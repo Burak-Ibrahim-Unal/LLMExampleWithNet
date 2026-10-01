@@ -1,0 +1,178 @@
+{
+  "questions": [
+    {
+      "id": "N01",
+      "category": "normal",
+      "question": "Lumora Termo'yu kurarken hangi Wi-Fi ağını kullanmalıyım?",
+      "expectedAnswer": "Yalnızca 2.4 GHz Wi-Fi ağları desteklenir; cihaz 5 GHz ağlara bağlanamaz.",
+      "expect": {
+        "answerable": true,
+        "sourcesAnyOf": ["kurulum-kilavuzu-lumora-termo", "sorun-giderme-baglanti"],
+        "mustContain": [["2.4 GHz", "2,4 GHz"]]
+      }
+    },
+    {
+      "id": "N02",
+      "category": "normal",
+      "question": "Termostatın LED ışığı kırmızı yanıp sönüyor, bu ne anlama geliyor?",
+      "expectedAnswer": "Kırmızı yanıp sönen LED, cihazın Wi-Fi bağlantısının olmadığını gösterir (sabit kırmızı ise donanım hatasıdır).",
+      "expect": {
+        "answerable": true,
+        "sourcesAnyOf": ["sorun-giderme-baglanti"],
+        "mustContain": [["Wi-Fi", "kablosuz"]]
+      }
+    },
+    {
+      "id": "N03",
+      "category": "normal",
+      "question": "Cihazıma su döküldü ve artık çalışmıyor. Garanti kapsamında ücretsiz onarılır mı?",
+      "expectedAnswer": "Hayır. Sıvı teması, nem veya su hasarı garanti kapsamı dışındadır.",
+      "expect": {
+        "answerable": true,
+        "sourcesAnyOf": ["garanti-kosullari"],
+        "mustContain": [["kapsam dışı", "kapsamı dışında", "kapsamında değil", "kapsamına girmez", "karşılanmaz", "hayır"]]
+      }
+    },
+    {
+      "id": "N04",
+      "category": "normal",
+      "question": "Kaç TL ve üzeri siparişlerde kargo ücretsiz oluyor?",
+      "expectedAnswer": "750 TL ve üzerindeki siparişlerde kargo ücretsizdir; altındaki siparişlerde 49,90 TL kargo ücreti alınır.",
+      "expect": {
+        "answerable": true,
+        "sourcesAnyOf": ["kargo-ve-teslimat"],
+        "mustContain": [["750"]]
+      }
+    },
+    {
+      "id": "N05",
+      "category": "normal",
+      "question": "Bir müşteri aynı arızayı üçüncü kez bildirirse talebi nasıl ele almalıyım?",
+      "expectedAnswer": "Talep doğrudan L2'ye (Seviye 2) aktarılır ve bir L2 uzmanı vaka sahibi olarak atanır.",
+      "expect": {
+        "answerable": true,
+        "sourcesAnyOf": ["sikayet-eskalasyon-proseduru"],
+        "mustContain": [["L2", "Seviye 2"]]
+      }
+    },
+    {
+      "id": "N06",
+      "category": "normal",
+      "question": "termostati fabrika ayarlarina nasil donduruyorum",
+      "expectedAnswer": "Cihazın sağ yanındaki sıfırlama düğmesine 10 saniye basılı tutun; LED turuncu yanıp sönmeye başlayınca bırakın.",
+      "expect": {
+        "answerable": true,
+        "sourcesAnyOf": ["kurulum-kilavuzu-lumora-termo"],
+        "mustContain": [["10 saniye", "10 sn"]]
+      }
+    },
+    {
+      "id": "N07",
+      "category": "normal",
+      "question": "Sipariş ettiğim termostat ne zaman elime ulaşır ve kurulum için hangi Wi-Fi ağı gerekir?",
+      "expectedAnswer": "Sipariş 1–2 iş günü içinde kargoya verilir ve bölgeye göre 2–4 iş günü içinde teslim edilir; kurulum için 2.4 GHz Wi-Fi ağı gerekir.",
+      "expect": {
+        "answerable": true,
+        "sourcesAllOf": ["kargo-ve-teslimat", "kurulum-kilavuzu-lumora-termo"],
+        "mustContain": [["iş günü"], ["2.4 GHz", "2,4 GHz"]]
+      }
+    },
+    {
+      "id": "N08",
+      "category": "normal",
+      "question": "Paramı ne zaman geri alırım?",
+      "expectedAnswer": "İade edilen ürün depoya ulaşıp kontrol edildikten sonra ücret 5 iş günü içinde ödemenin yapıldığı karta veya hesaba iade edilir (v2.0). Soruda 'iade' kelimesi geçmiyor; bölümü anlamsal arama bulmalı.",
+      "expect": {
+        "answerable": true,
+        "sourcesAnyOf": ["iade-politikasi-v2"],
+        "forbiddenSources": ["iade-politikasi-v1"],
+        "mustContain": [["5 iş günü", "beş iş günü"]],
+        "mustNotContain": ["10 iş günü"]
+      }
+    },
+    {
+      "id": "U01",
+      "category": "cevapsiz",
+      "question": "Lumora'nın genel müdürü kimdir?",
+      "expectedAnswer": "Dokümanlarda bu bilgi yok; sistem yanıt üretmeyip bilgi olmadığını belirtmeli.",
+      "expect": { "answerable": false }
+    },
+    {
+      "id": "U02",
+      "category": "cevapsiz",
+      "question": "Garanti süresini uzatmak için ek garanti paketi satın alabilir miyim?",
+      "expectedAnswer": "Dokümanlarda garanti uzatma paketi bilgisi yok (yalnızca 2 yıllık standart garanti anlatılıyor); bilgi olmadığı belirtilmeli.",
+      "expect": { "answerable": false }
+    },
+    {
+      "id": "U03",
+      "category": "cevapsiz",
+      "question": "Lumora Termo'yu Apple HomeKit ile kullanabilir miyim?",
+      "expectedAnswer": "Dokümanlarda HomeKit uyumluluğundan bahsedilmiyor; bilgi olmadığı belirtilmeli.",
+      "expect": { "answerable": false }
+    },
+    {
+      "id": "U04",
+      "category": "cevapsiz",
+      "question": "Ürünlerinizi yurt dışına gönderiyor musunuz?",
+      "expectedAnswer": "Dokümanlarda yurt dışı gönderimden bahsedilmiyor; bilgi olmadığı belirtilmeli.",
+      "expect": { "answerable": false }
+    },
+    {
+      "id": "C01",
+      "category": "celiskili",
+      "question": "Bir ürünü kaç gün içinde iade edebilirim?",
+      "expectedAnswer": "Teslimattan itibaren 30 gün (İade Politikası v2.0, 2025-06-01). v1.0'daki 14 günlük kural geçersiz.",
+      "expect": {
+        "answerable": true,
+        "sourcesAnyOf": ["iade-politikasi-v2"],
+        "forbiddenSources": ["iade-politikasi-v1"],
+        "mustContain": [["30 gün"]],
+        "mustNotContain": ["14 gün"],
+        "discardedVersions": ["iade-politikasi-v1"]
+      }
+    },
+    {
+      "id": "C02",
+      "category": "celiskili",
+      "question": "İade ettiğim ürünün parası kaç iş gününde hesabıma geçer?",
+      "expectedAnswer": "Ürün depoya ulaşıp kontrol edildikten sonra 5 iş günü içinde iade edilir (v2.0). v1.0'daki 10 iş günü geçersiz.",
+      "expect": {
+        "answerable": true,
+        "sourcesAnyOf": ["iade-politikasi-v2"],
+        "forbiddenSources": ["iade-politikasi-v1"],
+        "mustContain": [["5 iş günü", "beş iş günü"]],
+        "mustNotContain": ["10 iş günü"],
+        "discardedVersions": ["iade-politikasi-v1"]
+      }
+    },
+    {
+      "id": "C03",
+      "category": "celiskili",
+      "question": "Destek ekibine hafta sonu ulaşabilir miyim?",
+      "expectedAnswer": "Evet. Canlı sohbet 7/24, çağrı merkezi hafta sonu dahil her gün 08:00–22:00 hizmet verir (v2.0). v1.0'daki 'hafta sonu destek verilmez' kuralı geçersiz.",
+      "expect": {
+        "answerable": true,
+        "sourcesAnyOf": ["destek-kanallari-v2"],
+        "forbiddenSources": ["destek-kanallari-v1"],
+        "mustContain": [["7/24", "7 gün", "24 saat", "her gün", "hafta sonu dahil"]],
+        "mustNotContain": ["destek hizmeti verilmez"],
+        "discardedVersions": ["destek-kanallari-v1"]
+      }
+    },
+    {
+      "id": "C04",
+      "category": "celiskili",
+      "question": "İade kargo ücretini kim öder?",
+      "expectedAnswer": "Anlaşmalı kargo ile iade kodu kullanılarak gönderilen iadelerde kargo ücretsizdir; ücreti Lumora karşılar (İade Politikası v2.0). 2024 tarihli SSS'deki 'müşteri öder' bilgisi ve v1.0 geçersiz.",
+      "expect": {
+        "answerable": true,
+        "sourcesAnyOf": ["iade-politikasi-v2"],
+        "forbiddenSources": ["iade-politikasi-v1", "sss-genel"],
+        "mustContain": [["ücretsiz", "Lumora karşıla", "Lumora tarafından karşılan", "ücret alınmaz"]],
+        "mustNotContain": ["müşteriye aittir"],
+        "discardedVersions": ["iade-politikasi-v1"]
+      }
+    }
+  ]
+}

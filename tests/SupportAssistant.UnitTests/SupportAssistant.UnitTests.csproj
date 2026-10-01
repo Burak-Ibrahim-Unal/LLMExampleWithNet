@@ -21,6 +21,7 @@
     <ProjectReference Include="..\..\src\Modules\Knowledge\Knowledge.Application\Knowledge.Application.csproj" />
     <ProjectReference Include="..\..\src\Modules\Knowledge\Knowledge.Domain\Knowledge.Domain.csproj" />
     <ProjectReference Include="..\..\src\Modules\Knowledge\Knowledge.Infrastructure\Knowledge.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\tools\SupportAssistant.Eval\SupportAssistant.Eval.csproj" />
   </ItemGroup>
 
 </Project>

@@ -4,8 +4,11 @@ public sealed class RetrievalOptions
 {
     public const string SectionName = "Retrieval";
 
-    /// <summary>Chunks passed to the answer generator.</summary>
-    public int TopK { get; set; } = 6;
+    /// <summary>
+    /// Chunks passed to the answer generator. Calibrated on the evaluation set: with 6, the second topic of a
+    /// two-part question (delivery time + Wi-Fi) ranked 8th and was left out.
+    /// </summary>
+    public int TopK { get; set; } = 8;
 
     /// <summary>Candidates taken from each ranking (BM25 and vector) before fusion.</summary>
     public int CandidatePoolSize { get; set; } = 20;

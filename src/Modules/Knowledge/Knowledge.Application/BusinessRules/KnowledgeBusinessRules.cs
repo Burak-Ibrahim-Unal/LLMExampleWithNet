@@ -96,6 +96,16 @@ public sealed class KnowledgeBusinessRules(IKnowledgeIndex index)
         return ApiResult<T>.Fail(string.Format(Messages.Knowledge.QuestionTooLong, MaxQueryLength), 400);
     }
 
+    public ApiResult<T>? CheckRetrievalMode<T>(string? mode)
+    {
+        if (mode is null || mode.Equals("lexical", StringComparison.OrdinalIgnoreCase) || mode.Equals("hybrid", StringComparison.OrdinalIgnoreCase))
+        {
+            return null;
+        }
+
+        return ApiResult<T>.Fail(Messages.Knowledge.RetrievalModeInvalid, 400);
+    }
+
     public ApiResult<T>? CheckTopKInRange<T>(int topK)
     {
         if (topK is >= 1 and <= MaxTopK)

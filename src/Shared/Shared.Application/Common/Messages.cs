@@ -13,6 +13,7 @@ public static class Messages
         public const string QueryRequired = "Arama ifadesi boş olamaz.";
         public const string QueryTooLong = "Arama ifadesi en fazla {0} karakter olabilir.";
         public const string TopKOutOfRange = "topK 1 ile {0} arasında olmalıdır.";
+        public const string RetrievalModeInvalid = "mode yalnızca 'lexical' veya 'hybrid' olabilir.";
         public const string QuestionRequired = "Soru boş olamaz.";
         public const string QuestionTooLong = "Soru en fazla {0} karakter olabilir.";
         public const string NotEnoughInformation = "Bu soruyu yanıtlamak için dokümanlarda yeterli bilgi bulunamadı.";

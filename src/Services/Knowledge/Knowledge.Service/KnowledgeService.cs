@@ -33,9 +33,9 @@ public sealed class KnowledgeService(ISender sender) : IKnowledgeService
         return sender.Send(new GetDocumentByIdQuery(id), cancellationToken);
     }
 
-    public Task<ApiResult<SearchResultDto>> SearchAsync(string query, int? topK, CancellationToken cancellationToken = default)
+    public Task<ApiResult<SearchResultDto>> SearchAsync(string query, int? topK, string? mode = null, CancellationToken cancellationToken = default)
     {
-        return sender.Send(new SearchKnowledgeQuery(query, topK), cancellationToken);
+        return sender.Send(new SearchKnowledgeQuery(query, topK, mode), cancellationToken);
     }
 
     public Task<ApiResult<SystemStatusDto>> GetStatusAsync(CancellationToken cancellationToken = default)

@@ -13,7 +13,7 @@ public interface IKnowledgeService
 
     Task<ApiResult<DocumentDetailDto>> GetDocumentAsync(string id, CancellationToken cancellationToken = default);
 
-    Task<ApiResult<SearchResultDto>> SearchAsync(string query, int? topK, CancellationToken cancellationToken = default);
+    Task<ApiResult<SearchResultDto>> SearchAsync(string query, int? topK, string? mode = null, CancellationToken cancellationToken = default);
 
     Task<ApiResult<SystemStatusDto>> GetStatusAsync(CancellationToken cancellationToken = default);
 }

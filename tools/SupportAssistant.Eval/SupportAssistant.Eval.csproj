@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <!-- Reuses the API contracts (AnswerDto, SearchResultDto) and the Turkish text normalizer. -->
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Modules\Knowledge\Knowledge.Application\Knowledge.Application.csproj" />
+  </ItemGroup>
+
+</Project>

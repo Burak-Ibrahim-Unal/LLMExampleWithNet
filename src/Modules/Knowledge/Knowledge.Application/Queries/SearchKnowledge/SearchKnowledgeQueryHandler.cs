@@ -37,13 +37,27 @@ public sealed class SearchKnowledgeQueryHandler(
             return topKError;
         }
 
+        var modeError = rules.CheckRetrievalMode<SearchResultDto>(request.Mode);
+        if (modeError is not null)
+        {
+            return modeError;
+        }
+
         var readyError = rules.CheckIndexReady<SearchResultDto>();
         if (readyError is not null)
         {
             return readyError;
         }
 
-        var result = index.Search(await index.PrepareAsync(query, cancellationToken), topK);
+        var prepared = await index.PrepareAsync(query, cancellationToken);
+
+        // Without a query vector the index ranks with BM25 only — used to measure what vectors add.
+        if (string.Equals(request.Mode, "lexical", StringComparison.OrdinalIgnoreCase))
+        {
+            prepared = prepared with { Vector = null };
+        }
+
+        var result = index.Search(prepared, topK);
 
         var hits = result.Hits
             .Select(hit => new SearchHitDto(

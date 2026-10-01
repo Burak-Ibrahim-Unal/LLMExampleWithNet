@@ -12,6 +12,9 @@ public sealed class SearchRequest
 
     /// <summary>Number of sections to return (1–20); the configured default when omitted.</summary>
     public int? TopK { get; set; }
+
+    /// <summary>"lexical" for BM25 only, "hybrid" (default) to add vector similarity when available.</summary>
+    public string? Mode { get; set; }
 }
 
 public sealed class SearchEndpoint(IKnowledgeService knowledgeService) : Endpoint<SearchRequest, ApiResult<SearchResultDto>>
@@ -28,7 +31,7 @@ public sealed class SearchEndpoint(IKnowledgeService knowledgeService) : Endpoin
 
     public override async Task HandleAsync(SearchRequest req, CancellationToken ct)
     {
-        var result = await knowledgeService.SearchAsync(req.Q ?? string.Empty, req.TopK, ct);
+        var result = await knowledgeService.SearchAsync(req.Q ?? string.Empty, req.TopK, req.Mode, ct);
         await Send.ResponseAsync(result, result.StatusCode, ct);
     }
 }

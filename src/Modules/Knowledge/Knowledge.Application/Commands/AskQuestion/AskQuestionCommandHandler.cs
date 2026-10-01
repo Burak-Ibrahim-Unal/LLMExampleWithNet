@@ -79,7 +79,7 @@ public sealed class AskQuestionCommandHandler(
             .Take(settings.TopK)
             .Select((hit, position) => new ContextChunk($"C{position + 1}", hit.Chunk))
             .ToList();
-        var resolutionDto = ToDto(resolution);
+        var contextFamilies = context.Select(source => source.Chunk.DocumentKey).ToHashSet(StringComparer.Ordinal);
 
         GeneratedAnswer generated;
 
@@ -100,22 +100,25 @@ public sealed class AskQuestionCommandHandler(
 
         if (!generated.Answerable)
         {
-            return await RefuseAsync(question, RefusalReasons.ModelInsufficientContext, generated.MissingInformation, resolutionDto, diagnostics, cancellationToken);
+            return await RefuseAsync(question, RefusalReasons.ModelInsufficientContext, generated.MissingInformation, ToDto(resolution, contextFamilies), diagnostics, cancellationToken);
         }
 
         var citations = CitationValidator.Validate(generated.Citations, context);
 
         if (citations.Count == 0)
         {
-            return await RefuseAsync(question, RefusalReasons.NoValidCitations, generated.MissingInformation, resolutionDto, diagnostics, cancellationToken);
+            return await RefuseAsync(question, RefusalReasons.NoValidCitations, generated.MissingInformation, ToDto(resolution, contextFamilies), diagnostics, cancellationToken);
         }
+
+        // Only the document families the answer actually rests on are reported as version decisions.
+        var citedFamilies = citations.Select(citation => citation.Source.Chunk.DocumentKey).ToHashSet(StringComparer.Ordinal);
 
         var answer = new AnswerDto(
             question,
             Answerable: true,
-            Answer: AnswerText.Clean(generated.Answer),
+            Answer: AnswerText.Clean(generated.Answer, citations.Select(citation => citation.Quote).ToList()),
             Sources: citations.Select(ToSourceDto).ToList(),
-            VersionResolution: resolutionDto,
+            VersionResolution: ToDto(resolution, citedFamilies),
             Conflicts: CheckConflicts(generated.Conflicts, context),
             MissingInformation: generated.MissingInformation.Trim(),
             RefusalReason: string.Empty,
@@ -225,16 +228,20 @@ public sealed class AskQuestionCommandHandler(
         await questionLogs.SaveChangesAsync(cancellationToken);
     }
 
-    private static VersionResolutionDto ToDto(VersionResolution resolution) => new(
-        resolution.Applied,
-        VersionResolver.Rule,
-        resolution.Selected.Select(version => new VersionRefDto(version.DocumentId, version.Title, version.Version, version.EffectiveDate)).ToList(),
-        resolution.Discarded.Select(discarded => new DiscardedVersionDto(
-            discarded.Version.DocumentId,
-            discarded.Version.Title,
-            discarded.Version.Version,
-            discarded.Version.EffectiveDate,
-            discarded.Reason)).ToList());
+    private static VersionResolutionDto ToDto(VersionResolution resolution, IReadOnlySet<string> relevantFamilies)
+    {
+        var discarded = resolution.Discarded
+            .Where(item => relevantFamilies.Contains(item.Version.DocumentKey))
+            .Select(item => new DiscardedVersionDto(item.Version.DocumentId, item.Version.Title, item.Version.Version, item.Version.EffectiveDate, item.Reason))
+            .ToList();
+
+        var selected = resolution.Selected
+            .Where(version => relevantFamilies.Contains(version.DocumentKey))
+            .Select(version => new VersionRefDto(version.DocumentId, version.Title, version.Version, version.EffectiveDate))
+            .ToList();
+
+        return new VersionResolutionDto(discarded.Count > 0, VersionResolver.Rule, selected, discarded);
+    }
 
     private static AnswerSourceDto ToSourceDto(ValidatedCitation citation)
     {

@@ -23,22 +23,10 @@ TestResults/
 *.log
 logs/
 
-# Local app data / databases
-src/API/ECommerce.API/*.db
-src/API/ECommerce.API/*.db-shm
-src/API/ECommerce.API/*.db-wal
-
-# Node / Frontend
-**/node_modules/
-frontend/web/.next/
-frontend/web/out/
-frontend/web/dist/
-frontend/web/coverage/
-frontend/mobile/.expo/
-frontend/mobile/.expo-shared/
-frontend/mobile/web-build/
-frontend/mobile/dist/
-frontend/mobile/coverage/
+# Local databases (derived data, rebuilt from knowledge-base/ on startup)
+*.db
+*.db-shm
+*.db-wal
 
 # Environment files
 .env

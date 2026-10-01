@@ -1,0 +1,24 @@
+<Solution>
+  <Folder Name="/src/" />
+  <Folder Name="/src/API/">
+    <Project Path="src/API/SupportAssistant.API/SupportAssistant.API.csproj" />
+  </Folder>
+  <Folder Name="/src/Modules/" />
+  <Folder Name="/src/Modules/Knowledge/">
+    <Project Path="src/Modules/Knowledge/Knowledge.Application/Knowledge.Application.csproj" />
+    <Project Path="src/Modules/Knowledge/Knowledge.Domain/Knowledge.Domain.csproj" />
+    <Project Path="src/Modules/Knowledge/Knowledge.Infrastructure/Knowledge.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/src/Services/" />
+  <Folder Name="/src/Services/Knowledge/">
+    <Project Path="src/Services/Knowledge/Knowledge.Service/Knowledge.Service.csproj" />
+  </Folder>
+  <Folder Name="/src/Shared/">
+    <Project Path="src/Shared/Shared.Application/Shared.Application.csproj" />
+    <Project Path="src/Shared/Shared.Infrastructure/Shared.Infrastructure.csproj" />
+    <Project Path="src/Shared/Shared.Kernel/Shared.Kernel.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/SupportAssistant.IntegrationTests/SupportAssistant.IntegrationTests.csproj" />
+  </Folder>
+</Solution>

@@ -15,7 +15,19 @@ public interface IKnowledgeIndex
     Task<PreparedQuery> PrepareAsync(string query, CancellationToken cancellationToken = default);
 
     SearchResult Search(PreparedQuery query, int topK, Func<IndexedChunk, bool>? filter = null);
+
+    /// <summary>Every indexed version of a document family, oldest effective date first.</summary>
+    IReadOnlyList<DocumentVersion> GetDocumentVersions(string documentKey);
 }
+
+public sealed record DocumentVersion(
+    string DocumentId,
+    string DocumentKey,
+    string Title,
+    string Version,
+    DateOnly EffectiveDate,
+    DocumentStatus Status,
+    DocumentCategory Category);
 
 public enum RetrievalMode
 {

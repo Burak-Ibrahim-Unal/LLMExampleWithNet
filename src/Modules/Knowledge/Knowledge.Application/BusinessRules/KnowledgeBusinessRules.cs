@@ -76,6 +76,26 @@ public sealed class KnowledgeBusinessRules(IKnowledgeIndex index)
         return ApiResult<T>.Fail(string.Format(Messages.Knowledge.QueryTooLong, MaxQueryLength), 400);
     }
 
+    public ApiResult<T>? CheckQuestionRequired<T>(string question)
+    {
+        if (!string.IsNullOrWhiteSpace(question))
+        {
+            return null;
+        }
+
+        return ApiResult<T>.Fail(Messages.Knowledge.QuestionRequired, 400);
+    }
+
+    public ApiResult<T>? CheckQuestionLength<T>(string question)
+    {
+        if (question.Length <= MaxQueryLength)
+        {
+            return null;
+        }
+
+        return ApiResult<T>.Fail(string.Format(Messages.Knowledge.QuestionTooLong, MaxQueryLength), 400);
+    }
+
     public ApiResult<T>? CheckTopKInRange<T>(int topK)
     {
         if (topK is >= 1 and <= MaxTopK)

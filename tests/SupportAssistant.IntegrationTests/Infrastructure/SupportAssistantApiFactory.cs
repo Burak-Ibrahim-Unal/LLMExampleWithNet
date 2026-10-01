@@ -1,7 +1,10 @@
+using Knowledge.Application.Abstractions;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.AspNetCore.TestHost;
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace SupportAssistant.IntegrationTests.Infrastructure;
 
@@ -26,9 +29,12 @@ public class SupportAssistantApiFactory : WebApplicationFactory<Program>
             {
                 ["ConnectionStrings:DefaultConnection"] = $"Data Source={_databasePath}",
                 ["KnowledgeBase:Path"] = KnowledgeBasePath,
-                ["Embeddings:BaseUrl"] = string.Empty
+                ["Embeddings:BaseUrl"] = string.Empty,
+                ["Llm:BaseUrl"] = string.Empty
             });
         });
+
+        builder.ConfigureTestServices(services => services.AddSingleton<IGroundedAnswerGenerator, FakeAnswerGenerator>());
     }
 
     public override async ValueTask DisposeAsync()

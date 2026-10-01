@@ -53,6 +53,21 @@ public sealed class KnowledgeIndexTests
     }
 
     [Fact]
+    public void Every_version_of_a_document_family_is_listed_oldest_first()
+    {
+        var index = CreateIndex(new FakeTextEmbedder(enabled: false));
+        var current = new KnowledgeDocument("iade-v2", "iade", "İade", "2.0", new DateOnly(2025, 6, 1), DocumentStatus.Active, DocumentCategory.Policy, "iade-v1", "h2");
+        current.AddChunk("İade Süresi", "30 gün.");
+        var outdated = new KnowledgeDocument("iade-v1", "iade", "İade", "1.0", new DateOnly(2024, 1, 15), DocumentStatus.Superseded, DocumentCategory.Policy, null, "h1");
+        outdated.AddChunk("İade Süresi", "14 gün.");
+        index.Rebuild([current, outdated, Shipping]);
+
+        index.GetDocumentVersions("iade").Select(version => (version.DocumentId, version.Version, version.Status))
+            .ShouldBe([("iade-v1", "1.0", DocumentStatus.Superseded), ("iade-v2", "2.0", DocumentStatus.Active)]);
+        index.GetDocumentVersions("yok").ShouldBeEmpty();
+    }
+
+    [Fact]
     public async Task Search_finds_the_section_for_a_question_typed_without_turkish_characters()
     {
         var index = CreateIndex(new FakeTextEmbedder(enabled: false));

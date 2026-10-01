@@ -63,10 +63,21 @@ public sealed class KnowledgeIndex(
             && entries.Count > 0
             && entries.All(entry => entry.Chunk.Embedding is not null && entry.Chunk.EmbeddingModel == embedder.ModelName);
 
+        var versions = documents
+            .GroupBy(document => document.DocumentKey, StringComparer.Ordinal)
+            .ToDictionary(
+                family => family.Key,
+                family => (IReadOnlyList<DocumentVersion>)family
+                    .OrderBy(document => document.EffectiveDate)
+                    .Select(document => new DocumentVersion(document.SourceId, document.DocumentKey, document.Title, document.Version, document.EffectiveDate, document.Status, document.Category))
+                    .ToList(),
+                StringComparer.Ordinal);
+
         _snapshot = new Snapshot(
             chunks,
             lexical,
             vectorsUsable ? entries.Select(entry => entry.Chunk.Embedding!).ToArray() : null,
+            versions,
             documents.Count,
             DateTime.UtcNow);
     }
@@ -137,6 +148,11 @@ public sealed class KnowledgeIndex(
             MaxLexicalCoverage: lexicalMatches.Count > 0 ? lexicalMatches.Max(match => match.Coverage) : 0);
     }
 
+    public IReadOnlyList<DocumentVersion> GetDocumentVersions(string documentKey)
+    {
+        return _snapshot?.Versions.GetValueOrDefault(documentKey) ?? [];
+    }
+
     private static double CosineSimilarity(float[] left, float[] right)
     {
         if (left.Length != right.Length)
@@ -156,7 +172,13 @@ public sealed class KnowledgeIndex(
         return leftNorm == 0 || rightNorm == 0 ? 0 : dot / Math.Sqrt(leftNorm * rightNorm);
     }
 
-    private sealed record Snapshot(IndexedChunk[] Chunks, Bm25Index Lexical, float[][]? Vectors, int DocumentCount, DateTime BuiltAtUtc)
+    private sealed record Snapshot(
+        IndexedChunk[] Chunks,
+        Bm25Index Lexical,
+        float[][]? Vectors,
+        IReadOnlyDictionary<string, IReadOnlyList<DocumentVersion>> Versions,
+        int DocumentCount,
+        DateTime BuiltAtUtc)
     {
         public RetrievalMode Mode => Vectors is null ? RetrievalMode.Lexical : RetrievalMode.Hybrid;
     }

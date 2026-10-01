@@ -13,5 +13,10 @@ public static class Messages
         public const string QueryRequired = "Arama ifadesi boş olamaz.";
         public const string QueryTooLong = "Arama ifadesi en fazla {0} karakter olabilir.";
         public const string TopKOutOfRange = "topK 1 ile {0} arasında olmalıdır.";
+        public const string QuestionRequired = "Soru boş olamaz.";
+        public const string QuestionTooLong = "Soru en fazla {0} karakter olabilir.";
+        public const string NotEnoughInformation = "Bu soruyu yanıtlamak için dokümanlarda yeterli bilgi bulunamadı.";
+        public const string LlmUnavailable = "Dil modeli servisine şu anda ulaşılamıyor. Lütfen daha sonra tekrar deneyin.";
+        public const string LlmInvalidOutput = "Dil modeli geçerli bir yanıt üretemedi. Lütfen tekrar deneyin.";
     }
 }

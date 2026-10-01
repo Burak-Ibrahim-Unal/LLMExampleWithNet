@@ -1,6 +1,7 @@
 using DotNetEnv;
 using FastEndpoints;
 using FastEndpoints.OpenApi;
+using Knowledge.Service.Abstractions;
 using Scalar.AspNetCore;
 using Shared.Application.Abstractions;
 using SupportAssistant.API.Extensions;
@@ -35,6 +36,29 @@ using (var scope = app.Services.CreateScope())
 
     await migrator.MigrateAsync();
     await seeder.SeedAsync();
+
+    // Build the search index from knowledge-base/; unchanged documents keep their stored embeddings.
+    // A failure is logged rather than thrown: the API still starts and reports 503 until a reindex succeeds.
+    var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+    var ingestion = await scope.ServiceProvider.GetRequiredService<IKnowledgeService>().ReindexAsync();
+
+    if (ingestion.Success)
+    {
+        logger.LogInformation(
+            "Knowledge base indexed: {Documents} documents, {Chunks} sections, {RetrievalMode} retrieval.",
+            ingestion.Data!.Documents,
+            ingestion.Data.Chunks,
+            ingestion.Data.RetrievalMode);
+
+        if (ingestion.Data.Warning is not null)
+        {
+            logger.LogWarning("{Warning}", ingestion.Data.Warning);
+        }
+    }
+    else
+    {
+        logger.LogError("Knowledge base could not be indexed: {Message}", ingestion.Message);
+    }
 }
 
 app.Run();

@@ -1,3 +1,4 @@
+using Knowledge.Infrastructure.DependencyInjection;
 using Shared.Application.Abstractions;
 using Shared.Infrastructure.DependencyInjection;
 using Shared.Infrastructure.Persistence;
@@ -9,6 +10,7 @@ public static class InfrastructureServiceExtensions
     public static IServiceCollection AddInfrastructureServices(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddSharedInfrastructure(configuration, Knowledge.Infrastructure.AssemblyReference.Assembly);
+        services.AddKnowledgeInfrastructure(configuration);
 
         services.AddScoped<IDatabaseMigrator, DbMigrator>();
         services.AddScoped<IDatabaseSeeder, DbSeeder>();

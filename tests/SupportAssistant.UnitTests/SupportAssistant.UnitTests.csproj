@@ -11,17 +11,14 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
     <PackageReference Include="Shouldly" />
     <PackageReference Include="xunit.v3" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\API\SupportAssistant.API\SupportAssistant.API.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Include="TestData\**\*" CopyToOutputDirectory="PreserveNewest" />
+    <ProjectReference Include="..\..\src\Modules\Knowledge\Knowledge.Application\Knowledge.Application.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Knowledge\Knowledge.Domain\Knowledge.Domain.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Knowledge\Knowledge.Infrastructure\Knowledge.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>

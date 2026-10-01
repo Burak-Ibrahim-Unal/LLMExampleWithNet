@@ -6,12 +6,15 @@ using Microsoft.Extensions.Configuration;
 namespace SupportAssistant.IntegrationTests.Infrastructure;
 
 /// <summary>
-/// Hosts the real API in-process with an isolated, throw-away SQLite database.
-/// The "Testing" environment keeps the developer's .env file (remote LLM endpoints) out of the tests.
+/// Hosts the real API in-process with an isolated, throw-away SQLite database and a small fixture knowledge base.
+/// The "Testing" environment keeps the developer's .env file (remote LLM endpoints) out of the tests, and the
+/// embedding endpoint is left empty so retrieval runs in BM25-only mode without network access.
 /// </summary>
-public sealed class SupportAssistantApiFactory : WebApplicationFactory<Program>
+public class SupportAssistantApiFactory : WebApplicationFactory<Program>
 {
     private readonly string _databasePath = Path.Combine(Path.GetTempPath(), $"supportassistant-tests-{Guid.NewGuid():N}.db");
+
+    protected virtual string KnowledgeBasePath => Path.Combine(AppContext.BaseDirectory, "TestData", "knowledge-base");
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
@@ -21,7 +24,9 @@ public sealed class SupportAssistantApiFactory : WebApplicationFactory<Program>
         {
             configuration.AddInMemoryCollection(new Dictionary<string, string?>
             {
-                ["ConnectionStrings:DefaultConnection"] = $"Data Source={_databasePath}"
+                ["ConnectionStrings:DefaultConnection"] = $"Data Source={_databasePath}",
+                ["KnowledgeBase:Path"] = KnowledgeBasePath,
+                ["Embeddings:BaseUrl"] = string.Empty
             });
         });
     }
@@ -37,4 +42,10 @@ public sealed class SupportAssistantApiFactory : WebApplicationFactory<Program>
             File.Delete(_databasePath);
         }
     }
+}
+
+/// <summary>Points the API at a folder that does not exist, so startup ingestion fails.</summary>
+public sealed class MissingKnowledgeBaseApiFactory : SupportAssistantApiFactory
+{
+    protected override string KnowledgeBasePath => Path.Combine(AppContext.BaseDirectory, "TestData", "does-not-exist");
 }

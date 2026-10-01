@@ -1,518 +1,410 @@
-# CqrsModulerMonolithApp2026
+# SupportAssistant — AI destekli bilgi asistanı
 
-A modular monolith sample focused on a `Products` module, implemented with a CQRS flow on .NET.
+Kurgu bir akıllı ev şirketinin (**Lumora Akıllı Ev**) müşteri destek ekibi için, Türkçe soruları **yalnızca bilgi
+tabanındaki dokümanlardan** yanıtlayan bir .NET 10 API.
 
-This repository demonstrates:
+- Her yanıt; kullanılan **dokümanı, sürümünü, yürürlük tarihini, bölümünü** ve metinde gerçekten geçtiği doğrulanmış
+  **alıntıyı** döndürür.
+- Dokümanlarda yeterli bilgi yoksa yanıt **üretmez**, bunu açıkça belirtir ve nedenini (`refusalReason`) söyler.
+- Aynı prosedürün eski ve yeni sürümü çeliştiğinde **yürürlükteki sürümü kodla seçer**, elenen sürümü gerekçesiyle
+  gösterir. Farklı dokümanlar arasındaki çelişkiyi model bildirir, sunucu öncelik kuralına uyup uymadığını denetler.
 
-- Clear separation between `Domain`, `Application`, `Infrastructure`, and API layers
-- Command/Query handling with MediatR
-- FastEndpoints-based HTTP API
-- EF Core + Sqlite persistence
-- Standard response envelope with `ApiResult<T>`
-- Soft-delete and restore behavior
-- Plan-based create quota checks
+**Değerlendirme:** 16/16 soru geçti (8 normal · 4 cevapsız · 4 çelişkili) — ayrıntı: [`eval/results/report.md`](eval/results/report.md)
 
-## Table Of Contents
+---
 
-1. [What This Project Is](#what-this-project-is)
-2. [Architecture Overview](#architecture-overview)
-3. [Repository Structure](#repository-structure)
-4. [Technology Stack](#technology-stack)
-5. [Request Pipeline](#request-pipeline)
-6. [Domain Rules](#domain-rules)
-7. [Data Model](#data-model)
-8. [API Contract](#api-contract)
-9. [Run Locally](#run-locally)
-10. [Frontend Notes](#frontend-notes)
-11. [Shared Type Contracts](#shared-type-contracts)
-12. [How To Extend The System](#how-to-extend-the-system)
-13. [Troubleshooting](#troubleshooting)
-14. [Current Status](#current-status)
+## İçindekiler
 
-## What This Project Is
+1. [Hızlı başlangıç](#hızlı-başlangıç)
+2. [API](#api)
+3. [Nasıl çalışır](#nasıl-çalışır)
+4. [Değerlendirme](#değerlendirme)
+5. [Teknik tercihler](#teknik-tercihler)
+6. [Bilinen sınırlar](#bilinen-sınırlar)
+7. [Proje yapısı](#proje-yapısı)
 
-This codebase is a learning/reference implementation of a modular monolith where:
+---
 
-- Modules contain business concerns (`Products` in this repo)
-- Shared projects host reusable abstractions and infrastructure
-- HTTP endpoints stay thin, while business logic flows through handlers and rules
+## Hızlı başlangıç
 
-It is intentionally structured to make feature growth predictable without immediately splitting into microservices.
+### Gereksinimler
 
-## Architecture Overview
+- **.NET 10 SDK** (`dotnet --version` → 10.0.x)
+- **OpenAI-uyumlu bir sohbet modeli ucu** (`/v1/chat/completions`) ve önerilen olarak bir **embedding ucu**
+  (`/v1/embeddings`). Geliştirme ve değerlendirmede kullanılan:
+  - Sohbet: **Gemma 4 26B-A4B-it** (QAT, Q4) — llama.cpp `llama-server`
+  - Embedding: **bge-m3** (Q8_0, 1024 boyut, çok dilli) — llama.cpp `llama-server`
 
-High-level flow:
+### 1. Model sunucularını başlatın
 
-`HTTP Endpoint -> Service Facade -> MediatR Command/Query -> Handler -> BusinessRules -> Repository -> EF Core`
-
-Key design choices:
-
-- Endpoints are transport adapters, not business logic centers
-- Commands/queries are explicit and testable application use-cases
-- Repositories abstract EF Core data access
-- Shared contracts (`ApiResult<T>`, base entities, repository abstractions) keep consistency across modules
-
-## Repository Structure
-
-```text
-.
-|-- ECommerce.App.sln
-|-- src
-|   |-- API
-|   |   `-- ECommerce.API
-|   |-- Modules
-|   |   `-- Products
-|   |       |-- Products.Domain
-|   |       |-- Products.Application
-|   |       `-- Products.Infrastructure
-|   |-- Services
-|   |   `-- Products
-|   |       `-- Products.Service
-|   `-- Shared
-|       |-- Shared.Kernel
-|       |-- Shared.Application
-|       `-- Shared.Infrastructure
-|-- frontend
-|   |-- web
-|   `-- mobile
-`-- shared
-    `-- types
-```
-
-Layer responsibilities:
-
-- `Shared.Kernel`: core abstractions (`EntityBase`, `IRepository<T>`, `ISoftDeletable`)
-- `Shared.Application`: cross-cutting app contracts (`ApiResult<T>`, standard messages, migration/seeding abstractions)
-- `Shared.Infrastructure`: EF Core `AppDbContext`, generic repository, db bootstrap services
-- `Products.Domain`: pure domain model and repository interface
-- `Products.Application`: CQRS commands/queries, handlers, business rules, DTOs
-- `Products.Infrastructure`: EF configuration and repository implementation
-- `Products.Service`: application-facing facade over MediatR
-- `ECommerce.API`: HTTP entry point, middleware, endpoint definitions, DI wiring
-
-## Technology Stack
-
-Backend:
-
-- .NET `10.0` (target framework: `net10.0`)
-- FastEndpoints `6.1.0`
-- FastEndpoints.Swagger `6.1.0`
-- MediatR `13.1.0`
-- EF Core `10.0.0`
-- EF Core Sqlite `10.0.0`
-
-Frontend:
-
-- Web: Next.js `15`, React `19`, React Query `5`, Zustand `5`
-- Mobile: Expo `53`, React Native `0.79`, React Query `5`, Zustand `5`
-
-## Request Pipeline
-
-The API startup (`Program.cs`) builds this sequence:
-
-1. Service registration
-2. Middleware registration
-3. FastEndpoints route configuration (global prefix `v1`)
-4. OpenAPI + Swagger UI registration
-5. Database migration/creation and seeding on startup
-
-Middlewares:
-
-- `UserIdPreProcessor`
-  - Reads `x-user-id` header
-  - Converts a valid GUID into an authenticated principal
-  - Stores parsed user id in `HttpContext.Items["CurrentUserId"]`
-- `SubscriptionPreProcessor`
-  - Reads `x-user-plan` header
-  - Defaults to `free` when missing
-  - Stores value in `HttpContext.Items["UserPlan"]`
-
-Important detail:
-
-- Endpoints currently use `AllowAnonymous()` at FastEndpoints level.
-- Authorization is enforced manually inside endpoint handlers by checking resolved user id.
-
-## Domain Rules
-
-Product creation validation rules:
-
-- Name is required and trimmed
-- Price must be greater than 0
-- Stock cannot be negative
-- Duplicate active product name is rejected
-
-Soft-delete behavior:
-
-- `DELETE /products/{id}` sets `DeletedAtUtc` (logical delete)
-- Active queries exclude soft-deleted rows via EF query filter
-- `POST /products/{id}/restore` reactivates logically deleted rows
-
-Quota behavior (`ISubscriptionQuotaService`):
-
-- `free` plan: max 3 active products
-- `basic` plan: max 20 active products
-- Other plan values: no limit
-
-## Data Model
-
-### Product Entity
-
-Fields:
-
-- `Id: Guid`
-- `Name: string` (required, max 150)
-- `Price: decimal(18,2)` (required)
-- `Stock: int` (required)
-- `DeletedAtUtc: DateTime?` (soft-delete marker)
-- `CreatedAtUtc: DateTime`
-- `UpdatedAtUtc: DateTime?`
-
-EF mapping:
-
-- Table: `products`
-- Index on `Name`
-- Global filter: `DeletedAtUtc == null`
-
-## API Contract
-
-Global route prefix: `/v1`
-
-All endpoints return:
-
-```json
-{
-  "success": true,
-  "message": "string",
-  "data": {},
-  "statusCode": 200
-}
-```
-
-### Required Headers
-
-Every product endpoint expects:
-
-- `x-user-id`: GUID (required in practice)
-- `x-user-plan`: optional (`free` by default)
-
-### Endpoints
-
-#### 1) Get Products
-
-- Method: `GET`
-- Path: `/v1/products`
-- Success: `200`
-- Error: `401` when user id is missing/invalid
-
-Sample request:
+llama.cpp ile (geliştirmede kullanılan kurulum):
 
 ```bash
-curl -X GET "http://localhost:5031/v1/products" \
-  -H "x-user-id: 11111111-1111-1111-1111-111111111111" \
-  -H "x-user-plan: free"
+# Sohbet modeli — port 1234 (--jinja: modelin chat şablonu; düşünme modu anahtarı bunu gerektirir)
+./build/bin/llama-server -m gemma-4-26B-A4B-it-qat-UD-Q4_K_XL.gguf --host 0.0.0.0 --port 1234 --jinja -c 32768 -ngl 99
+
+# Embedding modeli — port 1235
+./build/bin/llama-server -m bge-m3-Q8_0.gguf --host 0.0.0.0 --port 1235 --embedding --pooling cls \
+  -np 4 -c 32768 -b 8192 -ub 8192 -ngl 99
 ```
 
-Sample response:
+Alternatifler — kod değişmez, yalnızca `.env` değişir:
+
+| Sağlayıcı | `Llm__BaseUrl` / `Embeddings__BaseUrl` | Not |
+|---|---|---|
+| LM Studio | `http://localhost:1234/v1` | *Developer → Start Server*; bir sohbet ve bir embedding modeli yükleyin |
+| Ollama | `http://localhost:11434/v1` | ör. `ollama pull gemma3` · `ollama pull bge-m3` |
+| OpenAI | `https://api.openai.com/v1` | `Llm__ApiKey`/`Embeddings__ApiKey` = kendi anahtarınız, `Embeddings__Model=text-embedding-3-small`, `Llm__EnableThinking` satırını silin |
+
+Embedding ucu tanımlanmazsa (`Embeddings__BaseUrl=` boş) sistem **yalnızca BM25** ile çalışmaya devam eder.
+
+### 2. Yapılandırın
+
+```bash
+cp .env.example .env     # URL'leri kendi sunucularınıza göre düzenleyin; .env git'e girmez
+```
+
+`.env` yalnızca Development ortamında (`dotnet run`) yüklenir; gerçek ortam değişkenleri her zaman önceliklidir.
+Tüm ayarlar ve açıklamaları [`.env.example`](.env.example) içinde.
+
+### 3. Çalıştırın
+
+```bash
+dotnet run --project src/API/SupportAssistant.API
+```
+
+- Açılışta `knowledge-base/` indekslenir. Log: `Knowledge base indexed: 10 documents, 53 sections, hybrid retrieval.`
+- API arayüzü (Scalar): <http://localhost:5031/scalar> · OpenAPI: <http://localhost:5031/openapi/v1.json>
+- Durum: <http://localhost:5031/v1/health> — indeks, dil modeli ve embedding yapılandırmasını gösterir.
+- Veritabanı (`supportassistant.db`) türetilmiş veridir: silinirse açılışta yeniden oluşturulur.
+
+### 4. Testler ve değerlendirme
+
+```bash
+dotnet test --solution SupportAssistant.slnx        # 134 test; model sunucusu gerekmez
+dotnet run --project tools/SupportAssistant.Eval     # API çalışırken; rapor: eval/results/report.md
+```
+
+---
+
+## API
+
+Tüm uçlar `/v1` önekiyle ve standart `ApiResult<T>` zarfıyla (`success`, `message`, `data`, `statusCode`) yanıt verir.
+
+| Metot | Yol | Açıklama |
+|---|---|---|
+| `POST` | `/v1/questions` | Soruyu dokümanlara dayanarak yanıtlar. Gövde: `{ "question": "..." }` (en fazla 500 karakter) |
+| `GET` | `/v1/search?q=&topK=&mode=` | Dil modeli olmadan arama; bölümleri skorlarıyla gösterir. `mode=lexical` yalnızca BM25 |
+| `GET` | `/v1/documents` | Dokümanlar ve sürüm bilgileri |
+| `GET` | `/v1/documents/{id}` | Bir doküman ve bölümleri |
+| `POST` | `/v1/documents/reindex` | `knowledge-base/` klasörünü yeniden okur; yalnızca değişen dokümanlar yeniden embed edilir |
+| `GET` | `/v1/health` | İndeks / model / embedding durumu (`ok` veya `degraded`) |
+
+**Durum kodları:** `200` yanıt veya açık "bilgi yok" · `400` geçersiz girdi · `404` doküman yok ·
+`422` bilgi tabanı okunamadı · `502` model geçerli yapı üretemedi · `503` indeks hazır değil / modele ulaşılamıyor.
+
+### Örnek 1 — Çelişkili sürümler: yürürlükteki sürüm seçilir
+
+```bash
+curl -s -X POST http://localhost:5031/v1/questions \
+  -H "Content-Type: application/json" \
+  -d '{"question": "Bir ürünü kaç gün içinde iade edebilirim?"}'
+```
 
 ```json
 {
   "success": true,
   "message": "OK",
-  "data": [
-    {
-      "id": "8dc50e80-6f6d-4d16-98eb-3f9bc15cc2d9",
-      "name": "Keyboard",
-      "price": 99.9,
-      "stock": 15,
-      "deletedAtUtc": null
+  "data": {
+    "question": "Bir ürünü kaç gün içinde iade edebilirim?",
+    "answerable": true,
+    "answer": "Ürünü, teslim aldığınız tarihten itibaren 30 gün içinde iade edebilirsiniz. Bu süre, kargo firmasının teslimat kaydındaki tarih esas alınarak hesaplanmaktadır.",
+    "sources": [
+      {
+        "documentId": "iade-politikasi-v2",
+        "title": "İade ve Para İadesi Politikası",
+        "version": "2.0",
+        "effectiveDate": "2025-06-01",
+        "status": "active",
+        "category": "politika",
+        "section": "2. İade Süresi",
+        "quote": "Müşteriler, ürünü teslim aldıkları tarihten itibaren 30 gün içinde iade talebinde bulunabilir. Süre, kargo firmasının teslimat kaydındaki tarih esas alınarak hesaplanır.",
+        "quoteVerified": true
+      }
+    ],
+    "versionResolution": {
+      "applied": true,
+      "rule": "Aynı doküman ailesinde, yürürlük tarihi bugün veya daha önce olan en yeni sürüm seçilir; 'superseded' işaretli sürüm seçilmez.",
+      "selected": [{ "documentId": "iade-politikasi-v2", "title": "İade ve Para İadesi Politikası", "version": "2.0", "effectiveDate": "2025-06-01" }],
+      "discarded": [{ "documentId": "iade-politikasi-v1", "title": "İade ve Para İadesi Politikası", "version": "1.0", "effectiveDate": "2024-01-15",
+                      "reason": "2.0 sürümü (2025-06-01) tarafından geçersiz kılındı." }]
+    },
+    "conflicts": [],
+    "missingInformation": "",
+    "refusalReason": "",
+    "diagnostics": {
+      "retrievalMode": "hybrid",
+      "maxDenseScore": 0.728,
+      "maxLexicalCoverage": 0.667,
+      "candidateDocumentIds": ["iade-politikasi-v2", "iade-politikasi-v1", "kargo-ve-teslimat", "garanti-kosullari", "sss-genel"],
+      "context": [{ "label": "C1", "documentId": "iade-politikasi-v2", "version": "2.0", "section": "2. İade Süresi" }, "…7 bölüm daha"],
+      "model": "gemma-4-26b-a4b-it",
+      "latencyMs": 1335,
+      "inputTokens": 1286,
+      "outputTokens": 149
     }
-  ],
+  },
   "statusCode": 200
 }
 ```
 
-#### 2) Create Product
+v1.0'daki "14 gün" kuralı arama sonuçlarında vardı, ama modele hiç gönderilmedi (`discarded`).
 
-- Method: `POST`
-- Path: `/v1/products`
-- Success: `201`
-- Errors:
-  - `400` invalid input
-  - `401` missing/invalid user id
-  - `403` quota exceeded
-  - `409` duplicate name
+### Örnek 2 — Farklı dokümanlar arasında çelişki
 
-Sample request:
+`"İade kargo ücretini kim öder?"` sorusunda 2024 tarihli SSS "müşteri öder", 2025 tarihli İade Politikası v2.0
+"ücretsiz" diyor. Yanıt politikayı kullanır; model çelişkiyi bildirir, sunucu öncelik kuralına uyduğunu doğrular:
+
+```json
+"answer": "İade kodunu kullanarak anlaşmalı kargo firmamızla gönderdiğiniz iadelerin kargo ücretini Lumora karşılamaktadır.",
+"conflicts": [
+  {
+    "topic": "İade kargo ücreti",
+    "chosen":   { "documentId": "iade-politikasi-v2", "version": "2.0", "effectiveDate": "2025-06-01", "category": "politika", "section": "5. İade Kargo Ücreti" },
+    "rejected": [{ "documentId": "sss-genel", "version": "1.0", "effectiveDate": "2024-02-01", "category": "sss", "section": "İade > İade kargo ücretini kim öder?" }],
+    "reason": "C2 (Politika, sürüm 2.0, 2025-06-01) ile C1 (SSS, sürüm 1.0, 2024-02-01) arasında çelişki bulunmaktadır. Politika dokümanı SSS'den daha önceliklidir ve daha yeni bir yürürlük tarihine sahiptir.",
+    "ruleSatisfied": true
+  }
+]
+```
+
+### Örnek 3 — Dokümanlarda bilgi yok
 
 ```bash
-curl -X POST "http://localhost:5031/v1/products" \
+curl -s -X POST http://localhost:5031/v1/questions \
   -H "Content-Type: application/json" \
-  -H "x-user-id: 11111111-1111-1111-1111-111111111111" \
-  -H "x-user-plan: free" \
-  -d '{
-    "name": "Keyboard",
-    "price": 99.90,
-    "stock": 15
-  }'
+  -d '{"question": "Ürünlerinizi yurt dışına gönderiyor musunuz?"}'
 ```
 
-#### 3) Delete Product (Soft Delete)
-
-- Method: `DELETE`
-- Path: `/v1/products/{productId}`
-- Success: `200`
-- Errors:
-  - `401` missing/invalid user id
-  - `404` product not found
-
-Sample request:
-
-```bash
-curl -X DELETE "http://localhost:5031/v1/products/{productId}" \
-  -H "x-user-id: 11111111-1111-1111-1111-111111111111"
+```json
+{
+  "success": true,
+  "message": "Bu soruyu yanıtlamak için dokümanlarda yeterli bilgi bulunamadı.",
+  "data": {
+    "question": "Ürünlerinizi yurt dışına gönderiyor musunuz?",
+    "answerable": false,
+    "answer": "Bu soruyu yanıtlamak için dokümanlarda yeterli bilgi bulunamadı.",
+    "sources": [],
+    "versionResolution": { "applied": false, "rule": "…", "selected": [], "discarded": [] },
+    "conflicts": [],
+    "missingInformation": "",
+    "refusalReason": "LowRelevance",
+    "diagnostics": { "retrievalMode": "hybrid", "maxDenseScore": 0.456, "maxLexicalCoverage": 0.312, "context": [], "model": "", "latencyMs": 14 }
+  },
+  "statusCode": 200
+}
 ```
 
-#### 4) Restore Product
-
-- Method: `POST`
-- Path: `/v1/products/{productId}/restore`
-- Success: `200`
-- Errors:
-  - `401` missing/invalid user id
-  - `404` product not found
-  - `400` product already active
-
-Sample request:
-
-```bash
-curl -X POST "http://localhost:5031/v1/products/{productId}/restore" \
-  -H "x-user-id: 11111111-1111-1111-1111-111111111111"
-```
-
-### Standard Message Catalog
-
-Product-related messages include:
-
-- `Product name is required.`
-- `Product price must be greater than zero.`
-- `Product stock cannot be negative.`
-- `A product with the same name already exists.`
-- `Product not found.`
-- `Product is already active.`
-- `Created`
-- `Deleted`
-- `Restored`
-
-Authorization/subscription messages include:
-
-- `Unauthorized`
-- `Create quota exceeded for current plan.`
-
-## Run Locally
-
-### Prerequisites
-
-- .NET SDK `10.0.x`
-- Node.js `20+`
-- npm
-
-### Backend
-
-From repo root:
-
-```bash
-dotnet restore ECommerce.App.sln
-dotnet build ECommerce.App.sln
-dotnet run --project src/API/ECommerce.API
-```
-
-Default local URLs:
-
-- HTTP: `http://localhost:5031`
-- HTTPS profile also exists in launch settings
-
-Swagger UI:
-
-- `http://localhost:5031/swagger`
-
-Database:
-
-- Connection string key: `ConnectionStrings:DefaultConnection`
-- Default value: `Data Source=ecommerce.db`
-- Db file is created in the API runtime working directory
-
-Startup DB behavior:
-
-- If EF migrations exist, app runs `Database.MigrateAsync()`
-- If migrations do not exist, app checks expected vs existing tables and applies `EnsureCreated()` fallback when needed
-
-### Useful Local Commands
-
-Build all:
-
-```bash
-dotnet build ECommerce.App.sln
-```
-
-Run API only:
-
-```bash
-dotnet run --project src/API/ECommerce.API
-```
-
-## Frontend Notes
-
-This repository currently contains frontend infrastructure and API integration helpers, not full production UI pages/screens.
-
-### Shared Frontend-Backend Contracts
-
-- File: `shared/types/api.types.ts`
-- Contains:
-  - `ApiResult<T>`
-  - `ProductDto`
-  - `CreateProductRequest`
-
-### Web (`frontend/web`)
-
-Contains:
-
-- API helper functions (`src/lib/api.ts`)
-- Product query/mutation hooks (`src/queries/hooks/useProducts.ts`)
-- Query key factory (`src/queries/queryKeys.ts`)
-- Auth context + Zustand sync (`src/auth`, `src/stores`)
-
-Run commands:
-
-```bash
-cd frontend/web
-npm install
-npm run dev
-```
-
-Environment variable:
-
-- `NEXT_PUBLIC_API_BASE_URL` (default in code: `http://localhost:5000/v1`)
-
-Important mismatch to fix for full integration:
-
-- Web API wrapper sends `Authorization: Bearer ...`
-- Current backend resolves identity from `x-user-id`
-- For end-to-end calls, either update frontend headers or backend auth strategy
-
-### Mobile (`frontend/mobile`)
-
-Contains:
-
-- API helper functions (`src/api.ts`)
-- Product query hook (`src/queries/hooks/useProducts.ts`)
-- Auth context (`src/auth-context.tsx`)
-
-Run commands:
-
-```bash
-cd frontend/mobile
-npm install
-npm run start
-```
-
-Environment variable:
-
-- `EXPO_PUBLIC_API_BASE_URL` (default in code: `http://localhost:5000/v1`)
-
-Same auth-header mismatch applies to mobile.
-
-## Shared Type Contracts
-
-`shared/types/api.types.ts` is designed as the canonical transport contract shared by web and mobile clients.
-
-Benefits:
-
-- Keeps DTO shape aligned with backend responses
-- Reduces contract drift between clients
-- Makes API changes visible in one place
-
-## How To Extend The System
-
-Recommended workflow for a new module:
-
-1. Create module projects:
-   - `<Feature>.Domain`
-   - `<Feature>.Application`
-   - `<Feature>.Infrastructure`
-2. Add domain entity and repository interface in `Domain`.
-3. Add EF mapping + repository implementation in `Infrastructure`.
-4. Add commands/queries + handlers + business rules in `Application`.
-5. Add service facade in `src/Services/<Feature>`.
-6. Add endpoint classes in `src/API/ECommerce.API/Endpoints/<Feature>`.
-7. Register dependencies in:
-   - `ModuleServiceExtensions`
-   - `InfrastructureServiceExtensions` (include EF config assembly)
-8. Return `ApiResult<T>` consistently from endpoint handlers.
-
-CQRS consistency checklist:
-
-- Command/Query objects are small and explicit.
-- Handlers own orchestration, not transport concerns.
-- Business rules return fail-fast results before persistence.
-- Repositories hide EF details from application layer.
-
-## Troubleshooting
-
-### 401 Unauthorized
-
-Cause:
-
-- Missing or invalid `x-user-id`.
-
-Fix:
-
-- Send a valid GUID in `x-user-id`.
-
-### 403 Create Quota Exceeded
-
-Cause:
-
-- Reached plan limit (`free=3`, `basic=20`).
-
-Fix:
-
-- Use another plan value or delete/restore data as needed.
-
-### Frontend Cannot Reach API
-
-Cause:
-
-- Frontend defaults to `http://localhost:5000/v1`, API runs on `http://localhost:5031`.
-
-Fix:
-
-- Set `NEXT_PUBLIC_API_BASE_URL` or `EXPO_PUBLIC_API_BASE_URL` to `http://localhost:5031/v1`.
-
-### Frontend Requests Still Unauthorized
-
-Cause:
-
-- Frontend uses bearer token header, backend expects `x-user-id`.
-
-Fix:
-
-- Align auth strategy on both sides.
-
-## Current Status
-
-- Solution build verified with:
-  - `dotnet build ECommerce.App.sln`
-- Build result:
-  - Success
-  - 0 warnings
-  - 0 errors
-- Test projects:
-  - None in this repository at the moment
+Arama yeterli kanıt bulamadığı için dil modeli **hiç çağrılmadı** (14 ms). Alana yakın sorularda (ör. "HomeKit ile
+kullanabilir miyim?") retlerin nedeni `ModelInsufficientContext`'tir. Bu durumda `missingInformation` alanında
+modelin neyin eksik olduğunu açıklaması yer alır.
 
 ---
 
-If you want, the next step can be:
+## Nasıl çalışır
 
-1. Add a Postman collection and include it in this repo.
-2. Update web/mobile API wrappers to send `x-user-id` for local development.
-3. Add automated integration tests for product endpoints.
+```mermaid
+flowchart LR
+    Q[Soru] --> S["Hibrit arama<br/>BM25 + bge-m3 → RRF"]
+    S --> G1{"Kapı 1<br/>yeterli kanıt?"}
+    G1 -- hayır --> R1["Bilgi yok<br/>LowRelevance<br/>(model çağrılmaz)"]
+    G1 -- evet --> V["Sürüm çözümü<br/>yürürlükteki sürüm"]
+    V --> L["Gemma 4<br/>JSON şemalı yanıt"]
+    L --> G2{"Kapı 2<br/>answerable?"}
+    G2 -- hayır --> R2["Bilgi yok<br/>ModelInsufficientContext"]
+    G2 -- evet --> G3{"Kapı 3<br/>geçerli atıf?"}
+    G3 -- hayır --> R3["Bilgi yok<br/>NoValidCitations"]
+    G3 -- evet --> A["Yanıt + kaynaklar<br/>+ sürüm kararı + çelişkiler"]
+```
+
+### Mimari
+
+Mevcut CQRS modüler monolit iskeletim üzerine tek bir `Knowledge` modülü eklendi:
+
+`Endpoint (FastEndpoints) → IKnowledgeService → MediatR komut/sorgu → Handler → BusinessRules → Repository / Port`
+
+- **Domain:** `KnowledgeDocument` (bir doküman sürümü), `DocumentChunk` (bölüm + embedding), `QuestionLog` (denetim kaydı).
+- **Application:** `AskQuestionCommand`, `IngestKnowledgeBaseCommand`, `SearchKnowledgeQuery`, doküman sorguları,
+  `KnowledgeBusinessRules`. Cevaplama politikaları saf ve test edilebilir sınıflardır: `VersionResolver`,
+  `AnswerabilityPolicy`, `CitationValidator`, `SourcePrecedence`. LLM ve embedding, Application'ın kendi portları
+  arkasındadır (`IGroundedAnswerGenerator`, `ITextEmbedder`, `IKnowledgeIndex`).
+- **Infrastructure:** EF Core + SQLite, markdown ingest, bellek içi hibrit indeks, `Microsoft.Extensions.AI` +
+  OpenAI SDK adaptörleri.
+- Katman kuralları (ör. Application, EF Core veya OpenAI SDK'sını tanıyamaz) `NetArchTest` testleriyle zorunlu.
+
+`ask` bir *command* olarak modellendi: dış modele maliyetli bir çağrı yapar ve `question_logs` tablosuna denetim kaydı yazar.
+
+### Bilgi tabanı (`knowledge-base/`)
+
+Her dosya YAML front matter ile başlar
+(`id, documentKey, title, version, effectiveDate, status, supersedes, category`). Aynı prosedürün sürümleri aynı
+`documentKey`'i paylaşır.
+
+| Doküman | Tür | Sürüm / yürürlük | Not |
+|---|---|---|---|
+| `iade-politikasi-v1` · `-v2` | politika | 1.0 (2024-01-15, superseded) · 2.0 (2025-06-01) | 14 → 30 gün; kargo müşteriden → ücretsiz; para iadesi 10 → 5 iş günü |
+| `destek-kanallari-v1` · `-v2` | politika | 1.0 (2024-03-01, superseded) · 2.0 (2025-09-01) | hafta içi 09–18 → 7/24 canlı sohbet |
+| `garanti-kosullari` | politika | 1.0 (2025-01-10) | 2 yıl, kapsam dışı durumlar |
+| `kargo-ve-teslimat` | politika | 1.0 (2025-03-01) | süreler, 750 TL ücretsiz kargo eşiği |
+| `kurulum-kilavuzu-lumora-termo` | kılavuz | 1.0 (2025-02-01) | 2.4 GHz Wi-Fi, fabrika ayarı |
+| `sorun-giderme-baglanti` | kılavuz | 1.0 (2025-04-15) | LED renkleri, hata kodları |
+| `sikayet-eskalasyon-proseduru` | prosedür | 1.0 (2025-05-01) | ekip içi L1/L2/L3 |
+| `sss-genel` | SSS | 1.0 (2024-02-01) | eski "iade kargosunu müşteri öder" bilgisi (kaynaklar arası çelişki) |
+
+Her başlık (`##`/`###`) bir bölümdür (toplam 53). Atıflarda bölüm yolu görünür, ör. `2. Destek Seviyeleri > 2.2 Seviye 2 (L2)`.
+
+### Arama
+
+- **Türkçe normalizasyon:** `tr-TR` küçük harf ve ç/ğ/ı/ö/ş/ü katlama. "iade suresi kac gun" ile
+  "İade süresi kaç gün?" aynı terimlere iner.
+- **BM25:** Türkçe stopword'ler ve 5 harflik önek kökleme (F5; Türkçe bilgi erişimi çalışmalarında morfolojik
+  çözümlemeye yakın sonuç veren basit bir yöntem). Bölüm başlığı ve doküman başlığı da aranır.
+- **Vektör:** bge-m3 embedding'leri ingest sırasında hesaplanır ve SQLite'ta saklanır. İçerik hash'i değişmeyen
+  doküman yeniden embed edilmez.
+- **Birleşim:** Reciprocal Rank Fusion (k=60). BM25 skorlarıyla kosinüs skorları farklı ölçeklerde olduğu için sıralama
+  birleştirilir. Modele ilk **8** bölüm verilir.
+- Embedding ucuna ulaşılamazsa uygulama açılır ve BM25 moduna düşer; bir sonraki `reindex` eksik vektörleri tamamlar.
+
+### "Bilgi yok" politikası — üç kapı
+
+| Kapı | Nerede | Ne zaman reddeder |
+|---|---|---|
+| 1 · Arama kanıtı | `AnswerabilityPolicy` | En iyi kosinüs < 0,55 **ve** kelime kapsamı < 0,5. İkisinden biri yeter: vektör parafrazı yakalar, kelime kapsamı bge-m3'ün zayıf kaldığı Türkçe karaktersiz yazımı yakalar. Model çağrılmaz. |
+| 2 · Model kararı | JSON şemasındaki `answerable` | Kaynaklar soruyu yanıtlamıyorsa model `answerable=false` ve `missingInformation` döndürür. |
+| 3 · Atıf doğrulama | `CitationValidator` | Yanıt, modele verilen bölümlerden hiçbirine atıf yapmıyorsa. Alıntının bölüm metninde geçip geçmediği ayrıca `quoteVerified` ile gösterilir. |
+
+Model yanıtı **JSON şemasıyla kısıtlıdır**. llama.cpp şemayı bir grammar'a çevirdiği için çıktı her zaman ayrıştırılır;
+yine de geçersiz gelirse bir kez yeniden denenir, ikincisinde `502` döner. Modele ulaşılamazsa `503` döner. Bu iki
+durum "bilgi yok" diye geçiştirilmez.
+
+### Çelişki çözümü
+
+1. **Aynı dokümanın sürümleri (deterministik).** `VersionResolver` arama adaylarını `documentKey`'e göre gruplar ve
+   yürürlük tarihi bugün veya öncesi olan, `superseded` olmayan en yeni sürümü seçer. Tarih eşitse yüksek sürüm
+   numarası kazanır; ileri tarihli sürüm henüz yürürlükte sayılmaz. Eski sürümün bölümleri **modele gönderilmez**;
+   yanıtta `versionResolution.discarded` altında gerekçesiyle listelenir. Soruya yalnızca eski sürüm eşleştiyse,
+   güncel sürümün soruya en yakın bölümleri onun yerine konur.
+2. **Farklı dokümanlar (model + sunucu denetimi).** Prompt'taki öncelik kuralı: politika/prosedür > kılavuz > SSS;
+   aynı türde yürürlük tarihi daha yeni olan geçerlidir. Model çelişkiyi `conflicts` alanına yazar, sunucu seçimin bu
+   kurala uyup uymadığını hesaplayıp `ruleSatisfied` olarak ekler.
+
+Sürüm kararları yalnızca yanıtın atıf yaptığı doküman aileleri için raporlanır. Retlerde boş döner; arama ve bağlam
+ayrıntısı `diagnostics` altındadır.
+
+---
+
+## Değerlendirme
+
+[`eval/questions.json`](eval/questions.json) içinde **16 soru** var: 8 normal (biri parafraz, biri iki dokümana
+yayılan soru), 4 cevapsız ve 4 çelişkili. Her sorunun insanın okuyacağı bir **beklenen yanıtı** ve deterministik
+kontrolleri vardır:
+
+- yanıtlanabilirlik
+- beklenen ve yasak kaynaklar
+- içerik ifadeleri (Türkçe karakterden bağımsız, kelime başında eşleşir)
+- yasak ifadeler (ör. "14 gün")
+- elenmesi gereken sürümler
+
+[`tools/SupportAssistant.Eval`](tools/SupportAssistant.Eval) soruları çalışan API'ye sorar ve
+[`eval/results/report.md`](eval/results/report.md) dosyasına **beklenen ile gerçek** karşılaştırmasını, ham sonuçları da
+`results.json` dosyasına yazar.
+
+| Çalıştırma | Sonuç | Medyan yanıt süresi | Arama isabeti: yalnız BM25 / hibrit |
+|---|---|---|---|
+| Varsayılan — düşünme modu kapalı ([rapor](eval/results/report.md)) | **16/16** | 1,4 sn | 10/12 / **12/12** |
+| Düşünme modu açık ([rapor](eval/results/thinking-on/report.md)) | 16/16 | 9,8 sn | 10/12 / 12/12 |
+
+Bulgular:
+
+- **Hibrit aramanın katkısı ölçülebilir.** "Paramı ne zaman geri alırım?" (N08) sorusunda "iade" kelimesi geçmiyor.
+  "Para İadesi" bölümünü yalnızca vektör arama buluyor; BM25 tek başına iki soruda beklenen kaynağı kaçırıyor.
+- **Düşünme modu bu sette doğruluğu artırmadı, gecikmeyi ~7 kat yükseltti.** Soru başına üretilen token sayısı
+  58–273'ten 654–2618'e çıkıyor. Bu yüzden varsayılan kapalı.
+- **Kapı 1 eşiği veriyle seçildi.** Yanıtlanabilir sorularda en düşük kosinüs 0,60; Kapı 1'de reddedilen sorularda
+  0,45–0,46. Alana yakın cevapsız sorular (garanti uzatma paketi, HomeKit: 0,61–0,62) benzerlikle ayrılamıyor. Bunları
+  Kapı 2'de model doğru şekilde reddediyor.
+- **Kalibrasyon geçmişi (şeffaflık için).** İlk koşu 13/15'ti, iki düzeltme yapıldı:
+  - `TopK` 6 → 8: iki konulu N07'de teslimat bölümü 8. sıradaydı.
+  - Prompt kuralı: model kuralı bildiği halde müşterinin özel durumunu bilmediği için reddediyordu (N03).
+
+  Bir de değerlendirme bakımı yapıldı: C04'ün doğru yanıtı "Lumora **karşılamaktadır**" dediği için "Lumora karşılar"
+  ifade kontrolü kök biçimine ("Lumora karşıla") genişletildi. Soruları yazan, dokümanları da yazan kişi olduğundan
+  set küçük ve iyimser bir ölçüttür (bkz. sınırlar).
+- Gecikme notu: değerlendirme uzak, tek slotlu ve paylaşılan bir sunucuda koştu. İlk istek (ısınma) veya o anki yük
+  tek soruları 15–35 sn'ye çıkarabiliyor; raporda bu yüzden medyan da veriliyor.
+
+Yeniden üretmek için: API'yi çalıştırın → `dotnet run --project tools/SupportAssistant.Eval`
+(`--label ad` başka bir klasöre yazar, `--base-url` farklı adres).
+
+---
+
+## Teknik tercihler
+
+| Karar | Gerekçe | Reddedilen alternatif |
+|---|---|---|
+| Yalnızca .NET, mevcut CQRS modüler monolit | Tek runtime, tutarlı katmanlar, 3 günlük süre | .NET + FastAPI (iki dil, iki kat kurulum ve test) |
+| `Microsoft.Extensions.AI` + OpenAI SDK, OpenAI-uyumlu uç | Sağlayıcı yapılandırmayla değişir (llama.cpp, LM Studio, Ollama, OpenAI, Gemini) | Tek sağlayıcının SDK'sına bağlanmak |
+| Yerel Gemma 4 (llama.cpp) | Anahtar ve maliyet yok, veri dışarı çıkmaz, Türkçesi yeterli, ~200 token/sn | Bulut LLM (kod hazır, yalnızca `.env`) |
+| Hibrit arama: BM25 + bge-m3, RRF | Eş anlamlı ve parafraz sorular + kesin terim ve sayılar; ölçülen katkı 10/12 → 12/12 | Yalnız vektör (sayı/kod kaçırır), yalnız BM25 |
+| Bellek içi indeks, SQLite + EF Core | ~50 bölüm için kaba kuvvet aramanın maliyeti ihmal edilebilir; mevcut altyapı | Qdrant / pgvector / sqlite-vec (bu ölçekte gereksiz işletim yükü) |
+| Sürüm çelişkisini kod çözer | Açıklanabilir, test edilebilir; eski kural modele hiç ulaşmaz | Kararı yalnızca prompt'a bırakmak |
+| Üç kapılı "bilgi yok" | Ucuz ön eleme + model kararı + atıf doğrulaması | Yalnızca "bilmiyorsan söyle" talimatı |
+| JSON şemalı çıktı, kısa bölüm kimlikleri `[C1…]` | Ayrıştırma garantili; uydurma kimlik riski düşük | Serbest metin + regex |
+| Deterministik değerlendirme + arama isabeti | Tekrarlanabilir; hatanın aramada mı üretimde mi olduğu ayrılır | LLM-as-judge (aynı modelle zayıf, tekrarlanamaz) |
+| FastEndpoints 8, MediatR 14, EF Core 10.0.12 | Son kararlı sürümler; `Directory.Packages.props` ile merkezi yönetim | — |
+| Shouldly, xunit.v3 (Microsoft.Testing.Platform) | FluentAssertions 8 ticari lisanslı | FluentAssertions |
+
+Not: MediatR 13'ten itibaren ticari lisans modeline geçti. Anahtar olmadan çalışır, yalnızca açılışta uyarı loglar
+(`MEDIATR_LICENSE_KEY`). Lisans istenmiyorsa MIT lisanslı `Mediator` (source generator) ile değiştirilebilir.
+
+---
+
+## Bilinen sınırlar
+
+- **Küçük ve iyimser değerlendirme:** 16 soru; sorular ve dokümanlar aynı kişi tarafından yazıldı. Eşikler bu setle
+  kalibre edildi, yeni sorularda aşırı uyum riski var.
+- **Kaynaklar arası çelişki modele bağlı:** kural prompt'ta, denetim sunucuda (`ruleSatisfied`) ama garanti yok.
+  Aynı doküman ailesindeki sürüm çelişkisi ise deterministik.
+- **Türkçe morfoloji:** F5 önek kökleme basit bir yöntem; tam morfolojik çözümleme (ör. Zemberek) yok.
+  bge-m3 Türkçe karaktersiz yazımda zayıf; bu açığı BM25 tarafındaki harf katlama kapatıyor.
+- **Tarihsel soru yok:** "2024'te iade süresi neydi?" gibi sorularda da her zaman yürürlükteki sürüm kullanılır.
+- **Çok parçalı sorular:** iki ayrı konu soran sorularda ikinci konu aramada geride kalabilir. `TopK=8` bu setteki
+  örneği çözüyor; genel çözüm soru ayrıştırma (query decomposition) olurdu.
+- **Ölçek:** bellek içi indeks ve kaba kuvvet arama küçük korpus içindir. Büyüdüğünde `IKnowledgeIndex` arkasında
+  FTS5, pgvector veya Qdrant'a geçilir. Tek slotlu yerel model eşzamanlı istekleri sıraya koyar.
+- **Kapsam dışı:** kimlik doğrulama yok (`POST /v1/documents/reindex` dahil; üretimde yönetici yetkisi gerekir),
+  çok turlu sohbet yok, yalnızca markdown ingest. Şema değişirse `supportassistant.db` silinip yeniden oluşturulur
+  (veri türetilmiş).
+
+---
+
+## Proje yapısı
+
+```
+SupportAssistant.slnx                       .NET 10 solution (slnx)
+Directory.Build.props · Directory.Packages.props · global.json
+.env.example                                 örnek ortam değişkenleri
+knowledge-base/                              10 kurgu doküman (markdown + YAML front matter)
+eval/questions.json                          16 değerlendirme sorusu
+eval/results/                                report.md (beklenen ↔ gerçek), results.json, thinking-on/
+src/API/SupportAssistant.API                 FastEndpoints uçları, DI, Program.cs
+src/Modules/Knowledge/Knowledge.Domain        varlıklar, repository arayüzleri
+src/Modules/Knowledge/Knowledge.Application   komut/sorgu, iş kuralları, cevaplama politikaları, portlar
+src/Modules/Knowledge/Knowledge.Infrastructure EF Core, ingest, arama indeksi, LLM/embedding adaptörleri
+src/Services/Knowledge/Knowledge.Service      IKnowledgeService (MediatR facade)
+src/Shared/Shared.{Kernel,Application,Infrastructure}
+tests/SupportAssistant.UnitTests             birim + mimari testleri
+tests/SupportAssistant.IntegrationTests      API testleri (in-process, sahte LLM, geçici SQLite)
+tools/SupportAssistant.Eval                  değerlendirme aracı
+agent.md                                     kodlama ajanları için mimari kurallar
+```

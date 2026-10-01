@@ -96,7 +96,8 @@ public sealed class OpenAiCompatibleAnswerGenerator(
                     conflict.RejectedChunkIds ?? [],
                     conflict.Reason ?? string.Empty))
                 .ToList(),
-            response.ModelId ?? settings.ChatModel,
+            // The configured name, not response.ModelId: llama.cpp reports the model's file path there.
+            settings.ChatModel,
             response.Usage?.InputTokenCount,
             response.Usage?.OutputTokenCount);
     }

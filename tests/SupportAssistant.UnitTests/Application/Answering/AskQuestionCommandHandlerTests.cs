@@ -166,6 +166,11 @@ public sealed class AskQuestionCommandHandlerTests : IAsyncLifetime
         result.Data.MissingInformation.ShouldBe("Kaynaklar bu soruyu yanıtlamıyor.");
         result.Data.Answer.ShouldBe(Messages.Knowledge.NotEnoughInformation);
         result.Data.Sources.ShouldBeEmpty();
+
+        // Version decisions explain the sources of an answer; without an answer there is nothing to explain.
+        result.Data.VersionResolution.Applied.ShouldBeFalse();
+        result.Data.VersionResolution.Discarded.ShouldBeEmpty();
+        result.Data.Diagnostics.Context.ShouldNotBeEmpty();
     }
 
     [Fact]

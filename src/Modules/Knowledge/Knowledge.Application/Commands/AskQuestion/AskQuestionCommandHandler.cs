@@ -70,8 +70,7 @@ public sealed class AskQuestionCommandHandler(
 
         if (!answerabilityPolicy.HasEnoughEvidence(retrieval))
         {
-            var noResolution = new VersionResolutionDto(false, VersionResolver.Rule, [], []);
-            return await RefuseAsync(question, RefusalReasons.LowRelevance, string.Empty, noResolution, Diagnostics(retrieval, candidateDocumentIds, [], string.Empty, stopwatch, null), cancellationToken);
+            return await RefuseAsync(question, RefusalReasons.LowRelevance, string.Empty, Diagnostics(retrieval, candidateDocumentIds, [], string.Empty, stopwatch, null), cancellationToken);
         }
 
         var resolution = versionResolver.Resolve(retrieval.Hits, index.GetDocumentVersions);
@@ -79,7 +78,6 @@ public sealed class AskQuestionCommandHandler(
             .Take(settings.TopK)
             .Select((hit, position) => new ContextChunk($"C{position + 1}", hit.Chunk))
             .ToList();
-        var contextFamilies = context.Select(source => source.Chunk.DocumentKey).ToHashSet(StringComparer.Ordinal);
 
         GeneratedAnswer generated;
 
@@ -100,14 +98,14 @@ public sealed class AskQuestionCommandHandler(
 
         if (!generated.Answerable)
         {
-            return await RefuseAsync(question, RefusalReasons.ModelInsufficientContext, generated.MissingInformation, ToDto(resolution, contextFamilies), diagnostics, cancellationToken);
+            return await RefuseAsync(question, RefusalReasons.ModelInsufficientContext, generated.MissingInformation, diagnostics, cancellationToken);
         }
 
         var citations = CitationValidator.Validate(generated.Citations, context);
 
         if (citations.Count == 0)
         {
-            return await RefuseAsync(question, RefusalReasons.NoValidCitations, generated.MissingInformation, ToDto(resolution, contextFamilies), diagnostics, cancellationToken);
+            return await RefuseAsync(question, RefusalReasons.NoValidCitations, generated.MissingInformation, diagnostics, cancellationToken);
         }
 
         // Only the document families the answer actually rests on are reported as version decisions.
@@ -128,11 +126,14 @@ public sealed class AskQuestionCommandHandler(
         return ApiResult<AnswerDto>.Ok(answer);
     }
 
+    /// <summary>
+    /// An explicit "not enough information" response. It carries no version decisions — those explain the sources of
+    /// an answer — while diagnostics still show what was retrieved and shown to the model.
+    /// </summary>
     private async Task<ApiResult<AnswerDto>> RefuseAsync(
         string question,
         string reason,
         string missingInformation,
-        VersionResolutionDto resolution,
         AnswerDiagnosticsDto diagnostics,
         CancellationToken cancellationToken)
     {
@@ -141,7 +142,7 @@ public sealed class AskQuestionCommandHandler(
             Answerable: false,
             Answer: Messages.Knowledge.NotEnoughInformation,
             Sources: [],
-            VersionResolution: resolution,
+            VersionResolution: new VersionResolutionDto(false, VersionResolver.Rule, [], []),
             Conflicts: [],
             MissingInformation: missingInformation.Trim(),
             RefusalReason: reason,

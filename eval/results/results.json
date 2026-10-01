@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-02T00:27:55.4203442+03:00",
+  "generatedAt": "2026-10-02T00:33:02.7903027+03:00",
   "baseUrl": "http://localhost:5031",
   "label": null,
   "status": {
@@ -9,7 +9,7 @@
       "documents": 10,
       "sections": 53,
       "retrievalMode": "hybrid",
-      "builtAtUtc": "2026-10-01T21:27:06.3129217Z"
+      "builtAtUtc": "2026-10-01T21:32:07.2919841Z"
     },
     "llm": {
       "configured": true,
@@ -67,13 +67,13 @@
           "detail": "'2.4 GHz' | '2,4 GHz'"
         }
       ],
-      "latencyMs": 26991,
+      "latencyMs": 34067,
       "lexicalHit": true,
       "hybridHit": true,
       "answer": {
         "question": "Lumora Termo'yu kurarken hangi Wi-Fi ağını kullanmalıyım?",
         "answerable": true,
-        "answer": "Lumora Termo kurulumu için yalnızca 2.4 GHz Wi-Fi ağlarını kullanmalısınız; cihaz 5 GHz ağları desteklememektedir.",
+        "answer": "Lumora Termo kurulumu için yalnızca 2.4 GHz Wi-Fi ağını kullanmalısınız; cihaz 5 GHz ağları desteklememektedir.",
         "sources": [
           {
             "documentId": "kurulum-kilavuzu-lumora-termo",
@@ -172,9 +172,9 @@
             }
           ],
           "model": "gemma-4-26b-a4b-it",
-          "latencyMs": 26712,
+          "latencyMs": 33797,
           "inputTokens": 1602,
-          "outputTokens": 179
+          "outputTokens": 172
         }
       }
     },
@@ -221,7 +221,7 @@
           "detail": "'Wi-Fi' | 'kablosuz'"
         }
       ],
-      "latencyMs": 1483,
+      "latencyMs": 1282,
       "lexicalHit": true,
       "hybridHit": true,
       "answer": {
@@ -314,9 +314,9 @@
             }
           ],
           "model": "gemma-4-26b-a4b-it",
-          "latencyMs": 1365,
+          "latencyMs": 1166,
           "inputTokens": 1523,
-          "outputTokens": 104
+          "outputTokens": 102
         }
       }
     },
@@ -367,7 +367,7 @@
           "detail": "'kapsam dışı' | 'kapsamı dışında' | 'kapsamında değil' | 'kapsamına girmez' | 'karşılanmaz' | 'hayır'"
         }
       ],
-      "latencyMs": 1493,
+      "latencyMs": 1465,
       "lexicalHit": true,
       "hybridHit": true,
       "answer": {
@@ -461,7 +461,7 @@
             }
           ],
           "model": "gemma-4-26b-a4b-it",
-          "latencyMs": 1483,
+          "latencyMs": 1450,
           "inputTokens": 1320,
           "outputTokens": 100
         }
@@ -509,7 +509,7 @@
           "detail": "'750'"
         }
       ],
-      "latencyMs": 1194,
+      "latencyMs": 1094,
       "lexicalHit": true,
       "hybridHit": true,
       "answer": {
@@ -600,7 +600,7 @@
             }
           ],
           "model": "gemma-4-26b-a4b-it",
-          "latencyMs": 1185,
+          "latencyMs": 1083,
           "inputTokens": 1205,
           "outputTokens": 94
         }
@@ -649,7 +649,7 @@
           "detail": "'L2' | 'Seviye 2'"
         }
       ],
-      "latencyMs": 1413,
+      "latencyMs": 1437,
       "lexicalHit": true,
       "hybridHit": true,
       "answer": {
@@ -741,9 +741,9 @@
             }
           ],
           "model": "gemma-4-26b-a4b-it",
-          "latencyMs": 1403,
+          "latencyMs": 1427,
           "inputTokens": 1422,
-          "outputTokens": 129
+          "outputTokens": 131
         }
       }
     },
@@ -790,7 +790,7 @@
           "detail": "'10 saniye' | '10 sn'"
         }
       ],
-      "latencyMs": 1651,
+      "latencyMs": 1573,
       "lexicalHit": true,
       "hybridHit": true,
       "answer": {
@@ -883,9 +883,9 @@
             }
           ],
           "model": "gemma-4-26b-a4b-it",
-          "latencyMs": 1641,
+          "latencyMs": 1565,
           "inputTokens": 1516,
-          "outputTokens": 173
+          "outputTokens": 174
         }
       }
     },
@@ -941,7 +941,7 @@
           "detail": "'2.4 GHz' | '2,4 GHz'"
         }
       ],
-      "latencyMs": 1963,
+      "latencyMs": 1824,
       "lexicalHit": false,
       "hybridHit": true,
       "answer": {
@@ -1045,9 +1045,9 @@
             }
           ],
           "model": "gemma-4-26b-a4b-it",
-          "latencyMs": 1958,
+          "latencyMs": 1815,
           "inputTokens": 1581,
-          "outputTokens": 227
+          "outputTokens": 228
         }
       }
     },
@@ -1108,7 +1108,7 @@
           "detail": "'10 iş günü'"
         }
       ],
-      "latencyMs": 1566,
+      "latencyMs": 1625,
       "lexicalHit": false,
       "hybridHit": true,
       "answer": {
@@ -1216,7 +1216,7 @@
             }
           ],
           "model": "gemma-4-26b-a4b-it",
-          "latencyMs": 1555,
+          "latencyMs": 1611,
           "inputTokens": 1245,
           "outputTokens": 155
         }
@@ -1248,7 +1248,7 @@
           "detail": "beklenen: bilgi yok, gerçek: bilgi yok (LowRelevance)"
         }
       ],
-      "latencyMs": 14,
+      "latencyMs": 17,
       "lexicalHit": null,
       "hybridHit": null,
       "answer": {
@@ -1283,7 +1283,7 @@
           ],
           "context": [],
           "model": "",
-          "latencyMs": 9,
+          "latencyMs": 12,
           "inputTokens": null,
           "outputTokens": null
         }
@@ -1315,7 +1315,7 @@
           "detail": "beklenen: bilgi yok, gerçek: bilgi yok (ModelInsufficientContext)"
         }
       ],
-      "latencyMs": 957,
+      "latencyMs": 973,
       "lexicalHit": null,
       "hybridHit": null,
       "answer": {
@@ -1324,25 +1324,10 @@
         "answer": "Bu soruyu yanıtlamak için dokümanlarda yeterli bilgi bulunamadı.",
         "sources": [],
         "versionResolution": {
-          "applied": true,
+          "applied": false,
           "rule": "Aynı doküman ailesinde, yürürlük tarihi bugün veya daha önce olan en yeni sürüm seçilir; 'superseded' işaretli sürüm seçilmez.",
-          "selected": [
-            {
-              "documentId": "iade-politikasi-v2",
-              "title": "İade ve Para İadesi Politikası",
-              "version": "2.0",
-              "effectiveDate": "2025-06-01"
-            }
-          ],
-          "discarded": [
-            {
-              "documentId": "iade-politikasi-v1",
-              "title": "İade ve Para İadesi Politikası",
-              "version": "1.0",
-              "effectiveDate": "2024-01-15",
-              "reason": "2.0 sürümü (2025-06-01) tarafından geçersiz kılındı."
-            }
-          ]
+          "selected": [],
+          "discarded": []
         },
         "conflicts": [],
         "missingInformation": "Verilen kaynaklarda ek garanti paketi satın alınıp alınamayacağına dair bir bilgi bulunmamaktadır.",
@@ -1411,7 +1396,7 @@
             }
           ],
           "model": "gemma-4-26b-a4b-it",
-          "latencyMs": 951,
+          "latencyMs": 964,
           "inputTokens": 1308,
           "outputTokens": 60
         }
@@ -1443,7 +1428,7 @@
           "detail": "beklenen: bilgi yok, gerçek: bilgi yok (ModelInsufficientContext)"
         }
       ],
-      "latencyMs": 924,
+      "latencyMs": 765,
       "lexicalHit": null,
       "hybridHit": null,
       "answer": {
@@ -1452,25 +1437,10 @@
         "answer": "Bu soruyu yanıtlamak için dokümanlarda yeterli bilgi bulunamadı.",
         "sources": [],
         "versionResolution": {
-          "applied": true,
+          "applied": false,
           "rule": "Aynı doküman ailesinde, yürürlük tarihi bugün veya daha önce olan en yeni sürüm seçilir; 'superseded' işaretli sürüm seçilmez.",
-          "selected": [
-            {
-              "documentId": "iade-politikasi-v2",
-              "title": "İade ve Para İadesi Politikası",
-              "version": "2.0",
-              "effectiveDate": "2025-06-01"
-            }
-          ],
-          "discarded": [
-            {
-              "documentId": "iade-politikasi-v1",
-              "title": "İade ve Para İadesi Politikası",
-              "version": "1.0",
-              "effectiveDate": "2024-01-15",
-              "reason": "2.0 sürümü (2025-06-01) tarafından geçersiz kılındı."
-            }
-          ]
+          "selected": [],
+          "discarded": []
         },
         "conflicts": [],
         "missingInformation": "Lumora Termo'nun Apple HomeKit desteği hakkında kaynaklarda bilgi bulunmamaktadır.",
@@ -1541,7 +1511,7 @@
             }
           ],
           "model": "gemma-4-26b-a4b-it",
-          "latencyMs": 915,
+          "latencyMs": 756,
           "inputTokens": 1404,
           "outputTokens": 58
         }
@@ -1573,7 +1543,7 @@
           "detail": "beklenen: bilgi yok, gerçek: bilgi yok (LowRelevance)"
         }
       ],
-      "latencyMs": 21,
+      "latencyMs": 18,
       "lexicalHit": null,
       "hybridHit": null,
       "answer": {
@@ -1605,7 +1575,7 @@
           ],
           "context": [],
           "model": "",
-          "latencyMs": 16,
+          "latencyMs": 14,
           "inputTokens": null,
           "outputTokens": null
         }
@@ -1674,7 +1644,7 @@
           "detail": "beklenen: iade-politikasi-v1; raporlanan: iade-politikasi-v1"
         }
       ],
-      "latencyMs": 1452,
+      "latencyMs": 1343,
       "lexicalHit": true,
       "hybridHit": true,
       "answer": {
@@ -1780,7 +1750,7 @@
             }
           ],
           "model": "gemma-4-26b-a4b-it",
-          "latencyMs": 1446,
+          "latencyMs": 1335,
           "inputTokens": 1286,
           "outputTokens": 149
         }
@@ -1850,7 +1820,7 @@
           "detail": "beklenen: iade-politikasi-v1; raporlanan: iade-politikasi-v1"
         }
       ],
-      "latencyMs": 1442,
+      "latencyMs": 1303,
       "lexicalHit": true,
       "hybridHit": true,
       "answer": {
@@ -1958,7 +1928,7 @@
             }
           ],
           "model": "gemma-4-26b-a4b-it",
-          "latencyMs": 1436,
+          "latencyMs": 1298,
           "inputTokens": 1283,
           "outputTokens": 154
         }
@@ -2031,7 +2001,7 @@
           "detail": "beklenen: destek-kanallari-v1; raporlanan: destek-kanallari-v1"
         }
       ],
-      "latencyMs": 2037,
+      "latencyMs": 1973,
       "lexicalHit": true,
       "hybridHit": true,
       "answer": {
@@ -2150,7 +2120,7 @@
             }
           ],
           "model": "gemma-4-26b-a4b-it",
-          "latencyMs": 2017,
+          "latencyMs": 1968,
           "inputTokens": 1298,
           "outputTokens": 252
         }
@@ -2223,7 +2193,7 @@
           "detail": "beklenen: iade-politikasi-v1; raporlanan: iade-politikasi-v1"
         }
       ],
-      "latencyMs": 2567,
+      "latencyMs": 2599,
       "lexicalHit": true,
       "hybridHit": true,
       "answer": {
@@ -2283,7 +2253,7 @@
                 "section": "İade > İade kargo ücretini kim öder?"
               }
             ],
-            "reason": "C2 (Politika, sürüm 2.0, 2025-06-01) ile C1 (SSS, sürüm 1.0, 2024-02-01) arasında çelişki bulunmaktadır. Politika dokümanı SSS'den daha güncel ve önceliklidir.",
+            "reason": "C2 (Politika, sürüm 2.0, 2025-06-01) ile C1 (SSS, sürüm 1.0, 2024-02-01) arasında çelişki bulunmaktadır. Politika dokümanı SSS'den daha önceliklidir ve daha yeni bir yürürlük tarihine sahiptir.",
             "ruleSatisfied": true
           }
         ],
@@ -2350,9 +2320,9 @@
             }
           ],
           "model": "gemma-4-26b-a4b-it",
-          "latencyMs": 2552,
+          "latencyMs": 2588,
           "inputTokens": 1216,
-          "outputTokens": 266
+          "outputTokens": 273
         }
       }
     }

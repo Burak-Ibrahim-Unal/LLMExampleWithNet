@@ -31,9 +31,10 @@ public sealed class OpenAiCompatibleAnswerGeneratorTests
             Options.Add(options);
             var reply = replies[Math.Min(Requests.Count - 1, replies.Length - 1)];
 
+            // llama.cpp reports the model file path as the model id.
             return Task.FromResult(new ChatResponse(new ChatMessage(ChatRole.Assistant, reply))
             {
-                ModelId = "gemma-test",
+                ModelId = "/home/someone/models/gemma.gguf",
                 Usage = new UsageDetails { InputTokenCount = 100, OutputTokenCount = 20 }
             });
         }
@@ -88,7 +89,7 @@ public sealed class OpenAiCompatibleAnswerGeneratorTests
         answer.Answerable.ShouldBeTrue();
         answer.Answer.ShouldBe("30 gün içinde iade edebilirsiniz.");
         answer.Citations.ShouldBe([new GeneratedCitation("C1", "30 gün içinde iade edebilir")]);
-        answer.Model.ShouldBe("gemma-test");
+        answer.Model.ShouldBe("gemma-test"); // the configured name, not the server's file path
         answer.InputTokens.ShouldBe(100);
         answer.OutputTokens.ShouldBe(20);
     }

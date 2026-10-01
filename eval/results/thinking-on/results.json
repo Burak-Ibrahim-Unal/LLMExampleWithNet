@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-02T00:26:36.5427176+03:00",
+  "generatedAt": "2026-10-02T00:35:30.5883068+03:00",
   "baseUrl": "http://localhost:5031",
   "label": "thinking-on",
   "status": {
@@ -9,7 +9,7 @@
       "documents": 10,
       "sections": 53,
       "retrievalMode": "hybrid",
-      "builtAtUtc": "2026-10-01T21:24:10.2755418Z"
+      "builtAtUtc": "2026-10-01T21:33:05.5633384Z"
     },
     "llm": {
       "configured": true,
@@ -67,7 +67,7 @@
           "detail": "'2.4 GHz' | '2,4 GHz'"
         }
       ],
-      "latencyMs": 11596,
+      "latencyMs": 11139,
       "lexicalHit": true,
       "hybridHit": true,
       "answer": {
@@ -183,7 +183,7 @@
             }
           ],
           "model": "gemma-4-26b-a4b-it",
-          "latencyMs": 11236,
+          "latencyMs": 10857,
           "inputTokens": 1600,
           "outputTokens": 1746
         }
@@ -232,7 +232,7 @@
           "detail": "'Wi-Fi' | 'kablosuz'"
         }
       ],
-      "latencyMs": 8697,
+      "latencyMs": 8764,
       "lexicalHit": true,
       "hybridHit": true,
       "answer": {
@@ -325,7 +325,7 @@
             }
           ],
           "model": "gemma-4-26b-a4b-it",
-          "latencyMs": 8563,
+          "latencyMs": 8637,
           "inputTokens": 1521,
           "outputTokens": 1268
         }
@@ -378,7 +378,7 @@
           "detail": "'kapsam dışı' | 'kapsamı dışında' | 'kapsamında değil' | 'kapsamına girmez' | 'karşılanmaz' | 'hayır'"
         }
       ],
-      "latencyMs": 6953,
+      "latencyMs": 6821,
       "lexicalHit": true,
       "hybridHit": true,
       "answer": {
@@ -472,7 +472,7 @@
             }
           ],
           "model": "gemma-4-26b-a4b-it",
-          "latencyMs": 6939,
+          "latencyMs": 6808,
           "inputTokens": 1318,
           "outputTokens": 1069
         }
@@ -520,7 +520,7 @@
           "detail": "'750'"
         }
       ],
-      "latencyMs": 10120,
+      "latencyMs": 9911,
       "lexicalHit": true,
       "hybridHit": true,
       "answer": {
@@ -611,7 +611,7 @@
             }
           ],
           "model": "gemma-4-26b-a4b-it",
-          "latencyMs": 10109,
+          "latencyMs": 9905,
           "inputTokens": 1203,
           "outputTokens": 1605
         }
@@ -660,7 +660,7 @@
           "detail": "'L2' | 'Seviye 2'"
         }
       ],
-      "latencyMs": 16490,
+      "latencyMs": 16392,
       "lexicalHit": true,
       "hybridHit": true,
       "answer": {
@@ -752,7 +752,7 @@
             }
           ],
           "model": "gemma-4-26b-a4b-it",
-          "latencyMs": 16484,
+          "latencyMs": 16384,
           "inputTokens": 1420,
           "outputTokens": 2618
         }
@@ -801,7 +801,7 @@
           "detail": "'10 saniye' | '10 sn'"
         }
       ],
-      "latencyMs": 9693,
+      "latencyMs": 9639,
       "lexicalHit": true,
       "hybridHit": true,
       "answer": {
@@ -905,7 +905,7 @@
             }
           ],
           "model": "gemma-4-26b-a4b-it",
-          "latencyMs": 9683,
+          "latencyMs": 9631,
           "inputTokens": 1514,
           "outputTokens": 1631
         }
@@ -963,7 +963,7 @@
           "detail": "'2.4 GHz' | '2,4 GHz'"
         }
       ],
-      "latencyMs": 11124,
+      "latencyMs": 11075,
       "lexicalHit": false,
       "hybridHit": true,
       "answer": {
@@ -1067,7 +1067,7 @@
             }
           ],
           "model": "gemma-4-26b-a4b-it",
-          "latencyMs": 11117,
+          "latencyMs": 11067,
           "inputTokens": 1579,
           "outputTokens": 1986
         }
@@ -1130,7 +1130,7 @@
           "detail": "'10 iş günü'"
         }
       ],
-      "latencyMs": 10858,
+      "latencyMs": 10935,
       "lexicalHit": false,
       "hybridHit": true,
       "answer": {
@@ -1238,7 +1238,7 @@
             }
           ],
           "model": "gemma-4-26b-a4b-it",
-          "latencyMs": 10845,
+          "latencyMs": 10908,
           "inputTokens": 1243,
           "outputTokens": 1780
         }
@@ -1270,7 +1270,7 @@
           "detail": "beklenen: bilgi yok, gerçek: bilgi yok (LowRelevance)"
         }
       ],
-      "latencyMs": 17,
+      "latencyMs": 15,
       "lexicalHit": null,
       "hybridHit": null,
       "answer": {
@@ -1337,7 +1337,7 @@
           "detail": "beklenen: bilgi yok, gerçek: bilgi yok (ModelInsufficientContext)"
         }
       ],
-      "latencyMs": 5389,
+      "latencyMs": 5486,
       "lexicalHit": null,
       "hybridHit": null,
       "answer": {
@@ -1346,25 +1346,10 @@
         "answer": "Bu soruyu yanıtlamak için dokümanlarda yeterli bilgi bulunamadı.",
         "sources": [],
         "versionResolution": {
-          "applied": true,
+          "applied": false,
           "rule": "Aynı doküman ailesinde, yürürlük tarihi bugün veya daha önce olan en yeni sürüm seçilir; 'superseded' işaretli sürüm seçilmez.",
-          "selected": [
-            {
-              "documentId": "iade-politikasi-v2",
-              "title": "İade ve Para İadesi Politikası",
-              "version": "2.0",
-              "effectiveDate": "2025-06-01"
-            }
-          ],
-          "discarded": [
-            {
-              "documentId": "iade-politikasi-v1",
-              "title": "İade ve Para İadesi Politikası",
-              "version": "1.0",
-              "effectiveDate": "2024-01-15",
-              "reason": "2.0 sürümü (2025-06-01) tarafından geçersiz kılındı."
-            }
-          ]
+          "selected": [],
+          "discarded": []
         },
         "conflicts": [],
         "missingInformation": "Ek garanti paketi satın alınıp alınamayacağı hakkında bilgi bulunmamaktadır.",
@@ -1433,7 +1418,7 @@
             }
           ],
           "model": "gemma-4-26b-a4b-it",
-          "latencyMs": 5380,
+          "latencyMs": 5481,
           "inputTokens": 1306,
           "outputTokens": 797
         }
@@ -1465,7 +1450,7 @@
           "detail": "beklenen: bilgi yok, gerçek: bilgi yok (ModelInsufficientContext)"
         }
       ],
-      "latencyMs": 4711,
+      "latencyMs": 4445,
       "lexicalHit": null,
       "hybridHit": null,
       "answer": {
@@ -1474,25 +1459,10 @@
         "answer": "Bu soruyu yanıtlamak için dokümanlarda yeterli bilgi bulunamadı.",
         "sources": [],
         "versionResolution": {
-          "applied": true,
+          "applied": false,
           "rule": "Aynı doküman ailesinde, yürürlük tarihi bugün veya daha önce olan en yeni sürüm seçilir; 'superseded' işaretli sürüm seçilmez.",
-          "selected": [
-            {
-              "documentId": "iade-politikasi-v2",
-              "title": "İade ve Para İadesi Politikası",
-              "version": "2.0",
-              "effectiveDate": "2025-06-01"
-            }
-          ],
-          "discarded": [
-            {
-              "documentId": "iade-politikasi-v1",
-              "title": "İade ve Para İadesi Politikası",
-              "version": "1.0",
-              "effectiveDate": "2024-01-15",
-              "reason": "2.0 sürümü (2025-06-01) tarafından geçersiz kılındı."
-            }
-          ]
+          "selected": [],
+          "discarded": []
         },
         "conflicts": [],
         "missingInformation": "Verilen kaynaklarda Lumora Termo'nun Apple HomeKit ile uyumluluğu hakkında bilgi bulunmamaktadır.",
@@ -1563,7 +1533,7 @@
             }
           ],
           "model": "gemma-4-26b-a4b-it",
-          "latencyMs": 4701,
+          "latencyMs": 4439,
           "inputTokens": 1402,
           "outputTokens": 654
         }
@@ -1595,7 +1565,7 @@
           "detail": "beklenen: bilgi yok, gerçek: bilgi yok (LowRelevance)"
         }
       ],
-      "latencyMs": 14,
+      "latencyMs": 25,
       "lexicalHit": null,
       "hybridHit": null,
       "answer": {
@@ -1696,7 +1666,7 @@
           "detail": "beklenen: iade-politikasi-v1; raporlanan: iade-politikasi-v1"
         }
       ],
-      "latencyMs": 15494,
+      "latencyMs": 15370,
       "lexicalHit": true,
       "hybridHit": true,
       "answer": {
@@ -1813,7 +1783,7 @@
             }
           ],
           "model": "gemma-4-26b-a4b-it",
-          "latencyMs": 15489,
+          "latencyMs": 15359,
           "inputTokens": 1284,
           "outputTokens": 2534
         }
@@ -1883,7 +1853,7 @@
           "detail": "beklenen: iade-politikasi-v1; raporlanan: iade-politikasi-v1"
         }
       ],
-      "latencyMs": 8063,
+      "latencyMs": 7991,
       "lexicalHit": true,
       "hybridHit": true,
       "answer": {
@@ -1991,7 +1961,7 @@
             }
           ],
           "model": "gemma-4-26b-a4b-it",
-          "latencyMs": 8057,
+          "latencyMs": 7978,
           "inputTokens": 1281,
           "outputTokens": 1338
         }
@@ -2064,7 +2034,7 @@
           "detail": "beklenen: destek-kanallari-v1; raporlanan: destek-kanallari-v1"
         }
       ],
-      "latencyMs": 11761,
+      "latencyMs": 11646,
       "lexicalHit": true,
       "hybridHit": true,
       "answer": {
@@ -2183,7 +2153,7 @@
             }
           ],
           "model": "gemma-4-26b-a4b-it",
-          "latencyMs": 11755,
+          "latencyMs": 11641,
           "inputTokens": 1296,
           "outputTokens": 1974
         }
@@ -2256,7 +2226,7 @@
           "detail": "beklenen: iade-politikasi-v1; raporlanan: iade-politikasi-v1"
         }
       ],
-      "latencyMs": 12521,
+      "latencyMs": 12412,
       "lexicalHit": true,
       "hybridHit": true,
       "answer": {
@@ -2383,7 +2353,7 @@
             }
           ],
           "model": "gemma-4-26b-a4b-it",
-          "latencyMs": 12507,
+          "latencyMs": 12401,
           "inputTokens": 1214,
           "outputTokens": 2089
         }

@@ -1,0 +1,47 @@
+# OS
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# IDE / Editor
+.vs/
+.vscode/
+.idea/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# .NET
+**/bin/
+**/obj/
+TestResults/
+*.nupkg
+*.snupkg
+
+# Logs
+*.log
+logs/
+
+# Local app data / databases
+src/API/ECommerce.API/*.db
+src/API/ECommerce.API/*.db-shm
+src/API/ECommerce.API/*.db-wal
+
+# Node / Frontend
+**/node_modules/
+frontend/web/.next/
+frontend/web/out/
+frontend/web/dist/
+frontend/web/coverage/
+frontend/mobile/.expo/
+frontend/mobile/.expo-shared/
+frontend/mobile/web-build/
+frontend/mobile/dist/
+frontend/mobile/coverage/
+
+# Environment files
+.env
+.env.*
+!.env.example
+!.env.*.example

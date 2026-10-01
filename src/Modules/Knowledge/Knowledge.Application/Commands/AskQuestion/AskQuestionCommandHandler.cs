@@ -79,6 +79,12 @@ public sealed class AskQuestionCommandHandler(
             .Select((hit, position) => new ContextChunk($"C{position + 1}", hit.Chunk))
             .ToList();
 
+        // Everything relevant was superseded or not yet in effect: there is nothing the model may use.
+        if (context.Count == 0)
+        {
+            return await RefuseAsync(question, RefusalReasons.NoSourceInEffect, string.Empty, Diagnostics(retrieval, candidateDocumentIds, context, string.Empty, stopwatch, null), cancellationToken);
+        }
+
         GeneratedAnswer generated;
 
         try
@@ -108,13 +114,26 @@ public sealed class AskQuestionCommandHandler(
             return await RefuseAsync(question, RefusalReasons.NoValidCitations, generated.MissingInformation, diagnostics, cancellationToken);
         }
 
+        var answerText = AnswerText.Clean(generated.Answer, citations.Select(citation => citation.Quote).ToList());
+
+        // If the model's text consisted only of markers or quotes, the cited text itself is the answer.
+        if (string.IsNullOrWhiteSpace(answerText))
+        {
+            answerText = string.Join(" ", citations.Select(citation => citation.Quote).Where(quote => quote.Length > 0).Distinct());
+        }
+
+        if (string.IsNullOrWhiteSpace(answerText))
+        {
+            return await RefuseAsync(question, RefusalReasons.NoValidCitations, generated.MissingInformation, diagnostics, cancellationToken);
+        }
+
         // Only the document families the answer actually rests on are reported as version decisions.
         var citedFamilies = citations.Select(citation => citation.Source.Chunk.DocumentKey).ToHashSet(StringComparer.Ordinal);
 
         var answer = new AnswerDto(
             question,
             Answerable: true,
-            Answer: AnswerText.Clean(generated.Answer, citations.Select(citation => citation.Quote).ToList()),
+            Answer: answerText,
             Sources: citations.Select(ToSourceDto).ToList(),
             VersionResolution: ToDto(resolution, citedFamilies),
             Conflicts: CheckConflicts(generated.Conflicts, context),

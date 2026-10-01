@@ -120,6 +120,19 @@ public sealed class OpenAiCompatibleAnswerGeneratorTests
     }
 
     [Fact]
+    public async Task A_reply_marked_answerable_without_answer_text_is_retried()
+    {
+        var client = new ScriptedChatClient(
+            """{"answerable":true,"answer":"","citations":[{"chunkId":"C1","quote":"30 gün"}],"missingInformation":"","conflicts":[]}""",
+            ValidReply);
+
+        var answer = await Create(client).GenerateAsync("İade süresi kaç gün?", Context, TestContext.Current.CancellationToken);
+
+        client.Requests.Count.ShouldBe(2);
+        answer.Answer.ShouldBe("30 gün içinde iade edebilirsiniz.");
+    }
+
+    [Fact]
     public async Task Two_invalid_replies_are_reported_as_invalid_output()
     {
         var generator = Create(new ScriptedChatClient("bozuk", "yine bozuk"));

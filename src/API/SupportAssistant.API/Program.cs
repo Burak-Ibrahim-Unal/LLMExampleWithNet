@@ -40,24 +40,32 @@ using (var scope = app.Services.CreateScope())
     // Build the search index from knowledge-base/; unchanged documents keep their stored embeddings.
     // A failure is logged rather than thrown: the API still starts and reports 503 until a reindex succeeds.
     var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
-    var ingestion = await scope.ServiceProvider.GetRequiredService<IKnowledgeService>().ReindexAsync();
 
-    if (ingestion.Success)
+    try
     {
-        logger.LogInformation(
-            "Knowledge base indexed: {Documents} documents, {Chunks} sections, {RetrievalMode} retrieval.",
-            ingestion.Data!.Documents,
-            ingestion.Data.Chunks,
-            ingestion.Data.RetrievalMode);
+        var ingestion = await scope.ServiceProvider.GetRequiredService<IKnowledgeService>().ReindexAsync();
 
-        if (ingestion.Data.Warning is not null)
+        if (ingestion.Success)
         {
-            logger.LogWarning("{Warning}", ingestion.Data.Warning);
+            logger.LogInformation(
+                "Knowledge base indexed: {Documents} documents, {Chunks} sections, {RetrievalMode} retrieval.",
+                ingestion.Data!.Documents,
+                ingestion.Data.Chunks,
+                ingestion.Data.RetrievalMode);
+
+            if (ingestion.Data.Warning is not null)
+            {
+                logger.LogWarning("{Warning}", ingestion.Data.Warning);
+            }
+        }
+        else
+        {
+            logger.LogError("Knowledge base could not be indexed: {Message}", ingestion.Message);
         }
     }
-    else
+    catch (Exception exception)
     {
-        logger.LogError("Knowledge base could not be indexed: {Message}", ingestion.Message);
+        logger.LogError(exception, "Knowledge base indexing failed at startup; questions return 503 until POST /v1/documents/reindex succeeds.");
     }
 }
 

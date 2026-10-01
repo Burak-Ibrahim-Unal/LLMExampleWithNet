@@ -60,6 +60,14 @@ public sealed class MarkdownDocumentParserTests
     }
 
     [Fact]
+    public void Parse_rejects_empty_front_matter_instead_of_crashing()
+    {
+        var exception = Should.Throw<KnowledgeBaseFormatException>(() => MarkdownDocumentParser.Parse("bos.md", "---\n---\n\n## A\n\nMetin."));
+
+        exception.Message.ShouldContain("bos.md");
+    }
+
+    [Fact]
     public void Parse_rejects_text_without_front_matter()
     {
         Should.Throw<KnowledgeBaseFormatException>(() => MarkdownDocumentParser.Parse(FileName, "# Başlık\n\n## A\n\nMetin."));

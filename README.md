@@ -55,8 +55,12 @@ Alternatifler — kod değişmez, yalnızca `.env` değişir:
 | LM Studio | `http://localhost:1234/v1` | *Developer → Start Server*; bir sohbet ve bir embedding modeli yükleyin |
 | Ollama | `http://localhost:11434/v1` | ör. `ollama pull gemma3` · `ollama pull bge-m3` |
 | OpenAI | `https://api.openai.com/v1` | `Llm__ApiKey`/`Embeddings__ApiKey` = kendi anahtarınız, `Embeddings__Model=text-embedding-3-small`, `Llm__EnableThinking` satırını silin |
+| Google Gemini | `https://generativelanguage.googleapis.com/v1beta/openai/` | OpenAI-uyumlu uç; anahtar Google AI Studio'dan, `Embeddings__Model=gemini-embedding-001`, `Llm__EnableThinking` satırını silin |
 
 Embedding ucu tanımlanmazsa (`Embeddings__BaseUrl=` boş) sistem **yalnızca BM25** ile çalışmaya devam eder.
+Embedding modelini değiştirirseniz `Embeddings__Model` değerini de değiştirin; içerik değişmese de tüm bölümler yeni
+modelle yeniden embed edilir. Aynı ad altında farklı boyutlu bir model gelirse sistem bunu algılar, uyarı loglar ve
+BM25'e döner.
 
 ### 2. Yapılandırın
 
@@ -81,7 +85,7 @@ dotnet run --project src/API/SupportAssistant.API
 ### 4. Testler ve değerlendirme
 
 ```bash
-dotnet test --solution SupportAssistant.slnx        # 134 test; model sunucusu gerekmez
+dotnet test --solution SupportAssistant.slnx        # 145 test; model sunucusu gerekmez
 dotnet run --project tools/SupportAssistant.Eval     # API çalışırken; rapor: eval/results/report.md
 ```
 
@@ -103,7 +107,34 @@ Tüm uçlar `/v1` önekiyle ve standart `ApiResult<T>` zarfıyla (`success`, `me
 **Durum kodları:** `200` yanıt veya açık "bilgi yok" · `400` geçersiz girdi · `404` doküman yok ·
 `422` bilgi tabanı okunamadı · `502` model geçerli yapı üretemedi · `503` indeks hazır değil / modele ulaşılamıyor.
 
-### Örnek 1 — Çelişkili sürümler: yürürlükteki sürüm seçilir
+### Örnek 1 — Normal soru (Türkçe karakter kullanılmadan yazılmış)
+
+```bash
+curl -s -X POST http://localhost:5031/v1/questions \
+  -H "Content-Type: application/json" \
+  -d '{"question": "termostati fabrika ayarlarina nasil donduruyorum"}'
+```
+
+```json
+"answerable": true,
+"answer": "Cihazın sağ yanındaki sıfırlama düğmesine 10 saniye boyunca basılı tutun. LED turuncu yanıp sönmeye başladığında düğmeyi bırakın; bu işlem cihazın yeniden başlamasını ve tüm ayarların silinmesini sağlayacaktır.",
+"sources": [
+  {
+    "documentId": "kurulum-kilavuzu-lumora-termo",
+    "title": "Lumora Termo Kurulum Kılavuzu",
+    "version": "1.0",
+    "effectiveDate": "2025-02-01",
+    "status": "active",
+    "category": "kilavuz",
+    "section": "4. Fabrika Ayarlarına Döndürme",
+    "quote": "Cihazın sağ yanındaki sıfırlama düğmesine 10 saniye basılı tutun. LED turuncu yanıp sönmeye başladığında düğmeyi bırakın; cihaz yeniden başlar ve tüm ayarlar silinir.",
+    "quoteVerified": true
+  }
+],
+"versionResolution": { "applied": false, "selected": [], "discarded": [] }
+```
+
+### Örnek 2 — Çelişkili sürümler: yürürlükteki sürüm seçilir
 
 ```bash
 curl -s -X POST http://localhost:5031/v1/questions \
@@ -149,7 +180,7 @@ curl -s -X POST http://localhost:5031/v1/questions \
       "candidateDocumentIds": ["iade-politikasi-v2", "iade-politikasi-v1", "kargo-ve-teslimat", "garanti-kosullari", "sss-genel"],
       "context": [{ "label": "C1", "documentId": "iade-politikasi-v2", "version": "2.0", "section": "2. İade Süresi" }, "…7 bölüm daha"],
       "model": "gemma-4-26b-a4b-it",
-      "latencyMs": 1335,
+      "latencyMs": 1470,
       "inputTokens": 1286,
       "outputTokens": 149
     }
@@ -160,13 +191,13 @@ curl -s -X POST http://localhost:5031/v1/questions \
 
 v1.0'daki "14 gün" kuralı arama sonuçlarında vardı, ama modele hiç gönderilmedi (`discarded`).
 
-### Örnek 2 — Farklı dokümanlar arasında çelişki
+### Örnek 3 — Farklı dokümanlar arasında çelişki
 
 `"İade kargo ücretini kim öder?"` sorusunda 2024 tarihli SSS "müşteri öder", 2025 tarihli İade Politikası v2.0
 "ücretsiz" diyor. Yanıt politikayı kullanır; model çelişkiyi bildirir, sunucu öncelik kuralına uyduğunu doğrular:
 
 ```json
-"answer": "İade kodunu kullanarak anlaşmalı kargo firmamızla gönderdiğiniz iadelerin kargo ücretini Lumora karşılamaktadır.",
+"answer": "İade kargosu ücretsizdir; iade kodunu kullanarak anlaşmalı kargo firmamızla gönderdiğiniz iadelerin kargo ücretini Lumora karşılar.",
 "conflicts": [
   {
     "topic": "İade kargo ücreti",
@@ -178,7 +209,7 @@ v1.0'daki "14 gün" kuralı arama sonuçlarında vardı, ama modele hiç gönder
 ]
 ```
 
-### Örnek 3 — Dokümanlarda bilgi yok
+### Örnek 4 — Dokümanlarda bilgi yok
 
 ```bash
 curl -s -X POST http://localhost:5031/v1/questions \
@@ -199,13 +230,13 @@ curl -s -X POST http://localhost:5031/v1/questions \
     "conflicts": [],
     "missingInformation": "",
     "refusalReason": "LowRelevance",
-    "diagnostics": { "retrievalMode": "hybrid", "maxDenseScore": 0.456, "maxLexicalCoverage": 0.312, "context": [], "model": "", "latencyMs": 14 }
+    "diagnostics": { "retrievalMode": "hybrid", "maxDenseScore": 0.456, "maxLexicalCoverage": 0.312, "context": [], "model": "", "latencyMs": 17 }
   },
   "statusCode": 200
 }
 ```
 
-Arama yeterli kanıt bulamadığı için dil modeli **hiç çağrılmadı** (14 ms). Alana yakın sorularda (ör. "HomeKit ile
+Arama yeterli kanıt bulamadığı için dil modeli **hiç çağrılmadı** (17 ms). Alana yakın sorularda (ör. "HomeKit ile
 kullanabilir miyim?") retlerin nedeni `ModelInsufficientContext`'tir. Bu durumda `missingInformation` alanında
 modelin neyin eksik olduğunu açıklaması yer alır.
 
@@ -283,6 +314,9 @@ Her başlık (`##`/`###`) bir bölümdür (toplam 53). Atıflarda bölüm yolu g
 | 2 · Model kararı | JSON şemasındaki `answerable` | Kaynaklar soruyu yanıtlamıyorsa model `answerable=false` ve `missingInformation` döndürür. |
 | 3 · Atıf doğrulama | `CitationValidator` | Yanıt, modele verilen bölümlerden hiçbirine atıf yapmıyorsa. Alıntının bölüm metninde geçip geçmediği ayrıca `quoteVerified` ile gösterilir. |
 
+Ayrıca, aramanın bulduğu bölümlerin tamamı yürürlükte olmayan sürümlerden geliyorsa (superseded ya da ileri tarihli)
+model çağrılmadan `NoSourceInEffect` ile reddedilir.
+
 Model yanıtı **JSON şemasıyla kısıtlıdır**. llama.cpp şemayı bir grammar'a çevirdiği için çıktı her zaman ayrıştırılır;
 yine de geçersiz gelirse bir kez yeniden denenir, ikincisinde `502` döner. Modele ulaşılamazsa `503` döner. Bu iki
 durum "bilgi yok" diye geçiştirilmez.
@@ -321,15 +355,18 @@ kontrolleri vardır:
 
 | Çalıştırma | Sonuç | Medyan yanıt süresi | Arama isabeti: yalnız BM25 / hibrit |
 |---|---|---|---|
-| Varsayılan — düşünme modu kapalı ([rapor](eval/results/report.md)) | **16/16** | 1,4 sn | 10/12 / **12/12** |
-| Düşünme modu açık ([rapor](eval/results/thinking-on/report.md)) | 16/16 | 9,8 sn | 10/12 / 12/12 |
+| Varsayılan — düşünme modu kapalı ([rapor](eval/results/report.md)) | **16/16** | 1,5 sn | 10/12 / **12/12** |
+| Düşünme modu açık ([rapor](eval/results/thinking-on/report.md)) | 16/16 | 9,9 sn | 10/12 / 12/12 |
+
+*Arama isabeti:* beklenen kaynağın ilk 8 arama sonucunda olup olmadığı (sürüm çözümünden önce). Modelin bağlamı da
+sürüm çözümünden sonra 8 bölümdür, dolayısıyla metrik iyimser değil, eşit ya da daha katıdır.
 
 Bulgular:
 
 - **Hibrit aramanın katkısı ölçülebilir.** "Paramı ne zaman geri alırım?" (N08) sorusunda "iade" kelimesi geçmiyor.
   "Para İadesi" bölümünü yalnızca vektör arama buluyor; BM25 tek başına iki soruda beklenen kaynağı kaçırıyor.
 - **Düşünme modu bu sette doğruluğu artırmadı, gecikmeyi ~7 kat yükseltti.** Soru başına üretilen token sayısı
-  58–273'ten 654–2618'e çıkıyor. Bu yüzden varsayılan kapalı.
+  60–280'den 654–2618'e çıkıyor. Bu yüzden varsayılan kapalı.
 - **Kapı 1 eşiği veriyle seçildi.** Yanıtlanabilir sorularda en düşük kosinüs 0,60; Kapı 1'de reddedilen sorularda
   0,45–0,46. Alana yakın cevapsız sorular (garanti uzatma paketi, HomeKit: 0,61–0,62) benzerlikle ayrılamıyor. Bunları
   Kapı 2'de model doğru şekilde reddediyor.
@@ -340,8 +377,9 @@ Bulgular:
   Bir de değerlendirme bakımı yapıldı: C04'ün doğru yanıtı "Lumora **karşılamaktadır**" dediği için "Lumora karşılar"
   ifade kontrolü kök biçimine ("Lumora karşıla") genişletildi. Soruları yazan, dokümanları da yazan kişi olduğundan
   set küçük ve iyimser bir ölçüttür (bkz. sınırlar).
-- Gecikme notu: değerlendirme uzak, tek slotlu ve paylaşılan bir sunucuda koştu. İlk istek (ısınma) veya o anki yük
-  tek soruları 15–35 sn'ye çıkarabiliyor; raporda bu yüzden medyan da veriliyor.
+- Gecikme notu: değerlendirme uzak, tek slotlu ve paylaşılan bir sunucuda koştu. Raporlanan son koşuda en uzun
+  yanıt 3,0 sn sürdü, ancak önceki koşularda ilk istek (ısınma) veya o anki yük tek soruları 15–35 sn'ye çıkardı.
+  Raporda bu yüzden medyan da veriliyor.
 
 Yeniden üretmek için: API'yi çalıştırın → `dotnet run --project tools/SupportAssistant.Eval`
 (`--label ad` başka bir klasöre yazar, `--base-url` farklı adres).

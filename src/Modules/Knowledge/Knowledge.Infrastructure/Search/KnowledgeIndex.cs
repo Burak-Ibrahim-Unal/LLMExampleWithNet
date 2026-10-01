@@ -61,7 +61,8 @@ public sealed class KnowledgeIndex(
         // Vectors are only comparable with query vectors when the same model produced every one of them.
         var vectorsUsable = embedder.IsEnabled
             && entries.Count > 0
-            && entries.All(entry => entry.Chunk.Embedding is not null && entry.Chunk.EmbeddingModel == embedder.ModelName);
+            && entries.All(entry => entry.Chunk.Embedding is not null && entry.Chunk.EmbeddingModel == embedder.ModelName)
+            && entries.Select(entry => entry.Chunk.Embedding!.Length).Distinct().Count() == 1;
 
         var versions = documents
             .GroupBy(document => document.DocumentKey, StringComparer.Ordinal)
@@ -85,9 +86,10 @@ public sealed class KnowledgeIndex(
     public async Task<PreparedQuery> PrepareAsync(string query, CancellationToken cancellationToken = default)
     {
         var terms = SearchTokenizer.Tokenize(query);
+        var indexedVectors = _snapshot?.Vectors;
         float[]? vector = null;
 
-        if (_snapshot?.Vectors is not null)
+        if (indexedVectors is not null)
         {
             try
             {
@@ -96,6 +98,17 @@ public sealed class KnowledgeIndex(
             catch (Exception exception) when (exception is not OperationCanceledException)
             {
                 logger.LogWarning(exception, "Query embedding failed; searching with BM25 only.");
+            }
+
+            // A different model is answering under the configured name; its vectors cannot be compared with the index.
+            if (vector is not null && vector.Length != indexedVectors[0].Length)
+            {
+                logger.LogWarning(
+                    "The query embedding has {QueryDimensions} dimensions but the index has {IndexDimensions}; searching with BM25 only. " +
+                    "If the embedding model changed, change Embeddings:Model (or delete the database) and reindex.",
+                    vector.Length,
+                    indexedVectors[0].Length);
+                vector = null;
             }
         }
 

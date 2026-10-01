@@ -168,6 +168,20 @@ public sealed class IngestKnowledgeBaseCommandHandlerTests : IAsyncLifetime
         _index.IsReady.ShouldBeFalse();
     }
 
+    [Theory]
+    [InlineData("io")]
+    [InlineData("access")]
+    public async Task An_unreadable_knowledge_base_file_is_reported_as_unprocessable(string failure)
+    {
+        _source.Failure = failure == "io" ? new IOException("disk error") : new UnauthorizedAccessException("denied");
+
+        var result = await IngestAsync();
+
+        result.Success.ShouldBeFalse();
+        result.StatusCode.ShouldBe(422);
+        result.Message.ShouldBe(Shared.Application.Common.Messages.Knowledge.KnowledgeBaseUnreadable);
+    }
+
     [Fact]
     public async Task Duplicate_document_ids_are_rejected()
     {

@@ -72,7 +72,7 @@ public static class ReportWriter
         report.AppendLine($"| **Toplam** | **{results.Count}** | **{passed}** |").AppendLine();
 
         var withExpectedSource = results.Where(result => result.HybridHit is not null).ToList();
-        report.AppendLine($"**Arama isabeti** (beklenen kaynak, modele verilen bağlam kadar arama sonucu içinde; {withExpectedSource.Count} soru): " +
+        report.AppendLine($"**Arama isabeti** (beklenen kaynak, sunucunun varsayılan topK değeri kadar arama sonucu içinde — sürüm çözümünden önce; {withExpectedSource.Count} soru): " +
             $"yalnız BM25 {withExpectedSource.Count(result => result.LexicalHit == true)}/{withExpectedSource.Count} · " +
             $"hibrit {withExpectedSource.Count(result => result.HybridHit == true)}/{withExpectedSource.Count}  ");
         report.AppendLine($"**Yanıt süresi:** medyan {Seconds(Median(results.Select(result => result.LatencyMs)))}, ortalama {Seconds((long)results.Average(result => result.LatencyMs))}, " +

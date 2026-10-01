@@ -63,7 +63,8 @@ public sealed class OpenAiCompatibleAnswerGenerator(
                 throw new AnswerGenerationException(AnswerGenerationFailure.Unavailable, $"The language model endpoint failed: {exception.Message}", exception);
             }
 
-            if (response.TryGetResult(out var payload) && payload is not null)
+            // Schema-valid is not enough: "answerable" without answer text is neither an answer nor a refusal.
+            if (response.TryGetResult(out var payload) && payload is not null && !(payload.Answerable && string.IsNullOrWhiteSpace(payload.Answer)))
             {
                 return ToGeneratedAnswer(payload, response, settings);
             }

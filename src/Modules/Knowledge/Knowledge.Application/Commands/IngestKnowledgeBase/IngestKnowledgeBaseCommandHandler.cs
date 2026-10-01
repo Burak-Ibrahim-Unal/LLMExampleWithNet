@@ -22,7 +22,25 @@ public sealed class IngestKnowledgeBaseCommandHandler(
     KnowledgeBusinessRules rules,
     ILogger<IngestKnowledgeBaseCommandHandler> logger) : IRequestHandler<IngestKnowledgeBaseCommand, ApiResult<IngestionSummaryDto>>
 {
+    // Reindexing is an occasional operator action. Running one at a time keeps two concurrent requests from both
+    // replacing the same chunks, where the slower one would fail with a concurrency error.
+    private static readonly SemaphoreSlim IngestionGate = new(1, 1);
+
     public async Task<ApiResult<IngestionSummaryDto>> Handle(IngestKnowledgeBaseCommand request, CancellationToken cancellationToken)
+    {
+        await IngestionGate.WaitAsync(cancellationToken);
+
+        try
+        {
+            return await IngestAsync(cancellationToken);
+        }
+        finally
+        {
+            IngestionGate.Release();
+        }
+    }
+
+    private async Task<ApiResult<IngestionSummaryDto>> IngestAsync(CancellationToken cancellationToken)
     {
         IReadOnlyList<SourceDocument> sources;
 
@@ -33,6 +51,11 @@ public sealed class IngestKnowledgeBaseCommandHandler(
         catch (KnowledgeBaseFormatException exception)
         {
             return ApiResult<IngestionSummaryDto>.Fail(exception.Message, 422);
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+        {
+            logger.LogError(exception, "The knowledge base files could not be read.");
+            return ApiResult<IngestionSummaryDto>.Fail(Messages.Knowledge.KnowledgeBaseUnreadable, 422);
         }
 
         var emptyError = rules.CheckKnowledgeBaseNotEmpty<IngestionSummaryDto>(sources.Count);

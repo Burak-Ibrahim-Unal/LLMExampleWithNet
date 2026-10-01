@@ -71,6 +71,27 @@ public sealed class VersionResolverTests
     }
 
     [Fact]
+    public void A_superseded_document_is_not_used_even_when_its_successor_is_missing()
+    {
+        var resolution = Resolve([Hit(ReturnsV1)], ReturnsV1);
+
+        resolution.Kept.ShouldBeEmpty();
+        resolution.Discarded.ShouldHaveSingleItem().Reason.ShouldBe("Bu dokümanın yürürlükte bir sürümü yok.");
+        resolution.NeedsSubstitution.ShouldBeEmpty();
+    }
+
+    [Fact]
+    public void A_single_document_is_not_used_before_its_effective_date()
+    {
+        var upcoming = Version("garanti-2027", "garanti", "1.0", new DateOnly(2027, 1, 1), DocumentStatus.Active);
+
+        var resolution = Resolve([Hit(upcoming), Hit(Shipping)], upcoming, Shipping);
+
+        resolution.Kept.Select(hit => hit.Chunk.DocumentId).ShouldBe(["kargo"]);
+        resolution.Discarded.ShouldHaveSingleItem().Reason.ShouldBe("Yürürlük tarihi (2027-01-01) henüz gelmedi.");
+    }
+
+    [Fact]
     public void Versions_with_the_same_effective_date_are_ordered_by_version_number()
     {
         var older = Version("garanti-1-9", "garanti", "1.9", new DateOnly(2025, 1, 1), DocumentStatus.Active);

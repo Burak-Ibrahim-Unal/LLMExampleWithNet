@@ -17,16 +17,27 @@ internal sealed class FakeTextEmbedder(string modelName = FakeTextEmbedder.Defau
 
     public List<string> EmbeddedDocumentTexts { get; } = [];
 
-    public Task<IReadOnlyList<float[]>> EmbedDocumentsAsync(IReadOnlyList<DocumentEmbeddingInput> inputs, CancellationToken cancellationToken = default)
+    /// <summary>Simulated network latency of the embedding server.</summary>
+    public TimeSpan Delay { get; set; } = TimeSpan.Zero;
+
+    public async Task<IReadOnlyList<float[]>> EmbedDocumentsAsync(IReadOnlyList<DocumentEmbeddingInput> inputs, CancellationToken cancellationToken = default)
     {
+        if (Delay > TimeSpan.Zero)
+        {
+            await Task.Delay(Delay, cancellationToken);
+        }
+
         if (Failure is not null)
         {
             throw Failure;
         }
 
-        EmbeddedDocumentTexts.AddRange(inputs.Select(input => input.Text));
-        IReadOnlyList<float[]> vectors = inputs.Select(input => new[] { input.Text.Length, 1f }).ToList();
-        return Task.FromResult(vectors);
+        lock (EmbeddedDocumentTexts)
+        {
+            EmbeddedDocumentTexts.AddRange(inputs.Select(input => input.Text));
+        }
+
+        return inputs.Select(input => new[] { input.Text.Length, 1f }).ToList();
     }
 
     public Task<float[]> EmbedQueryAsync(string query, CancellationToken cancellationToken = default)

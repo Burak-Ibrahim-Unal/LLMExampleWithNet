@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-02T00:33:02.7903027+03:00",
+  "generatedAt": "2026-10-02T01:04:10.4810769+03:00",
   "baseUrl": "http://localhost:5031",
   "label": null,
   "status": {
@@ -9,7 +9,7 @@
       "documents": 10,
       "sections": 53,
       "retrievalMode": "hybrid",
-      "builtAtUtc": "2026-10-01T21:32:07.2919841Z"
+      "builtAtUtc": "2026-10-01T22:03:44.3693089Z"
     },
     "llm": {
       "configured": true,
@@ -67,13 +67,13 @@
           "detail": "'2.4 GHz' | '2,4 GHz'"
         }
       ],
-      "latencyMs": 34067,
+      "latencyMs": 3034,
       "lexicalHit": true,
       "hybridHit": true,
       "answer": {
         "question": "Lumora Termo'yu kurarken hangi Wi-Fi ağını kullanmalıyım?",
         "answerable": true,
-        "answer": "Lumora Termo kurulumu için yalnızca 2.4 GHz Wi-Fi ağını kullanmalısınız; cihaz 5 GHz ağları desteklememektedir.",
+        "answer": "Lumora Termo kurulumu için yalnızca 2.4 GHz Wi-Fi ağlarını kullanmalısınız; cihaz 5 GHz ağları desteklememektedir.",
         "sources": [
           {
             "documentId": "kurulum-kilavuzu-lumora-termo",
@@ -172,9 +172,9 @@
             }
           ],
           "model": "gemma-4-26b-a4b-it",
-          "latencyMs": 33797,
+          "latencyMs": 2657,
           "inputTokens": 1602,
-          "outputTokens": 172
+          "outputTokens": 179
         }
       }
     },
@@ -221,7 +221,7 @@
           "detail": "'Wi-Fi' | 'kablosuz'"
         }
       ],
-      "latencyMs": 1282,
+      "latencyMs": 1540,
       "lexicalHit": true,
       "hybridHit": true,
       "answer": {
@@ -314,9 +314,9 @@
             }
           ],
           "model": "gemma-4-26b-a4b-it",
-          "latencyMs": 1166,
+          "latencyMs": 1405,
           "inputTokens": 1523,
-          "outputTokens": 102
+          "outputTokens": 104
         }
       }
     },
@@ -367,7 +367,7 @@
           "detail": "'kapsam dışı' | 'kapsamı dışında' | 'kapsamında değil' | 'kapsamına girmez' | 'karşılanmaz' | 'hayır'"
         }
       ],
-      "latencyMs": 1465,
+      "latencyMs": 1314,
       "lexicalHit": true,
       "hybridHit": true,
       "answer": {
@@ -461,7 +461,7 @@
             }
           ],
           "model": "gemma-4-26b-a4b-it",
-          "latencyMs": 1450,
+          "latencyMs": 1300,
           "inputTokens": 1320,
           "outputTokens": 100
         }
@@ -509,7 +509,7 @@
           "detail": "'750'"
         }
       ],
-      "latencyMs": 1094,
+      "latencyMs": 1166,
       "lexicalHit": true,
       "hybridHit": true,
       "answer": {
@@ -600,7 +600,7 @@
             }
           ],
           "model": "gemma-4-26b-a4b-it",
-          "latencyMs": 1083,
+          "latencyMs": 1159,
           "inputTokens": 1205,
           "outputTokens": 94
         }
@@ -649,7 +649,7 @@
           "detail": "'L2' | 'Seviye 2'"
         }
       ],
-      "latencyMs": 1437,
+      "latencyMs": 1432,
       "lexicalHit": true,
       "hybridHit": true,
       "answer": {
@@ -741,9 +741,9 @@
             }
           ],
           "model": "gemma-4-26b-a4b-it",
-          "latencyMs": 1427,
+          "latencyMs": 1423,
           "inputTokens": 1422,
-          "outputTokens": 131
+          "outputTokens": 129
         }
       }
     },
@@ -790,13 +790,13 @@
           "detail": "'10 saniye' | '10 sn'"
         }
       ],
-      "latencyMs": 1573,
+      "latencyMs": 1665,
       "lexicalHit": true,
       "hybridHit": true,
       "answer": {
         "question": "termostati fabrika ayarlarina nasil donduruyorum",
         "answerable": true,
-        "answer": "Cihazın sağ yanındaki sıfırlama düğmesine 10 saniye boyunca basılı tutmanız gerekmektedir. LED turuncu yanıp sönmeye başladığında düğmeyi bırakabilirsiniz; bu işlemden sonra cihaz yeniden başlar ve tüm ayarlar silinir.",
+        "answer": "Cihazın sağ yanındaki sıfırlama düğmesine 10 saniye boyunca basılı tutun. LED turuncu yanıp sönmeye başladığında düğmeyi bırakın; bu işlem cihazın yeniden başlamasını ve tüm ayarların silinmesini sağlayacaktır.",
         "sources": [
           {
             "documentId": "kurulum-kilavuzu-lumora-termo",
@@ -883,9 +883,9 @@
             }
           ],
           "model": "gemma-4-26b-a4b-it",
-          "latencyMs": 1565,
+          "latencyMs": 1660,
           "inputTokens": 1516,
-          "outputTokens": 174
+          "outputTokens": 172
         }
       }
     },
@@ -941,7 +941,7 @@
           "detail": "'2.4 GHz' | '2,4 GHz'"
         }
       ],
-      "latencyMs": 1824,
+      "latencyMs": 2068,
       "lexicalHit": false,
       "hybridHit": true,
       "answer": {
@@ -1045,9 +1045,9 @@
             }
           ],
           "model": "gemma-4-26b-a4b-it",
-          "latencyMs": 1815,
+          "latencyMs": 2063,
           "inputTokens": 1581,
-          "outputTokens": 228
+          "outputTokens": 232
         }
       }
     },
@@ -1108,13 +1108,13 @@
           "detail": "'10 iş günü'"
         }
       ],
-      "latencyMs": 1625,
+      "latencyMs": 1807,
       "lexicalHit": false,
       "hybridHit": true,
       "answer": {
         "question": "Paramı ne zaman geri alırım?",
         "answerable": true,
-        "answer": "İade edilen ürün depomuza ulaşıp kontrol edildikten sonra ücret, 5 iş günü içinde ödemenin yapıldığı karta veya hesaba iade edilir. Bankanızın iadeyi hesabınıza yansıtma süresi bu süreye dahil değildir.",
+        "answer": "İade edilen ürün depomuza ulaşıp kontrol edildikten sonra, ücretiniz 5 iş günü içinde ödemenin yapıldığı karta veya hesaba iade edilir. Bankanızın iadeyi hesabınıza yansıtma süresi bu 5 iş günlük süreye dahil değildir.",
         "sources": [
           {
             "documentId": "iade-politikasi-v2",
@@ -1124,7 +1124,7 @@
             "status": "active",
             "category": "politika",
             "section": "6. Para İadesi",
-            "quote": "İade edilen ürün depomuza ulaşıp kontrol edildikten sonra ücret, 5 iş günü içinde ödemenin yapıldığı karta veya hesaba iade edilir.",
+            "quote": "İade edilen ürün depomuza ulaşıp kontrol edildikten sonra ücret, 5 iş günü içinde ödemenin yapıldığı karta veya hesaba iade edilir. Bankanızın iadeyi hesabınıza yansıtma süresi bu süreye dahil değildir.",
             "quoteVerified": true
           }
         ],
@@ -1216,9 +1216,9 @@
             }
           ],
           "model": "gemma-4-26b-a4b-it",
-          "latencyMs": 1611,
+          "latencyMs": 1796,
           "inputTokens": 1245,
-          "outputTokens": 155
+          "outputTokens": 180
         }
       }
     },
@@ -1248,7 +1248,7 @@
           "detail": "beklenen: bilgi yok, gerçek: bilgi yok (LowRelevance)"
         }
       ],
-      "latencyMs": 17,
+      "latencyMs": 25,
       "lexicalHit": null,
       "hybridHit": null,
       "answer": {
@@ -1283,7 +1283,7 @@
           ],
           "context": [],
           "model": "",
-          "latencyMs": 12,
+          "latencyMs": 18,
           "inputTokens": null,
           "outputTokens": null
         }
@@ -1315,7 +1315,7 @@
           "detail": "beklenen: bilgi yok, gerçek: bilgi yok (ModelInsufficientContext)"
         }
       ],
-      "latencyMs": 973,
+      "latencyMs": 911,
       "lexicalHit": null,
       "hybridHit": null,
       "answer": {
@@ -1330,7 +1330,7 @@
           "discarded": []
         },
         "conflicts": [],
-        "missingInformation": "Verilen kaynaklarda ek garanti paketi satın alınıp alınamayacağına dair bir bilgi bulunmamaktadır.",
+        "missingInformation": "Verilen kaynaklarda ek garanti paketi satın alınabilir mi sorusuna dair bir bilgi bulunmamaktadır.",
         "refusalReason": "ModelInsufficientContext",
         "diagnostics": {
           "retrievalMode": "hybrid",
@@ -1396,7 +1396,7 @@
             }
           ],
           "model": "gemma-4-26b-a4b-it",
-          "latencyMs": 964,
+          "latencyMs": 905,
           "inputTokens": 1308,
           "outputTokens": 60
         }
@@ -1428,7 +1428,7 @@
           "detail": "beklenen: bilgi yok, gerçek: bilgi yok (ModelInsufficientContext)"
         }
       ],
-      "latencyMs": 765,
+      "latencyMs": 999,
       "lexicalHit": null,
       "hybridHit": null,
       "answer": {
@@ -1443,7 +1443,7 @@
           "discarded": []
         },
         "conflicts": [],
-        "missingInformation": "Lumora Termo'nun Apple HomeKit desteği hakkında kaynaklarda bilgi bulunmamaktadır.",
+        "missingInformation": "Verilen kaynaklarda Lumora Termo'nun Apple HomeKit desteği olup olmadığına dair bir bilgi bulunmamaktadır.",
         "refusalReason": "ModelInsufficientContext",
         "diagnostics": {
           "retrievalMode": "hybrid",
@@ -1511,9 +1511,9 @@
             }
           ],
           "model": "gemma-4-26b-a4b-it",
-          "latencyMs": 756,
+          "latencyMs": 994,
           "inputTokens": 1404,
-          "outputTokens": 58
+          "outputTokens": 64
         }
       }
     },
@@ -1543,7 +1543,7 @@
           "detail": "beklenen: bilgi yok, gerçek: bilgi yok (LowRelevance)"
         }
       ],
-      "latencyMs": 18,
+      "latencyMs": 23,
       "lexicalHit": null,
       "hybridHit": null,
       "answer": {
@@ -1575,7 +1575,7 @@
           ],
           "context": [],
           "model": "",
-          "latencyMs": 14,
+          "latencyMs": 17,
           "inputTokens": null,
           "outputTokens": null
         }
@@ -1644,7 +1644,7 @@
           "detail": "beklenen: iade-politikasi-v1; raporlanan: iade-politikasi-v1"
         }
       ],
-      "latencyMs": 1343,
+      "latencyMs": 1478,
       "lexicalHit": true,
       "hybridHit": true,
       "answer": {
@@ -1750,7 +1750,7 @@
             }
           ],
           "model": "gemma-4-26b-a4b-it",
-          "latencyMs": 1335,
+          "latencyMs": 1470,
           "inputTokens": 1286,
           "outputTokens": 149
         }
@@ -1820,7 +1820,7 @@
           "detail": "beklenen: iade-politikasi-v1; raporlanan: iade-politikasi-v1"
         }
       ],
-      "latencyMs": 1303,
+      "latencyMs": 1495,
       "lexicalHit": true,
       "hybridHit": true,
       "answer": {
@@ -1928,7 +1928,7 @@
             }
           ],
           "model": "gemma-4-26b-a4b-it",
-          "latencyMs": 1298,
+          "latencyMs": 1486,
           "inputTokens": 1283,
           "outputTokens": 154
         }
@@ -2001,7 +2001,7 @@
           "detail": "beklenen: destek-kanallari-v1; raporlanan: destek-kanallari-v1"
         }
       ],
-      "latencyMs": 1973,
+      "latencyMs": 2055,
       "lexicalHit": true,
       "hybridHit": true,
       "answer": {
@@ -2120,9 +2120,9 @@
             }
           ],
           "model": "gemma-4-26b-a4b-it",
-          "latencyMs": 1968,
+          "latencyMs": 2046,
           "inputTokens": 1298,
-          "outputTokens": 252
+          "outputTokens": 246
         }
       }
     },
@@ -2193,13 +2193,13 @@
           "detail": "beklenen: iade-politikasi-v1; raporlanan: iade-politikasi-v1"
         }
       ],
-      "latencyMs": 2599,
+      "latencyMs": 2756,
       "lexicalHit": true,
       "hybridHit": true,
       "answer": {
         "question": "İade kargo ücretini kim öder?",
         "answerable": true,
-        "answer": "İade kodunu kullanarak anlaşmalı kargo firmamızla gönderdiğiniz iadelerin kargo ücretini Lumora karşılamaktadır.",
+        "answer": "İade kargosu ücretsizdir; iade kodunu kullanarak anlaşmalı kargo firmamızla gönderdiğiniz iadelerin kargo ücretini Lumora karşılar.",
         "sources": [
           {
             "documentId": "iade-politikasi-v2",
@@ -2320,9 +2320,9 @@
             }
           ],
           "model": "gemma-4-26b-a4b-it",
-          "latencyMs": 2588,
+          "latencyMs": 2744,
           "inputTokens": 1216,
-          "outputTokens": 273
+          "outputTokens": 280
         }
       }
     }

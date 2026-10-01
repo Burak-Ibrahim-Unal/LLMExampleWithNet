@@ -114,6 +114,19 @@ public sealed class KnowledgeIndexTests
     }
 
     [Fact]
+    public async Task A_query_vector_of_another_dimension_falls_back_to_lexical_search()
+    {
+        // The embedding server now runs a different model under the same configured name.
+        var index = CreateIndex(new FakeTextEmbedder { QueryVector = _ => [0f, 1f, 0f] });
+        index.Rebuild([Document("iade", "İade", ("İade Süresi", "30 gün içinde iade edebilirsiniz.", [1f, 0f], FakeTextEmbedder.DefaultModel))]);
+
+        var result = index.Search(await index.PrepareAsync("iade süresi", TestContext.Current.CancellationToken), topK: 3);
+
+        result.Mode.ShouldBe(RetrievalMode.Lexical);
+        result.Hits.ShouldHaveSingleItem().Chunk.SectionPath.ShouldBe("İade Süresi");
+    }
+
+    [Fact]
     public async Task Search_falls_back_to_lexical_when_the_query_cannot_be_embedded()
     {
         var embedder = new FakeTextEmbedder();

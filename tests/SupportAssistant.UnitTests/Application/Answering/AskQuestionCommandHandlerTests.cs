@@ -247,6 +247,32 @@ public sealed class AskQuestionCommandHandlerTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Questions_matching_only_outdated_sources_are_refused_without_calling_the_model()
+    {
+        var index = new KnowledgeIndex(new FakeTextEmbedder(enabled: false), Options.Create(new RetrievalOptions()), NullLogger<KnowledgeIndex>.Instance);
+        index.Rebuild([Document("eski", "eski", "1.0", new DateOnly(2024, 1, 1), DocumentStatus.Superseded, DocumentCategory.Policy,
+            ("Hediye Paketi", "Hediye paketi ücreti 20 TL'dir."))]);
+
+        var result = await AskAsync("Hediye paketi ücreti ne kadar?", index);
+
+        _generator.Calls.ShouldBe(0);
+        result.Data!.Answerable.ShouldBeFalse();
+        result.Data.RefusalReason.ShouldBe(RefusalReasons.NoSourceInEffect);
+    }
+
+    [Fact]
+    public async Task When_cleaning_leaves_no_answer_text_the_verified_quote_is_used()
+    {
+        _generator.Respond = (_, context) =>
+            FakeAnswerGenerator.Answer("[C1]", new GeneratedCitation(context[0].Label, context[0].Chunk.Content));
+
+        var result = await AskAsync("İade süresi kaç gün?");
+
+        result.Data!.Answerable.ShouldBeTrue();
+        result.Data.Answer.ShouldBe("Ürünü teslim aldıktan sonra 30 gün içinde iade edebilirsiniz.");
+    }
+
+    [Fact]
     public async Task Questions_wait_for_the_index()
     {
         var emptyIndex = new KnowledgeIndex(new FakeTextEmbedder(enabled: false), Options.Create(new RetrievalOptions()), NullLogger<KnowledgeIndex>.Instance);

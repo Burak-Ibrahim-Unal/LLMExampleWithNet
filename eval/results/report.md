@@ -1,6 +1,6 @@
 # Değerlendirme Raporu
 
-- **Tarih:** 2026-10-02 00:33
+- **Tarih:** 2026-10-02 01:04
 - **Çalıştırma:** varsayılan yapılandırma
 - **Dil modeli:** gemma-4-26b-a4b-it · **Embedding:** bge-m3 · **Arama modu:** hybrid
 - **Sonuç:** 16/16 soru geçti
@@ -14,27 +14,27 @@
 | Çelişkili | 4 | 4 |
 | **Toplam** | **16** | **16** |
 
-**Arama isabeti** (beklenen kaynak, modele verilen bağlam kadar arama sonucu içinde; 12 soru): yalnız BM25 10/12 · hibrit 12/12  
-**Yanıt süresi:** medyan 1,4 sn, ortalama 3,3 sn, en uzun 34,1 sn (Kapı 1'de reddedilen sorular modele gitmediği için ~0 sn)
+**Arama isabeti** (beklenen kaynak, sunucunun varsayılan topK değeri kadar arama sonucu içinde — sürüm çözümünden önce; 12 soru): yalnız BM25 10/12 · hibrit 12/12  
+**Yanıt süresi:** medyan 1,5 sn, ortalama 1,5 sn, en uzun 3,0 sn (Kapı 1'de reddedilen sorular modele gitmediği için ~0 sn)
 
 | ID | Kategori | Soru | Beklenen | Sonuç | Süre |
 |---|---|---|---|---|---:|
-| N01 | Normal | Lumora Termo'yu kurarken hangi Wi-Fi ağını kullanmalıyım? | yanıt | ✅ | 34,1 sn |
-| N02 | Normal | Termostatın LED ışığı kırmızı yanıp sönüyor, bu ne anlama geliyor? | yanıt | ✅ | 1,3 sn |
-| N03 | Normal | Cihazıma su döküldü ve artık çalışmıyor. Garanti kapsamında ücretsiz onarılır mı? | yanıt | ✅ | 1,5 sn |
-| N04 | Normal | Kaç TL ve üzeri siparişlerde kargo ücretsiz oluyor? | yanıt | ✅ | 1,1 sn |
+| N01 | Normal | Lumora Termo'yu kurarken hangi Wi-Fi ağını kullanmalıyım? | yanıt | ✅ | 3,0 sn |
+| N02 | Normal | Termostatın LED ışığı kırmızı yanıp sönüyor, bu ne anlama geliyor? | yanıt | ✅ | 1,5 sn |
+| N03 | Normal | Cihazıma su döküldü ve artık çalışmıyor. Garanti kapsamında ücretsiz onarılır mı? | yanıt | ✅ | 1,3 sn |
+| N04 | Normal | Kaç TL ve üzeri siparişlerde kargo ücretsiz oluyor? | yanıt | ✅ | 1,2 sn |
 | N05 | Normal | Bir müşteri aynı arızayı üçüncü kez bildirirse talebi nasıl ele almalıyım? | yanıt | ✅ | 1,4 sn |
-| N06 | Normal | termostati fabrika ayarlarina nasil donduruyorum | yanıt | ✅ | 1,6 sn |
-| N07 | Normal | Sipariş ettiğim termostat ne zaman elime ulaşır ve kurulum için hangi Wi-Fi ağı gerekir? | yanıt | ✅ | 1,8 sn |
-| N08 | Normal | Paramı ne zaman geri alırım? | yanıt | ✅ | 1,6 sn |
+| N06 | Normal | termostati fabrika ayarlarina nasil donduruyorum | yanıt | ✅ | 1,7 sn |
+| N07 | Normal | Sipariş ettiğim termostat ne zaman elime ulaşır ve kurulum için hangi Wi-Fi ağı gerekir? | yanıt | ✅ | 2,1 sn |
+| N08 | Normal | Paramı ne zaman geri alırım? | yanıt | ✅ | 1,8 sn |
 | U01 | Cevapsız | Lumora'nın genel müdürü kimdir? | bilgi yok | ✅ | 0,0 sn |
-| U02 | Cevapsız | Garanti süresini uzatmak için ek garanti paketi satın alabilir miyim? | bilgi yok | ✅ | 1,0 sn |
-| U03 | Cevapsız | Lumora Termo'yu Apple HomeKit ile kullanabilir miyim? | bilgi yok | ✅ | 0,8 sn |
+| U02 | Cevapsız | Garanti süresini uzatmak için ek garanti paketi satın alabilir miyim? | bilgi yok | ✅ | 0,9 sn |
+| U03 | Cevapsız | Lumora Termo'yu Apple HomeKit ile kullanabilir miyim? | bilgi yok | ✅ | 1,0 sn |
 | U04 | Cevapsız | Ürünlerinizi yurt dışına gönderiyor musunuz? | bilgi yok | ✅ | 0,0 sn |
-| C01 | Çelişkili | Bir ürünü kaç gün içinde iade edebilirim? | yanıt | ✅ | 1,3 sn |
-| C02 | Çelişkili | İade ettiğim ürünün parası kaç iş gününde hesabıma geçer? | yanıt | ✅ | 1,3 sn |
-| C03 | Çelişkili | Destek ekibine hafta sonu ulaşabilir miyim? | yanıt | ✅ | 2,0 sn |
-| C04 | Çelişkili | İade kargo ücretini kim öder? | yanıt | ✅ | 2,6 sn |
+| C01 | Çelişkili | Bir ürünü kaç gün içinde iade edebilirim? | yanıt | ✅ | 1,5 sn |
+| C02 | Çelişkili | İade ettiğim ürünün parası kaç iş gününde hesabıma geçer? | yanıt | ✅ | 1,5 sn |
+| C03 | Çelişkili | Destek ekibine hafta sonu ulaşabilir miyim? | yanıt | ✅ | 2,1 sn |
+| C04 | Çelişkili | İade kargo ücretini kim öder? | yanıt | ✅ | 2,8 sn |
 
 ## Soru bazında karşılaştırma
 
@@ -42,11 +42,11 @@
 
 **Soru:** Lumora Termo'yu kurarken hangi Wi-Fi ağını kullanmalıyım?  
 **Beklenen:** Yalnızca 2.4 GHz Wi-Fi ağları desteklenir; cihaz 5 GHz ağlara bağlanamaz.  
-**Gerçek:** Lumora Termo kurulumu için yalnızca 2.4 GHz Wi-Fi ağını kullanmalısınız; cihaz 5 GHz ağları desteklememektedir.  
+**Gerçek:** Lumora Termo kurulumu için yalnızca 2.4 GHz Wi-Fi ağlarını kullanmalısınız; cihaz 5 GHz ağları desteklememektedir.  
 **Kaynak:** `kurulum-kilavuzu-lumora-termo` v1.0 (2025-02-01) › 2. Kurulumdan Önce — "Lumora Termo yalnızca 2.4 GHz Wi-Fi ağlarını destekler; 5 GHz ağlara bağlanamaz." *(alıntı doğrulandı)*  
 **Kaynak:** `sorun-giderme-baglanti` v1.0 (2025-04-15) › 2. Cihaz Wi-Fi Ağına Bağlanmıyor — "Modeminizin 2.4 GHz yayın yaptığından emin olun; cihaz 5 GHz ağları görmez." *(alıntı doğrulandı)*  
 **Kontroller:** ✅ yanıtlanabilirlik · ✅ kaynak · ✅ içerik  
-**Arama isabeti:** BM25 ✅ · hibrit ✅ · **Süre:** 34,1 sn
+**Arama isabeti:** BM25 ✅ · hibrit ✅ · **Süre:** 3,0 sn
 
 ### N02 · Normal · ✅ geçti
 
@@ -55,7 +55,7 @@
 **Gerçek:** Termostatın LED ışığının kırmızı yanıp sönmesi, Wi-Fi bağlantısının olmadığını göstermektedir.  
 **Kaynak:** `sorun-giderme-baglanti` v1.0 (2025-04-15) › 1. LED Gösterge Renkleri — "Kırmızı yanıp sönüyor: Wi-Fi bağlantısı yok." *(alıntı doğrulandı)*  
 **Kontroller:** ✅ yanıtlanabilirlik · ✅ kaynak · ✅ içerik  
-**Arama isabeti:** BM25 ✅ · hibrit ✅ · **Süre:** 1,3 sn
+**Arama isabeti:** BM25 ✅ · hibrit ✅ · **Süre:** 1,5 sn
 
 ### N03 · Normal · ✅ geçti
 
@@ -64,7 +64,7 @@
 **Gerçek:** Maalesef, sıvı teması veya su hasarı gibi durumlar garanti kapsamı dışında yer almaktadır.  
 **Kaynak:** `garanti-kosullari` v1.0 (2025-01-10) › 3. Garanti Kapsamı Dışındaki Durumlar — "Sıvı teması, nem veya su hasarı" *(alıntı doğrulandı)*  
 **Kontroller:** ✅ yanıtlanabilirlik · ✅ kaynak · ✅ içerik  
-**Arama isabeti:** BM25 ✅ · hibrit ✅ · **Süre:** 1,5 sn
+**Arama isabeti:** BM25 ✅ · hibrit ✅ · **Süre:** 1,3 sn
 
 ### N04 · Normal · ✅ geçti
 
@@ -73,7 +73,7 @@
 **Gerçek:** 750 TL ve üzerindeki siparişlerde kargo ücretsizdir.  
 **Kaynak:** `kargo-ve-teslimat` v1.0 (2025-03-01) › 2. Kargo Ücreti — "750 TL ve üzerindeki siparişlerde kargo ücretsizdir." *(alıntı doğrulandı)*  
 **Kontroller:** ✅ yanıtlanabilirlik · ✅ kaynak · ✅ içerik  
-**Arama isabeti:** BM25 ✅ · hibrit ✅ · **Süre:** 1,1 sn
+**Arama isabeti:** BM25 ✅ · hibrit ✅ · **Süre:** 1,2 sn
 
 ### N05 · Normal · ✅ geçti
 
@@ -88,10 +88,10 @@
 
 **Soru:** termostati fabrika ayarlarina nasil donduruyorum  
 **Beklenen:** Cihazın sağ yanındaki sıfırlama düğmesine 10 saniye basılı tutun; LED turuncu yanıp sönmeye başlayınca bırakın.  
-**Gerçek:** Cihazın sağ yanındaki sıfırlama düğmesine 10 saniye boyunca basılı tutmanız gerekmektedir. LED turuncu yanıp sönmeye başladığında düğmeyi bırakabilirsiniz; bu işlemden sonra cihaz yeniden başlar ve tüm ayarlar silinir.  
+**Gerçek:** Cihazın sağ yanındaki sıfırlama düğmesine 10 saniye boyunca basılı tutun. LED turuncu yanıp sönmeye başladığında düğmeyi bırakın; bu işlem cihazın yeniden başlamasını ve tüm ayarların silinmesini sağlayacaktır.  
 **Kaynak:** `kurulum-kilavuzu-lumora-termo` v1.0 (2025-02-01) › 4. Fabrika Ayarlarına Döndürme — "Cihazın sağ yanındaki sıfırlama düğmesine 10 saniye basılı tutun. LED turuncu yanıp sönmeye başladığında düğmeyi bırakın; cihaz yeniden başlar ve tüm ayarlar silinir." *(alıntı doğrulandı)*  
 **Kontroller:** ✅ yanıtlanabilirlik · ✅ kaynak · ✅ içerik  
-**Arama isabeti:** BM25 ✅ · hibrit ✅ · **Süre:** 1,6 sn
+**Arama isabeti:** BM25 ✅ · hibrit ✅ · **Süre:** 1,7 sn
 
 ### N07 · Normal · ✅ geçti
 
@@ -101,17 +101,17 @@
 **Kaynak:** `kargo-ve-teslimat` v1.0 (2025-03-01) › 1. Teslimat Süresi — "Siparişler, ödeme onayından sonra 1–2 iş günü içinde kargoya verilir. Kargoya verilen siparişler bulunduğunuz bölgeye göre 2–4 iş günü içinde teslim edilir." *(alıntı doğrulandı)*  
 **Kaynak:** `kurulum-kilavuzu-lumora-termo` v1.0 (2025-02-01) › 2. Kurulumdan Önce — "Lumora Termo yalnızca 2.4 GHz Wi-Fi ağlarını destekler; 5 GHz ağlara bağlanamaz." *(alıntı doğrulandı)*  
 **Kontroller:** ✅ yanıtlanabilirlik · ✅ kaynaklar · ✅ içerik · ✅ içerik  
-**Arama isabeti:** BM25 ❌ · hibrit ✅ · **Süre:** 1,8 sn
+**Arama isabeti:** BM25 ❌ · hibrit ✅ · **Süre:** 2,1 sn
 
 ### N08 · Normal · ✅ geçti
 
 **Soru:** Paramı ne zaman geri alırım?  
 **Beklenen:** İade edilen ürün depoya ulaşıp kontrol edildikten sonra ücret 5 iş günü içinde ödemenin yapıldığı karta veya hesaba iade edilir (v2.0). Soruda 'iade' kelimesi geçmiyor; bölümü anlamsal arama bulmalı.  
-**Gerçek:** İade edilen ürün depomuza ulaşıp kontrol edildikten sonra ücret, 5 iş günü içinde ödemenin yapıldığı karta veya hesaba iade edilir. Bankanızın iadeyi hesabınıza yansıtma süresi bu süreye dahil değildir.  
-**Kaynak:** `iade-politikasi-v2` v2.0 (2025-06-01) › 6. Para İadesi — "İade edilen ürün depomuza ulaşıp kontrol edildikten sonra ücret, 5 iş günü içinde ödemenin yapıldığı karta veya hesaba iade edilir." *(alıntı doğrulandı)*  
+**Gerçek:** İade edilen ürün depomuza ulaşıp kontrol edildikten sonra, ücretiniz 5 iş günü içinde ödemenin yapıldığı karta veya hesaba iade edilir. Bankanızın iadeyi hesabınıza yansıtma süresi bu 5 iş günlük süreye dahil değildir.  
+**Kaynak:** `iade-politikasi-v2` v2.0 (2025-06-01) › 6. Para İadesi — "İade edilen ürün depomuza ulaşıp kontrol edildikten sonra ücret, 5 iş günü içinde ödemenin yapıldığı karta veya hesaba iade edilir. Bankanızın iadeyi hesabınıza yansıtma süresi bu süreye dahil değildir." *(alıntı doğrulandı)*  
 **Sürüm kararı:** `iade-politikasi-v1` v1.0 elendi — 2.0 sürümü (2025-06-01) tarafından geçersiz kılındı.  
 **Kontroller:** ✅ yanıtlanabilirlik · ✅ kaynak · ✅ yasak kaynak yok · ✅ içerik · ✅ yasak ifade  
-**Arama isabeti:** BM25 ❌ · hibrit ✅ · **Süre:** 1,6 sn
+**Arama isabeti:** BM25 ❌ · hibrit ✅ · **Süre:** 1,8 sn
 
 ### U01 · Cevapsız · ✅ geçti
 
@@ -126,18 +126,18 @@
 **Soru:** Garanti süresini uzatmak için ek garanti paketi satın alabilir miyim?  
 **Beklenen:** Dokümanlarda garanti uzatma paketi bilgisi yok (yalnızca 2 yıllık standart garanti anlatılıyor); bilgi olmadığı belirtilmeli.  
 **Gerçek:** Bu soruyu yanıtlamak için dokümanlarda yeterli bilgi bulunamadı. *(refusalReason: ModelInsufficientContext)*  
-**Eksik bilgi (model):** Verilen kaynaklarda ek garanti paketi satın alınıp alınamayacağına dair bir bilgi bulunmamaktadır.  
+**Eksik bilgi (model):** Verilen kaynaklarda ek garanti paketi satın alınabilir mi sorusuna dair bir bilgi bulunmamaktadır.  
 **Kontroller:** ✅ yanıtlanabilirlik  
-**Arama isabeti:** BM25 — · hibrit — · **Süre:** 1,0 sn
+**Arama isabeti:** BM25 — · hibrit — · **Süre:** 0,9 sn
 
 ### U03 · Cevapsız · ✅ geçti
 
 **Soru:** Lumora Termo'yu Apple HomeKit ile kullanabilir miyim?  
 **Beklenen:** Dokümanlarda HomeKit uyumluluğundan bahsedilmiyor; bilgi olmadığı belirtilmeli.  
 **Gerçek:** Bu soruyu yanıtlamak için dokümanlarda yeterli bilgi bulunamadı. *(refusalReason: ModelInsufficientContext)*  
-**Eksik bilgi (model):** Lumora Termo'nun Apple HomeKit desteği hakkında kaynaklarda bilgi bulunmamaktadır.  
+**Eksik bilgi (model):** Verilen kaynaklarda Lumora Termo'nun Apple HomeKit desteği olup olmadığına dair bir bilgi bulunmamaktadır.  
 **Kontroller:** ✅ yanıtlanabilirlik  
-**Arama isabeti:** BM25 — · hibrit — · **Süre:** 0,8 sn
+**Arama isabeti:** BM25 — · hibrit — · **Süre:** 1,0 sn
 
 ### U04 · Cevapsız · ✅ geçti
 
@@ -155,7 +155,7 @@
 **Kaynak:** `iade-politikasi-v2` v2.0 (2025-06-01) › 2. İade Süresi — "Müşteriler, ürünü teslim aldıkları tarihten itibaren 30 gün içinde iade talebinde bulunabilir. Süre, kargo firmasının teslimat kaydındaki tarih esas alınarak hesaplanır." *(alıntı doğrulandı)*  
 **Sürüm kararı:** `iade-politikasi-v1` v1.0 elendi — 2.0 sürümü (2025-06-01) tarafından geçersiz kılındı.  
 **Kontroller:** ✅ yanıtlanabilirlik · ✅ kaynak · ✅ yasak kaynak yok · ✅ içerik · ✅ yasak ifade · ✅ eski sürüm elendi  
-**Arama isabeti:** BM25 ✅ · hibrit ✅ · **Süre:** 1,3 sn
+**Arama isabeti:** BM25 ✅ · hibrit ✅ · **Süre:** 1,5 sn
 
 ### C02 · Çelişkili · ✅ geçti
 
@@ -165,7 +165,7 @@
 **Kaynak:** `iade-politikasi-v2` v2.0 (2025-06-01) › 6. Para İadesi — "İade edilen ürün depomuza ulaşıp kontrol edildikten sonra ücret, 5 iş günü içinde ödemenin yapıldığı karta veya hesaba iade edilir." *(alıntı doğrulandı)*  
 **Sürüm kararı:** `iade-politikasi-v1` v1.0 elendi — 2.0 sürümü (2025-06-01) tarafından geçersiz kılındı.  
 **Kontroller:** ✅ yanıtlanabilirlik · ✅ kaynak · ✅ yasak kaynak yok · ✅ içerik · ✅ yasak ifade · ✅ eski sürüm elendi  
-**Arama isabeti:** BM25 ✅ · hibrit ✅ · **Süre:** 1,3 sn
+**Arama isabeti:** BM25 ✅ · hibrit ✅ · **Süre:** 1,5 sn
 
 ### C03 · Çelişkili · ✅ geçti
 
@@ -176,16 +176,16 @@
 **Kaynak:** `destek-kanallari-v2` v2.0 (2025-09-01) › 2. Telefon Desteği — "Çağrı merkezimize 0850 000 00 00 numarasından hafta sonu ve resmî tatiller dahil her gün 08:00–22:00 saatleri arasında ulaşabilirsiniz." *(alıntı doğrulandı)*  
 **Sürüm kararı:** `destek-kanallari-v1` v1.0 elendi — 2.0 sürümü (2025-09-01) tarafından geçersiz kılındı.  
 **Kontroller:** ✅ yanıtlanabilirlik · ✅ kaynak · ✅ yasak kaynak yok · ✅ içerik · ✅ yasak ifade · ✅ eski sürüm elendi  
-**Arama isabeti:** BM25 ✅ · hibrit ✅ · **Süre:** 2,0 sn
+**Arama isabeti:** BM25 ✅ · hibrit ✅ · **Süre:** 2,1 sn
 
 ### C04 · Çelişkili · ✅ geçti
 
 **Soru:** İade kargo ücretini kim öder?  
 **Beklenen:** Anlaşmalı kargo ile iade kodu kullanılarak gönderilen iadelerde kargo ücretsizdir; ücreti Lumora karşılar (İade Politikası v2.0). 2024 tarihli SSS'deki 'müşteri öder' bilgisi ve v1.0 geçersiz.  
-**Gerçek:** İade kodunu kullanarak anlaşmalı kargo firmamızla gönderdiğiniz iadelerin kargo ücretini Lumora karşılamaktadır.  
+**Gerçek:** İade kargosu ücretsizdir; iade kodunu kullanarak anlaşmalı kargo firmamızla gönderdiğiniz iadelerin kargo ücretini Lumora karşılar.  
 **Kaynak:** `iade-politikasi-v2` v2.0 (2025-06-01) › 5. İade Kargo Ücreti — "İade kargosu ücretsizdir: iade kodunu kullanarak anlaşmalı kargo firmamızla gönderdiğiniz iadelerin kargo ücretini Lumora karşılar." *(alıntı doğrulandı)*  
 **Sürüm kararı:** `iade-politikasi-v1` v1.0 elendi — 2.0 sürümü (2025-06-01) tarafından geçersiz kılındı.  
 **Kaynaklar arası çelişki:** İade kargo ücreti — seçilen `iade-politikasi-v2`, elenen `sss-genel`; kurala uygun: evet  
 **Kontroller:** ✅ yanıtlanabilirlik · ✅ kaynak · ✅ yasak kaynak yok · ✅ içerik · ✅ yasak ifade · ✅ eski sürüm elendi  
-**Arama isabeti:** BM25 ✅ · hibrit ✅ · **Süre:** 2,6 sn
+**Arama isabeti:** BM25 ✅ · hibrit ✅ · **Süre:** 2,8 sn
 

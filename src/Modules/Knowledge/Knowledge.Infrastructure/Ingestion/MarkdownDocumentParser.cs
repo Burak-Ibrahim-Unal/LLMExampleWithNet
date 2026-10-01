@@ -38,7 +38,9 @@ public static class MarkdownDocumentParser
             throw Invalid(fileName, "front matter kapanış satırı ('---') bulunamadı");
         }
 
-        var frontMatter = ReadFrontMatter(fileName, normalized[(Delimiter.Length + 1)..closing]);
+        // "---\n---\n": the closing delimiter directly follows the opening one, i.e. the front matter is empty.
+        var yaml = closing > Delimiter.Length ? normalized[(Delimiter.Length + 1)..closing] : string.Empty;
+        var frontMatter = ReadFrontMatter(fileName, yaml);
         var body = normalized[(closing + Delimiter.Length + 2)..];
 
         var title = Required(fileName, frontMatter.Title, "title");

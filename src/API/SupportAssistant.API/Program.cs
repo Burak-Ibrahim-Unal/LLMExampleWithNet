@@ -20,14 +20,19 @@ if (string.Equals(Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT"), 
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Servis kayıtları üç extension'a ayrılır: web katmanı (FastEndpoints, OpenAPI belgesi, MediatR), modül servisleri
-// (zaman kaynağı, repository'ler, iş kuralları, cevaplama politikaları, IKnowledgeService) ve altyapı (SQLite
-// DbContext, Knowledge adaptörleri, migrator/seeder). Program.cs böylece yalnızca açılış akışını gösterir.
+// Servis kayıtları dört extension'a ayrılır: web katmanı (FastEndpoints, OpenAPI belgesi, MediatR), koruma katmanları
+// (hız sınırı), modül servisleri (zaman kaynağı, repository'ler, iş kuralları, cevaplama politikaları,
+// IKnowledgeService) ve altyapı (SQLite DbContext, Knowledge adaptörleri, migrator/seeder). Program.cs böylece yalnızca
+// açılış akışını gösterir.
 builder.Services.AddWebApiServices();
+builder.Services.AddSecurityServices(builder.Configuration);
 builder.Services.AddModuleServices();
 builder.Services.AddInfrastructureServices(builder.Configuration);
 
 var app = builder.Build();
+
+// Hız sınırı uç noktalardan önce çalışır; politika yalnızca onu isteyen uca (POST /v1/questions) uygulanır.
+app.UseRateLimiter();
 
 // Tüm uç noktalar "v1" önekiyle yayınlanır (ör. /v1/questions). Sözleşme ileride uyumsuz biçimde değişirse yeni bir
 // sürüm, mevcut istemcileri bozmadan yanına eklenebilir.

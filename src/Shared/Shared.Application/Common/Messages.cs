@@ -115,4 +115,17 @@ public static class Messages
         public const string UnsafeOutputRefused =
             "Üretilen yanıt güvenlik denetiminden geçmediği için gösterilmedi. Lütfen sorunuzu farklı bir şekilde yeniden sorun.";
     }
+
+    /// <summary>
+    /// API genelindeki koruma katmanlarının (hız sınırı, yönetici anahtarı, istek boyutu) mesajları. Tek bir modüle ait
+    /// olmadıkları için ayrı bir iç sınıfta durur; zarf ve dil diğer yanıtlarla aynıdır.
+    /// </summary>
+    public static class Security
+    {
+        /// <summary>
+        /// İstemci, soru ucunun dakika başına istek sınırını aştığında 429 yanıtının mesajı. Ne kadar bekleneceği
+        /// <c>Retry-After</c> başlığında saniye olarak verilir.
+        /// </summary>
+        public const string TooManyRequests = "Çok fazla istek gönderildi. Lütfen biraz bekleyip tekrar deneyin.";
+    }
 }

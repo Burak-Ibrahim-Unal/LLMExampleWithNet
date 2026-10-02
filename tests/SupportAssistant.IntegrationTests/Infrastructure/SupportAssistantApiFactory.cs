@@ -69,7 +69,10 @@ public class SupportAssistantApiFactory : WebApplicationFactory<Program>
                 // Boş adresler ağ erişimini keser: embedding kapanır (DisabledTextEmbedder, yalnızca BM25) ve gerçek LLM
                 // istemcisi hiç kurulmaz; sahte üretici devreye girmese bile testler uzak bir sunucuya istek atamaz.
                 ["Embeddings:BaseUrl"] = string.Empty,
-                ["Llm:BaseUrl"] = string.Empty
+                ["Llm:BaseUrl"] = string.Empty,
+                // Hız sınırı açık kalır ama testlerin toplam soru sayısının çok üstündedir; sınırın kendisi ayrı bir
+                // fabrikayla (LowRateLimitApiFactory) sınanır.
+                ["RateLimiting:QuestionsPerMinute"] = "1000"
             });
         });
 
@@ -94,6 +97,37 @@ public class SupportAssistantApiFactory : WebApplicationFactory<Program>
         {
             File.Delete(_databasePath);
         }
+    }
+}
+
+/// <summary>
+/// Soru ucunun hız sınırını dakikada <see cref="QuestionsPerMinute"/> soruya indiren fabrika; sınırın aşıldığı durumu
+/// birkaç istekle sınamak içindir.
+/// </summary>
+/// <remarks>
+/// Temel fabrikanın yapılandırması aynen uygulanır, ardından ikinci bir bellek içi kaynak eklenir. Sonra eklenen kaynak
+/// öncekini ezdiği için yalnızca hız sınırı değişir. Diğer test sınıfları yüksek sınırlı temel fabrikayı kullandığından,
+/// aynı süreçte koşan testler birbirinin kotasını tüketmez.
+/// </remarks>
+public sealed class LowRateLimitApiFactory : SupportAssistantApiFactory
+{
+    /// <summary>Bu fabrikada bir istemcinin dakikada gönderebileceği soru sayısı.</summary>
+    public const int QuestionsPerMinute = 2;
+
+    /// <summary>
+    /// Temel test kurulumunu uygular ve hız sınırını <see cref="QuestionsPerMinute"/> değerine indirir.
+    /// </summary>
+    protected override void ConfigureWebHost(IWebHostBuilder builder)
+    {
+        base.ConfigureWebHost(builder);
+
+        builder.ConfigureAppConfiguration((_, configuration) =>
+        {
+            configuration.AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["RateLimiting:QuestionsPerMinute"] = QuestionsPerMinute.ToString(System.Globalization.CultureInfo.InvariantCulture)
+            });
+        });
     }
 }
 

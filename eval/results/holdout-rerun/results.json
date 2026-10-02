@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-02T09:17:28.4876726+03:00",
+  "generatedAt": "2026-10-02T10:09:58.0254937+03:00",
   "baseUrl": "http://localhost:5031",
   "label": "holdout-rerun",
   "status": {
@@ -9,7 +9,7 @@
       "documents": 10,
       "sections": 53,
       "retrievalMode": "hybrid",
-      "builtAtUtc": "2026-10-02T06:16:47.5457739Z"
+      "builtAtUtc": "2026-10-02T07:09:17.9587016Z"
     },
     "llm": {
       "configured": true,
@@ -90,7 +90,7 @@
           "detail": "'e-posta' | 'eposta' | 'mail'"
         }
       ],
-      "latencyMs": 3091,
+      "latencyMs": 19231,
       "lexicalHit": true,
       "hybridHit": true,
       "answer": {
@@ -184,7 +184,7 @@
             }
           ],
           "model": "gemma-4-26b-a4b-it",
-          "latencyMs": 2967,
+          "latencyMs": 19107,
           "inputTokens": 1545,
           "outputTokens": 153,
           "modelCalls": 1
@@ -254,7 +254,7 @@
           "detail": "'49,90' | '49.90'"
         }
       ],
-      "latencyMs": 2149,
+      "latencyMs": 1339,
       "lexicalHit": true,
       "hybridHit": true,
       "answer": {
@@ -344,7 +344,7 @@
             }
           ],
           "model": "gemma-4-26b-a4b-it",
-          "latencyMs": 2138,
+          "latencyMs": 1328,
           "inputTokens": 1206,
           "outputTokens": 116,
           "modelCalls": 1
@@ -401,7 +401,7 @@
           "detail": "beklenen: yanıt, gerçek: bilgi yok (ModelInsufficientContext)"
         }
       ],
-      "latencyMs": 2001,
+      "latencyMs": 1284,
       "lexicalHit": true,
       "hybridHit": true,
       "answer": {
@@ -482,7 +482,7 @@
             }
           ],
           "model": "gemma-4-26b-a4b-it",
-          "latencyMs": 1995,
+          "latencyMs": 1278,
           "inputTokens": 1351,
           "outputTokens": 92,
           "modelCalls": 1
@@ -546,7 +546,7 @@
           "detail": "'2.4 GHz' | '2,4 GHz'"
         }
       ],
-      "latencyMs": 2684,
+      "latencyMs": 1582,
       "lexicalHit": true,
       "hybridHit": true,
       "answer": {
@@ -641,7 +641,7 @@
             }
           ],
           "model": "gemma-4-26b-a4b-it",
-          "latencyMs": 2679,
+          "latencyMs": 1577,
           "inputTokens": 1517,
           "outputTokens": 132,
           "modelCalls": 1
@@ -718,7 +718,7 @@
           "detail": "'yapılamaz' | 'değiştirilemez' | 'değiştiremezsiniz' | 'mümkün değil' | 'hayır'"
         }
       ],
-      "latencyMs": 2657,
+      "latencyMs": 1677,
       "lexicalHit": true,
       "hybridHit": true,
       "answer": {
@@ -821,7 +821,7 @@
             }
           ],
           "model": "gemma-4-26b-a4b-it",
-          "latencyMs": 2652,
+          "latencyMs": 1672,
           "inputTokens": 1239,
           "outputTokens": 163,
           "modelCalls": 1
@@ -862,7 +862,7 @@
           "detail": "—"
         }
       ],
-      "latencyMs": 15,
+      "latencyMs": 12,
       "lexicalHit": null,
       "hybridHit": null,
       "answer": {
@@ -895,7 +895,7 @@
           ],
           "context": [],
           "model": "",
-          "latencyMs": 12,
+          "latencyMs": 9,
           "inputTokens": null,
           "outputTokens": null,
           "modelCalls": 0
@@ -936,7 +936,7 @@
           "detail": "—"
         }
       ],
-      "latencyMs": 1547,
+      "latencyMs": 1020,
       "lexicalHit": null,
       "hybridHit": null,
       "answer": {
@@ -1019,7 +1019,7 @@
             }
           ],
           "model": "gemma-4-26b-a4b-it",
-          "latencyMs": 1543,
+          "latencyMs": 1012,
           "inputTokens": 1372,
           "outputTokens": 63,
           "modelCalls": 1
@@ -1060,7 +1060,7 @@
           "detail": "—"
         }
       ],
-      "latencyMs": 1621,
+      "latencyMs": 1077,
       "lexicalHit": null,
       "hybridHit": null,
       "answer": {
@@ -1141,7 +1141,7 @@
             }
           ],
           "model": "gemma-4-26b-a4b-it",
-          "latencyMs": 1611,
+          "latencyMs": 1073,
           "inputTokens": 1308,
           "outputTokens": 70,
           "modelCalls": 1
@@ -1230,7 +1230,7 @@
           "detail": "beklenen: iade-politikasi-v1; raporlanan: iade-politikasi-v1"
         }
       ],
-      "latencyMs": 1991,
+      "latencyMs": 1375,
       "lexicalHit": true,
       "hybridHit": true,
       "answer": {
@@ -1337,7 +1337,7 @@
             }
           ],
           "model": "gemma-4-26b-a4b-it",
-          "latencyMs": 1979,
+          "latencyMs": 1364,
           "inputTokens": 1253,
           "outputTokens": 115,
           "modelCalls": 1
@@ -1421,7 +1421,7 @@
           "detail": "'müşteriye aittir'"
         }
       ],
-      "latencyMs": 3273,
+      "latencyMs": 2218,
       "lexicalHit": true,
       "hybridHit": true,
       "answer": {
@@ -1549,7 +1549,7 @@
             }
           ],
           "model": "gemma-4-26b-a4b-it",
-          "latencyMs": 3265,
+          "latencyMs": 2206,
           "inputTokens": 1228,
           "outputTokens": 207,
           "modelCalls": 1
@@ -1639,7 +1639,7 @@
           "detail": "beklenen: destek-kanallari-v1; raporlanan: destek-kanallari-v1"
         }
       ],
-      "latencyMs": 1836,
+      "latencyMs": 1405,
       "lexicalHit": true,
       "hybridHit": true,
       "answer": {
@@ -1747,7 +1747,7 @@
             }
           ],
           "model": "gemma-4-26b-a4b-it",
-          "latencyMs": 1832,
+          "latencyMs": 1401,
           "inputTokens": 1297,
           "outputTokens": 115,
           "modelCalls": 1
@@ -1836,7 +1836,7 @@
           "detail": "beklenen: iade-politikasi-v1; raporlanan: iade-politikasi-v1"
         }
       ],
-      "latencyMs": 13504,
+      "latencyMs": 2147,
       "lexicalHit": true,
       "hybridHit": true,
       "answer": {
@@ -1964,7 +1964,7 @@
             }
           ],
           "model": "gemma-4-26b-a4b-it",
-          "latencyMs": 13497,
+          "latencyMs": 2143,
           "inputTokens": 1471,
           "outputTokens": 277,
           "modelCalls": 1

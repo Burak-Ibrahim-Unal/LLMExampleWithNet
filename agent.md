@@ -71,7 +71,12 @@ Kurala aykırı bir tasarım gerekiyorsa önce mimari kararı yaz, sonra testi b
 - Prompt'a giren her güvenilmez metin (doküman alanları, soru, modelin önceki alıntıları) `AnswerPrompt.Neutralize`'dan
   geçer. Kullanıcı mesajına yeni bir alan eklerken de bu kural geçerlidir.
 - `PromptInjectionDetector` kalıplarını değiştirirken hem saldırı hem masum soru örneklerini test et: yanlış alarm gerçek
-  bir müşteri sorusunu yanıtsız bırakır. Hangi kalıbın yakalandığı istemciye söylenmez, yalnızca loglanır.
+  bir müşteri sorusunu yanıtsız bırakır. Hangi kalıbın yakalandığı istemciye söylenmez, yalnızca loglanır. Temsilciler
+  müşteri kayıtlarını ve sohbet dökümlerini yapıştırır: satır başındaki `Sistem:` / `Asistan:` gibi biçimler tek başına
+  saldırı sayılmaz (prompt'ta zaten etkisizleştirilir); normalleştirme kesme işaretli ekleri ayrı sözcüğe böler
+  ("Alexa'dan" → "alexa dan"), kalıp yazarken bunu hesaba kat.
+- Model sunucusuna giden istekler yeniden denenmez (SDK `maxRetries: 0`); soru başına iki istek bütçesi ancak böyle
+  gerçek sayıyı gösterir.
 - Sohbet şablonu belirteçleri çalışan modelin şablonundan alınır (`/props`); model ailesi değişirse kalıp güncellenir.
 - Sistem prompt'unun öncelik kuralı `AnswerPrompt.PrecedenceRule` sabitinde kalır: çıktı koruması
   (`SystemPromptLeakDetector`) o kuralı sızıntı saymaz.

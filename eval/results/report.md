@@ -1,6 +1,6 @@
 # Değerlendirme Raporu
 
-- **Tarih:** 2026-10-02 07:47
+- **Tarih:** 2026-10-02 09:12
 - **Çalıştırma:** varsayılan yapılandırma
 - **Dil modeli:** gemma-4-26b-a4b-it · **Embedding:** bge-m3 · **Arama modu:** hybrid
 - **Sonuç:** 16/16 soru geçti
@@ -15,27 +15,27 @@
 | **Toplam** | **16** | **16** |
 
 **Arama isabeti** (beklenen kaynak, sunucunun varsayılan topK değeri kadar arama sonucu içinde — sürüm çözümünden önce; 12 soru): yalnız BM25 10/12 · hibrit 12/12  
-**Yanıt süresi:** medyan 1,5 sn, ortalama 1,3 sn, en uzun 2,6 sn (Kapı 1'de reddedilen sorular modele gitmediği için ~0 sn)  
+**Yanıt süresi:** medyan 1,5 sn, ortalama 1,5 sn, en uzun 4,4 sn (Kapı 1'de reddedilen sorular modele gitmediği için ~0 sn)  
 **Düzeltme turu:** 0 soruda model ikinci kez çağrıldı
 
 | ID | Kategori | Soru | Beklenen | Sonuç | Süre |
 |---|---|---|---|---|---:|
-| N01 | Normal | Lumora Termo'yu kurarken hangi Wi-Fi ağını kullanmalıyım? | yanıt | ✅ | 1,6 sn |
-| N02 | Normal | Termostatın LED ışığı kırmızı yanıp sönüyor, bu ne anlama geliyor? | yanıt | ✅ | 1,4 sn |
+| N01 | Normal | Lumora Termo'yu kurarken hangi Wi-Fi ağını kullanmalıyım? | yanıt | ✅ | 4,4 sn |
+| N02 | Normal | Termostatın LED ışığı kırmızı yanıp sönüyor, bu ne anlama geliyor? | yanıt | ✅ | 1,3 sn |
 | N03 | Normal | Cihazıma su döküldü ve artık çalışmıyor. Garanti kapsamında ücretsiz onarılır mı? | yanıt | ✅ | 1,3 sn |
 | N04 | Normal | Kaç TL ve üzeri siparişlerde kargo ücretsiz oluyor? | yanıt | ✅ | 1,2 sn |
 | N05 | Normal | Bir müşteri aynı arızayı üçüncü kez bildirirse talebi nasıl ele almalıyım? | yanıt | ✅ | 1,4 sn |
-| N06 | Normal | termostati fabrika ayarlarina nasil donduruyorum | yanıt | ✅ | 1,5 sn |
-| N07 | Normal | Sipariş ettiğim termostat ne zaman elime ulaşır ve kurulum için hangi Wi-Fi ağı gerekir? | yanıt | ✅ | 2,1 sn |
+| N06 | Normal | termostati fabrika ayarlarina nasil donduruyorum | yanıt | ✅ | 1,7 sn |
+| N07 | Normal | Sipariş ettiğim termostat ne zaman elime ulaşır ve kurulum için hangi Wi-Fi ağı gerekir? | yanıt | ✅ | 1,9 sn |
 | N08 | Normal | Paramı ne zaman geri alırım? | yanıt | ✅ | 1,7 sn |
 | U01 | Cevapsız | Lumora'nın genel müdürü kimdir? | bilgi yok | ✅ | 0,0 sn |
-| U02 | Cevapsız | Garanti süresini uzatmak için ek garanti paketi satın alabilir miyim? | bilgi yok | ✅ | 0,9 sn |
+| U02 | Cevapsız | Garanti süresini uzatmak için ek garanti paketi satın alabilir miyim? | bilgi yok | ✅ | 1,0 sn |
 | U03 | Cevapsız | Lumora Termo'yu Apple HomeKit ile kullanabilir miyim? | bilgi yok | ✅ | 0,9 sn |
 | U04 | Cevapsız | Ürünlerinizi yurt dışına gönderiyor musunuz? | bilgi yok | ✅ | 0,0 sn |
-| C01 | Çelişkili | Bir ürünü kaç gün içinde iade edebilirim? | yanıt | ✅ | 1,6 sn |
+| C01 | Çelişkili | Bir ürünü kaç gün içinde iade edebilirim? | yanıt | ✅ | 1,5 sn |
 | C02 | Çelişkili | İade ettiğim ürünün parası kaç iş gününde hesabıma geçer? | yanıt | ✅ | 1,5 sn |
 | C03 | Çelişkili | Destek ekibine hafta sonu ulaşabilir miyim? | yanıt | ✅ | 2,0 sn |
-| C04 | Çelişkili | İade kargo ücretini kim öder? | yanıt | ✅ | 2,6 sn |
+| C04 | Çelişkili | İade kargo ücretini kim öder? | yanıt | ✅ | 2,9 sn |
 
 ## Soru bazında karşılaştırma
 
@@ -43,11 +43,11 @@
 
 **Soru:** Lumora Termo'yu kurarken hangi Wi-Fi ağını kullanmalıyım?  
 **Beklenen:** Yalnızca 2.4 GHz Wi-Fi ağları desteklenir; cihaz 5 GHz ağlara bağlanamaz.  
-**Gerçek:** Lumora Termo kurulumu için yalnızca 2.4 GHz Wi-Fi ağını kullanmalısınız; cihaz 5 GHz ağları desteklemez.  
+**Gerçek:** Lumora Termo kurulumu için yalnızca 2.4 GHz Wi-Fi ağını kullanmalısınız; cihaz 5 GHz ağları desteklememektedir.  
 **Kaynak:** `kurulum-kilavuzu-lumora-termo` v1.0 (2025-02-01) › 2. Kurulumdan Önce — "Lumora Termo yalnızca 2.4 GHz Wi-Fi ağlarını destekler; 5 GHz ağlara bağlanamaz." *(alıntı doğrulandı)*  
 **Kaynak:** `sorun-giderme-baglanti` v1.0 (2025-04-15) › 2. Cihaz Wi-Fi Ağına Bağlanmıyor — "Modeminizin 2.4 GHz yayın yaptığından emin olun; cihaz 5 GHz ağları görmez." *(alıntı doğrulandı)*  
 **Kontroller:** ✅ yanıtlanabilirlik · ✅ kaynak · ✅ bölüm · ✅ alıntı doğrulandı · ✅ sayılar kaynakta · ✅ içerik  
-**Arama isabeti:** BM25 ✅ · hibrit ✅ · **Süre:** 1,6 sn · **Model çağrısı:** 1
+**Arama isabeti:** BM25 ✅ · hibrit ✅ · **Süre:** 4,4 sn · **Model çağrısı:** 1
 
 ### N02 · Normal · ✅ geçti
 
@@ -56,15 +56,15 @@
 **Gerçek:** Termostatın LED ışığının kırmızı yanıp sönmesi, Wi-Fi bağlantısının olmadığını göstermektedir.  
 **Kaynak:** `sorun-giderme-baglanti` v1.0 (2025-04-15) › 1. LED Gösterge Renkleri — "Kırmızı yanıp sönüyor: Wi-Fi bağlantısı yok." *(alıntı doğrulandı)*  
 **Kontroller:** ✅ yanıtlanabilirlik · ✅ kaynak · ✅ bölüm · ✅ alıntı doğrulandı · ✅ içerik · ✅ içerik  
-**Arama isabeti:** BM25 ✅ · hibrit ✅ · **Süre:** 1,4 sn · **Model çağrısı:** 1
+**Arama isabeti:** BM25 ✅ · hibrit ✅ · **Süre:** 1,3 sn · **Model çağrısı:** 1
 
 ### N03 · Normal · ✅ geçti
 
 **Soru:** Cihazıma su döküldü ve artık çalışmıyor. Garanti kapsamında ücretsiz onarılır mı?  
 **Beklenen:** Hayır. Sıvı teması, nem veya su hasarı garanti kapsamı dışındadır.  
-**Gerçek:** Maalesef, sıvı teması, nem veya su hasarı gibi durumlar garanti kapsamı dışında yer almaktadır.  
+**Gerçek:** Maalesef, sıvı teması veya su hasarı gibi durumlar garanti kapsamı dışında yer almaktadır.  
 **Kaynak:** `garanti-kosullari` v1.0 (2025-01-10) › 3. Garanti Kapsamı Dışındaki Durumlar — "Sıvı teması, nem veya su hasarı" *(alıntı doğrulandı)*  
-**Kontroller:** ✅ yanıtlanabilirlik · ✅ kaynak · ✅ bölüm · ✅ alıntı doğrulandı · ✅ içerik  
+**Kontroller:** ✅ yanıtlanabilirlik · ✅ kaynak · ✅ bölüm · ✅ alıntı doğrulandı · ✅ içerik · ✅ yasak ifade · ✅ yasak ifade · ✅ yasak ifade · ✅ yasak ifade · ✅ yasak ifade · ✅ yasak ifade  
 **Arama isabeti:** BM25 ✅ · hibrit ✅ · **Süre:** 1,3 sn · **Model çağrısı:** 1
 
 ### N04 · Normal · ✅ geçti
@@ -73,7 +73,7 @@
 **Beklenen:** 750 TL ve üzerindeki siparişlerde kargo ücretsizdir; altındaki siparişlerde 49,90 TL kargo ücreti alınır.  
 **Gerçek:** 750 TL ve üzerindeki siparişlerde kargo ücretsizdir.  
 **Kaynak:** `kargo-ve-teslimat` v1.0 (2025-03-01) › 2. Kargo Ücreti — "750 TL ve üzerindeki siparişlerde kargo ücretsizdir." *(alıntı doğrulandı)*  
-**Kontroller:** ✅ yanıtlanabilirlik · ✅ kaynak · ✅ bölüm · ✅ alıntı doğrulandı · ✅ sayılar kaynakta · ✅ içerik · ✅ içerik · ✅ yasak ifade  
+**Kontroller:** ✅ yanıtlanabilirlik · ✅ kaynak · ✅ bölüm · ✅ alıntı doğrulandı · ✅ sayılar kaynakta · ✅ içerik · ✅ içerik · ✅ koşul · ✅ yasak ifade · ✅ yasak ifade · ✅ yasak ifade · ✅ yasak ifade · ✅ yasak ifade · ✅ yasak ifade  
 **Arama isabeti:** BM25 ✅ · hibrit ✅ · **Süre:** 1,2 sn · **Model çağrısı:** 1
 
 ### N05 · Normal · ✅ geçti
@@ -92,7 +92,7 @@
 **Gerçek:** Cihazın sağ yanındaki sıfırlama düğmesine 10 saniye boyunca basılı tutmanız gerekmektedir. LED turuncu yanıp sönmeye başladığında düğmeyi bırakabilirsiniz; bu işlemden sonra cihaz yeniden başlar ve tüm ayarlar silinir.  
 **Kaynak:** `kurulum-kilavuzu-lumora-termo` v1.0 (2025-02-01) › 4. Fabrika Ayarlarına Döndürme — "Cihazın sağ yanındaki sıfırlama düğmesine 10 saniye basılı tutun. LED turuncu yanıp sönmeye başladığında düğmeyi bırakın; cihaz yeniden başlar ve tüm ayarlar silinir." *(alıntı doğrulandı)*  
 **Kontroller:** ✅ yanıtlanabilirlik · ✅ kaynak · ✅ bölüm · ✅ alıntı doğrulandı · ✅ sayılar kaynakta · ✅ içerik  
-**Arama isabeti:** BM25 ✅ · hibrit ✅ · **Süre:** 1,5 sn · **Model çağrısı:** 1
+**Arama isabeti:** BM25 ✅ · hibrit ✅ · **Süre:** 1,7 sn · **Model çağrısı:** 1
 
 ### N07 · Normal · ✅ geçti
 
@@ -102,17 +102,17 @@
 **Kaynak:** `kargo-ve-teslimat` v1.0 (2025-03-01) › 1. Teslimat Süresi — "Siparişler, ödeme onayından sonra 1–2 iş günü içinde kargoya verilir. Kargoya verilen siparişler bulunduğunuz bölgeye göre 2–4 iş günü içinde teslim edilir." *(alıntı doğrulandı)*  
 **Kaynak:** `kurulum-kilavuzu-lumora-termo` v1.0 (2025-02-01) › 2. Kurulumdan Önce — "Lumora Termo yalnızca 2.4 GHz Wi-Fi ağlarını destekler; 5 GHz ağlara bağlanamaz." *(alıntı doğrulandı)*  
 **Kontroller:** ✅ yanıtlanabilirlik · ✅ kaynaklar · ✅ bölüm · ✅ alıntı doğrulandı · ✅ sayılar kaynakta · ✅ içerik · ✅ içerik  
-**Arama isabeti:** BM25 ❌ · hibrit ✅ · **Süre:** 2,1 sn · **Model çağrısı:** 1
+**Arama isabeti:** BM25 ❌ · hibrit ✅ · **Süre:** 1,9 sn · **Model çağrısı:** 1
 
 ### N08 · Normal · ✅ geçti
 
 **Soru:** Paramı ne zaman geri alırım?  
 **Beklenen:** İade edilen ürün depoya ulaşıp kontrol edildikten sonra ücret 5 iş günü içinde ödemenin yapıldığı karta veya hesaba iade edilir (v2.0). Soruda 'iade' kelimesi geçmiyor; bölümü anlamsal arama bulmalı.  
 **Gerçek:** İade edilen ürün depomuza ulaşıp kontrol edildikten sonra ücret, 5 iş günü içinde ödemenin yapıldığı karta veya hesaba iade edilir. Bankanızın iadeyi hesabınıza yansıtma süresi bu süreye dahil değildir.  
-**Eksik bilgi (model):** Müşterinin iade talebinin onaylanıp onaylanmadığı veya ürünün depoya ulaşıp ulaşmadığı bilgisi.  
+**Eksik bilgi (model):** Müşterinin iade talebinin onaylanıp ürünün depoya ulaşıp ulaşmadığı bilgisi eksiktir.  
 **Kaynak:** `iade-politikasi-v2` v2.0 (2025-06-01) › 6. Para İadesi — "İade edilen ürün depomuza ulaşıp kontrol edildikten sonra ücret, 5 iş günü içinde ödemenin yapıldığı karta veya hesaba iade edilir." *(alıntı doğrulandı)*  
 **Sürüm kararı:** `iade-politikasi-v1` v1.0 elendi — 2.0 sürümü (2025-06-01) tarafından geçersiz kılındı.  
-**Kontroller:** ✅ yanıtlanabilirlik · ✅ kaynak · ✅ yasak kaynak yok · ✅ bölüm · ✅ alıntı doğrulandı · ✅ sayılar kaynakta · ✅ içerik · ✅ yasak ifade  
+**Kontroller:** ✅ yanıtlanabilirlik · ✅ kaynak · ✅ yasak kaynak yok · ✅ bölüm · ✅ alıntı doğrulandı · ✅ sayılar kaynakta · ✅ içerik · ✅ koşul · ✅ yasak ifade · ✅ yasak ifade · ✅ yasak ifade  
 **Arama isabeti:** BM25 ❌ · hibrit ✅ · **Süre:** 1,7 sn · **Model çağrısı:** 1
 
 ### U01 · Cevapsız · ✅ geçti
@@ -130,7 +130,7 @@
 **Gerçek:** Bu soruyu yanıtlamak için dokümanlarda yeterli bilgi bulunamadı. *(refusalReason: ModelInsufficientContext)*  
 **Eksik bilgi (model):** Verilen kaynaklarda ek garanti paketi satın alınıp alınamayacağına dair bir bilgi bulunmamaktadır.  
 **Kontroller:** ✅ yanıtlanabilirlik · ✅ ret sözleşmesi  
-**Arama isabeti:** BM25 — · hibrit — · **Süre:** 0,9 sn · **Model çağrısı:** 1
+**Arama isabeti:** BM25 — · hibrit — · **Süre:** 1,0 sn · **Model çağrısı:** 1
 
 ### U03 · Cevapsız · ✅ geçti
 
@@ -156,8 +156,8 @@
 **Gerçek:** Ürünü, teslim aldığınız tarihten itibaren 30 gün içinde iade edebilirsiniz. Bu süre, kargo firmasının teslimat kaydındaki tarih esas alınarak hesaplanmaktadır.  
 **Kaynak:** `iade-politikasi-v2` v2.0 (2025-06-01) › 2. İade Süresi — "Müşteriler, ürünü teslim aldıkları tarihten itibaren 30 gün içinde iade talebinde bulunabilir. Süre, kargo firmasının teslimat kaydındaki tarih esas alınarak hesaplanır." *(alıntı doğrulandı)*  
 **Sürüm kararı:** `iade-politikasi-v1` v1.0 elendi — 2.0 sürümü (2025-06-01) tarafından geçersiz kılındı.  
-**Kontroller:** ✅ yanıtlanabilirlik · ✅ kaynak · ✅ yasak kaynak yok · ✅ bölüm · ✅ alıntı doğrulandı · ✅ sayılar kaynakta · ✅ içerik · ✅ yasak ifade · ✅ eski sürüm elendi  
-**Arama isabeti:** BM25 ✅ · hibrit ✅ · **Süre:** 1,6 sn · **Model çağrısı:** 1
+**Kontroller:** ✅ yanıtlanabilirlik · ✅ kaynak · ✅ yasak kaynak yok · ✅ bölüm · ✅ alıntı doğrulandı · ✅ sayılar kaynakta · ✅ içerik · ✅ koşul · ✅ yasak ifade · ✅ yasak ifade · ✅ yasak ifade · ✅ yasak ifade · ✅ eski sürüm elendi  
+**Arama isabeti:** BM25 ✅ · hibrit ✅ · **Süre:** 1,5 sn · **Model çağrısı:** 1
 
 ### C02 · Çelişkili · ✅ geçti
 
@@ -166,7 +166,7 @@
 **Gerçek:** İade edilen ürün depomuza ulaşıp kontrol edildikten sonra ücret, 5 iş günü içinde ödemenin yapıldığı karta veya hesaba iade edilir. Bankanızın iadeyi hesabınıza yansıtma süresi bu süreye dahil değildir.  
 **Kaynak:** `iade-politikasi-v2` v2.0 (2025-06-01) › 6. Para İadesi — "İade edilen ürün depomuza ulaşıp kontrol edildikten sonra ücret, 5 iş günü içinde ödemenin yapıldığı karta veya hesaba iade edilir." *(alıntı doğrulandı)*  
 **Sürüm kararı:** `iade-politikasi-v1` v1.0 elendi — 2.0 sürümü (2025-06-01) tarafından geçersiz kılındı.  
-**Kontroller:** ✅ yanıtlanabilirlik · ✅ kaynak · ✅ yasak kaynak yok · ✅ bölüm · ✅ alıntı doğrulandı · ✅ sayılar kaynakta · ✅ içerik · ✅ yasak ifade · ✅ eski sürüm elendi  
+**Kontroller:** ✅ yanıtlanabilirlik · ✅ kaynak · ✅ yasak kaynak yok · ✅ bölüm · ✅ alıntı doğrulandı · ✅ sayılar kaynakta · ✅ içerik · ✅ koşul · ✅ yasak ifade · ✅ yasak ifade · ✅ yasak ifade · ✅ eski sürüm elendi  
 **Arama isabeti:** BM25 ✅ · hibrit ✅ · **Süre:** 1,5 sn · **Model çağrısı:** 1
 
 ### C03 · Çelişkili · ✅ geçti
@@ -189,5 +189,5 @@
 **Sürüm kararı:** `iade-politikasi-v1` v1.0 elendi — 2.0 sürümü (2025-06-01) tarafından geçersiz kılındı.  
 **Kaynaklar arası çelişki:** İade kargo ücreti — seçilen `iade-politikasi-v2`, elenen `sss-genel`; kurala uygun: evet  
 **Kontroller:** ✅ yanıtlanabilirlik · ✅ kaynak · ✅ yasak kaynak yok · ✅ bölüm · ✅ alıntı doğrulandı · ✅ içerik · ✅ yasak ifade · ✅ eski sürüm elendi · ✅ çelişki kaydı  
-**Arama isabeti:** BM25 ✅ · hibrit ✅ · **Süre:** 2,6 sn · **Model çağrısı:** 1
+**Arama isabeti:** BM25 ✅ · hibrit ✅ · **Süre:** 2,9 sn · **Model çağrısı:** 1
 

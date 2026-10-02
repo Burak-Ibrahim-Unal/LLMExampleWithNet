@@ -30,10 +30,9 @@ catch (ArgumentException exception)
 //    istek gövdesi ve API yanıtları aynı ayarla okunup yazılır.
 var json = new JsonSerializerOptions(JsonSerializerDefaults.Web);
 
-// TODO(halüsinasyon-5): Rapor tarafı yapıldı: "desteksiz iddia oranı" report.md ve results.json'da (HallucinationSignals).
-// Kalan: halüsinasyon odaklı soru seti (ör. eval/questions-hallucination.json: modeli genel bilgiye çeken sorular,
-// yanıtı neredeyse dokümanda olan sorular, sayı tuzakları) ve aynı kontrollerin denetim kaydındaki (question_logs)
-// gerçek yanıtlara düzenli uygulanmasıyla üretimdeki halüsinasyonun izlenmesi. Bkz. README, Halüsinasyon.
+// TODO(halüsinasyon-5): Halüsinasyon seti (eval/questions-hallucination.json) ve rapor tarafı ("desteksiz iddia oranı",
+// HallucinationSignals) yapıldı. Kalan: aynı kontrollerin denetim kaydındaki (question_logs) gerçek yanıtlara düzenli
+// uygulanmasıyla üretimdeki halüsinasyonun izlenmesi. Bkz. README, Halüsinasyon.
 
 // Göreli yol depo köküne göre çözülür (bkz. EvalOptions.ResolveFromRepository). Dosyanın içeriği JSON null ise sıfır
 // soruyla sessizce devam etmek yerine dosya yolunu gösteren bir hatayla durulur.

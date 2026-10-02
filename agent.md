@@ -61,8 +61,12 @@ Kurala aykırı bir tasarım gerekiyorsa önce mimari kararı yaz, sonra testi b
   ikinci bir bütçe ekleme. `GeneratedAnswer.Attempts` gerçek istek sayısını, token alanları bütün isteklerin toplamını taşır.
 - Modelin çıktısı JSON şemasıyla kısıtlanır; şemada nullable alan kullanma, her alan `required` olsun (llama.cpp grammar uyumu, eksik çıktı = geçersiz çıktı).
 - Prompt değişikliği yapınca `tools/SupportAssistant.Eval` ile değerlendirmeyi yeniden koş ve raporu güncelle.
-- `eval/questions-holdout.json` bağımsız settir: eşik, prompt ya da `TopK` ayarı için kullanma; beklentilerini sonuç
-  görüp değiştirme. İlk koşunun raporunu (`eval/results/holdout/`) silme; yeni koşuları ayrı bir `--label` ile yaz.
+- `eval/questions.json` kalibrasyon setidir: bir kontrolün kendi hatası (doğru bir yanıtı kaldıran ifade listesi gibi)
+  düzeltilebilir, ama düzeltme README'de gerekçesiyle yazılır.
+- `eval/questions-holdout.json`, `eval/questions-holdout-2.json` ve `eval/questions-hallucination.json` bağımsız
+  setlerdir: eşik, prompt ya da `TopK` ayarı için kullanma; beklentilerini sonuç görüp değiştirme. Yeni bir bağımsız
+  set ilk koşudan önce commit'lenir; sonuçları olduğu gibi raporlanır. İlk koşuların raporlarını (`eval/results/holdout/`
+  gibi) silme; yeni koşuları ayrı bir `--label` ile yaz. Soru kimlikleri bütün setlerde benzersizdir (birim testi denetler).
 - Kritik kararlarda (eşik, süre, kapsam) değerlendirme beklentisi sayının varlığını (`mustContain`) ve koşulun yönünü
   (`conditions`, ters yazımlar `mustNotContain`'de) ayrı denetler. Bu kontroller kısmidir; README'de öyle anlatılır.
 

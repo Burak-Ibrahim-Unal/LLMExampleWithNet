@@ -103,6 +103,80 @@
       }
     },
     {
+      "id": "N09",
+      "category": "normal",
+      "question": "Garanti başvurusunu nereden yaparım ve hangi bilgiler gerekir?",
+      "expectedAnswer": "Lumora uygulamasında Destek > Garanti Talebi menüsünden; başvuru için cihazın seri numarası ve fatura gerekir (seri numarası cihazın arka yüzünde ve uygulamadaki Cihaz Bilgileri ekranında yer alır).",
+      "expect": {
+        "answerable": true,
+        "sourcesAnyOf": ["garanti-kosullari"],
+        "mustContain": [["Garanti Talebi"], ["seri numara"], ["fatura"]],
+        "sectionsAnyOf": ["Garanti Başvurusu"]
+      }
+    },
+    {
+      "id": "N10",
+      "category": "normal",
+      "question": "Garanti kapsamındaki cihazımın onarımı en geç ne kadar sürer?",
+      "expectedAnswer": "Cihazın servise ulaşmasından itibaren en geç 20 iş günü; bu süre aşılırsa cihazın yenisiyle değiştirilmesi talep edilebilir.",
+      "expect": {
+        "answerable": true,
+        "sourcesAnyOf": ["garanti-kosullari"],
+        "mustContain": [["20 iş günü", "yirmi iş günü"]],
+        "conditions": [["en geç 20 iş günü", "en fazla 20 iş günü", "20 iş günü içinde", "20 iş günü içerisinde", "20 iş gününde", "20 iş günü sürer", "20 iş gününü geçmez", "20 iş gününü aşmaz"]],
+        "sectionsAnyOf": ["Onarım Süresi"]
+      }
+    },
+    {
+      "id": "N11",
+      "category": "normal",
+      "question": "Uygulamada E02 hata kodu görüyorum, sorun ne ve ne yapmalıyım?",
+      "expectedAnswer": "E02, Lumora sunucularına ulaşılamadığını gösterir; internet bağlantınızı kontrol edin.",
+      "expect": {
+        "answerable": true,
+        "sourcesAnyOf": ["sorun-giderme-baglanti"],
+        "mustContain": [["sunucu"], ["internet"]],
+        "sectionsAnyOf": ["Hata Kodları"]
+      }
+    },
+    {
+      "id": "N12",
+      "category": "normal",
+      "question": "Siparişim hasarlı geldi, ne yapmalıyım?",
+      "expectedAnswer": "Teslimattan itibaren 3 gün içinde fotoğraflarla birlikte uygulamadaki Destek > Teslimat Sorunu menüsünden bildirin; ürün ücretsiz değiştirilir. Paket hasarlı görünüyorsa teslim alırken kargo görevlisine hasar tespit tutanağı tutturulmalıdır.",
+      "expect": {
+        "answerable": true,
+        "sourcesAnyOf": ["kargo-ve-teslimat"],
+        "mustContain": [["3 gün", "üç gün"], ["fotoğraf"]],
+        "conditions": [["3 gün içinde", "3 gün içerisinde", "üç gün içinde", "en geç 3 gün"]],
+        "sectionsAnyOf": ["Hasarlı veya Eksik Teslimat"]
+      }
+    },
+    {
+      "id": "N13",
+      "category": "normal",
+      "question": "Müşteri termostattan yanık kokusu geldiğini söylüyor. Talebi nasıl yönetmeliyim?",
+      "expectedAnswer": "Müşteriden cihazın elektriğini hemen kesmesi istenir ve talep doğrudan L3'e (ürün mühendisliği) aktarılır.",
+      "expect": {
+        "answerable": true,
+        "sourcesAnyOf": ["sikayet-eskalasyon-proseduru"],
+        "mustContain": [["L3", "Seviye 3"], ["elektri"]],
+        "sectionsAnyOf": ["Eskalasyon Kriterleri"]
+      }
+    },
+    {
+      "id": "N14",
+      "category": "normal",
+      "question": "Kombiden gelen kabloları termostatta nereye bağlamalıyım?",
+      "expectedAnswer": "Montaj plakasındaki COM ve NO uçlarına (kurulumdan önce kombinin elektrik bağlantısı kesilmelidir).",
+      "expect": {
+        "answerable": true,
+        "sourcesAnyOf": ["kurulum-kilavuzu-lumora-termo"],
+        "mustContain": [["COM ve NO", "COM ile NO", "NO ve COM", "COM NO"]],
+        "sectionsAnyOf": ["Adım Adım Kurulum"]
+      }
+    },
+    {
       "id": "U01",
       "category": "cevapsiz",
       "question": "Lumora'nın genel müdürü kimdir?",
@@ -128,6 +202,34 @@
       "category": "cevapsiz",
       "question": "Ürünlerinizi yurt dışına gönderiyor musunuz?",
       "expectedAnswer": "Dokümanlarda yurt dışı gönderimden bahsedilmiyor; bilgi olmadığı belirtilmeli.",
+      "expect": { "answerable": false }
+    },
+    {
+      "id": "U05",
+      "category": "cevapsiz",
+      "question": "Lumora Termo'nun fiyatı ne kadar?",
+      "expectedAnswer": "Dokümanlarda ürün fiyatı yok; bilgi olmadığı belirtilmeli. 750 TL kargo eşiği ve 49,90 TL kargo ücreti fiyat değildir.",
+      "expect": { "answerable": false }
+    },
+    {
+      "id": "U06",
+      "category": "cevapsiz",
+      "question": "Verdiğim siparişi nasıl iptal edebilirim?",
+      "expectedAnswer": "Dokümanlarda sipariş iptali anlatılmıyor (yalnızca kargoya verilmeden önce adres değişikliği ve teslimattan sonra iade var); bilgi olmadığı belirtilmeli.",
+      "expect": { "answerable": false }
+    },
+    {
+      "id": "U07",
+      "category": "cevapsiz",
+      "question": "İndirim kodumu siparişte nereye girmeliyim?",
+      "expectedAnswer": "Dokümanlarda indirim kodu ya da kampanya bilgisi yok; bilgi olmadığı belirtilmeli.",
+      "expect": { "answerable": false }
+    },
+    {
+      "id": "U08",
+      "category": "cevapsiz",
+      "question": "Lumora Termo WPA3 şifrelemeli Wi-Fi ağlarını destekliyor mu?",
+      "expectedAnswer": "Dokümanlarda Wi-Fi şifreleme standardı geçmiyor (yalnızca 2.4 GHz desteği anlatılıyor); bilgi olmadığı belirtilmeli.",
       "expect": { "answerable": false }
     },
     {
@@ -191,6 +293,65 @@
         "discardedVersions": ["iade-politikasi-v1"],
         "sectionsAnyOf": ["İade Kargo Ücreti"],
         "expectConflict": { "chosen": "iade-politikasi-v2", "rejected": ["sss-genel"] }
+      }
+    },
+    {
+      "id": "C05",
+      "category": "celiskili",
+      "question": "Çağrı merkezinize hangi saatlerde ulaşabilirim?",
+      "expectedAnswer": "Hafta sonu ve resmî tatiller dahil her gün 08:00–22:00 (0850 000 00 00; Destek Kanalları v2.0). v1.0'daki 'hafta içi 09:00–18:00' bilgisi geçersiz.",
+      "expect": {
+        "answerable": true,
+        "sourcesAnyOf": ["destek-kanallari-v2"],
+        "forbiddenSources": ["destek-kanallari-v1"],
+        "mustContain": [["08:00", "8:00"], ["22:00"]],
+        "mustNotContain": ["18:00", "destek hizmeti verilmez"],
+        "discardedVersions": ["destek-kanallari-v1"],
+        "sectionsAnyOf": ["Telefon Desteği"]
+      }
+    },
+    {
+      "id": "C06",
+      "category": "celiskili",
+      "question": "Canlı sohbetten destek alabilir miyim?",
+      "expectedAnswer": "Evet. Mobil uygulama ve web sitesindeki canlı sohbet haftanın 7 günü 24 saat hizmet verir; ilk yanıt süresi hedefi 5 dakikadır (v2.0). v1.0'daki 'canlı sohbet sunulmamaktadır' bilgisi geçersiz.",
+      "expect": {
+        "answerable": true,
+        "sourcesAnyOf": ["destek-kanallari-v2"],
+        "forbiddenSources": ["destek-kanallari-v1"],
+        "mustContain": [["7/24", "7 gün", "24 saat", "her gün"]],
+        "mustNotContain": ["sunulmamaktadır", "sunulmuyor"],
+        "discardedVersions": ["destek-kanallari-v1"],
+        "sectionsAnyOf": ["Canlı Sohbet"]
+      }
+    },
+    {
+      "id": "C07",
+      "category": "celiskili",
+      "question": "İade talebi oluşturduktan sonra iade kodum ne zaman gelir?",
+      "expectedAnswer": "İade kodu talep anında oluşturulur ve Lumora uygulamasında görüntülenir (v2.0). v1.0'daki 'en geç 2 iş günü içinde e-posta ile' bilgisi geçersiz.",
+      "expect": {
+        "answerable": true,
+        "sourcesAnyOf": ["iade-politikasi-v2"],
+        "forbiddenSources": ["iade-politikasi-v1"],
+        "mustContain": [["anında", "hemen", "anda", "anlık"]],
+        "mustNotContain": ["2 iş günü"],
+        "discardedVersions": ["iade-politikasi-v1"],
+        "sectionsAnyOf": ["İade Talebi Nasıl Oluşturulur"]
+      }
+    },
+    {
+      "id": "C08",
+      "category": "celiskili",
+      "question": "Termostatı bir pazaryerinden satın aldım. İadeyi nasıl yapacağım?",
+      "expectedAnswer": "Bayi ve pazaryeri satışlarında, satın alma yapılan satıcının iade koşulları geçerlidir. Bu bölüm v1.0 ve v2.0'da aynıdır; yine de güncel sürüm gösterilmeli ve v1.0 elenmelidir.",
+      "expect": {
+        "answerable": true,
+        "sourcesAnyOf": ["iade-politikasi-v2"],
+        "forbiddenSources": ["iade-politikasi-v1"],
+        "mustContain": [["satıcı"]],
+        "discardedVersions": ["iade-politikasi-v1"],
+        "sectionsAnyOf": ["Kapsam"]
       }
     }
   ]

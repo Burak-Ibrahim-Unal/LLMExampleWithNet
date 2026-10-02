@@ -234,17 +234,18 @@ internal static partial class AnswerPrompt
     /// Düzeltme turunun talimat bloğunu kurar: önceki yanıtın neden kabul edilmediğini söyler ve yalnızca gerçekten
     /// yanlış olan kısmın düzeltilmesini ister. Atıflar kabul edilmediyse kaynak metninde birebir bulunamayan alıntıları
     /// tırnak içinde listeler (ya da atıfların verilen kaynaklara dayanmadığını söyler); çelişki kayıtları geçersiz
-    /// kimlikler içeriyorduysa bunu söyler. Kaynaklar soruyu gerçekten yanıtlamıyorsa açık ret (<c>answerable=false</c>)
-    /// yolu da hatırlatılır.
+    /// kimlikler içeriyorduysa ya da bildirilen çelişkinin geçerli kaynağına atıf yapılmadıysa bunu söyler. Kaynaklar
+    /// soruyu gerçekten yanıtlamıyorsa açık ret (<c>answerable=false</c>) yolu da hatırlatılır.
     /// </summary>
     /// <remarks>
     /// Alıntıların aynen gösterilmesi modele neyi düzeltmesi gerektiğini somut olarak söyler; yalnızca "doğru alıntı yap"
-    /// demek, sıcaklık 0 altında aynı hatanın tekrarlanmasına yol açabilirdi. Sorun yalnızca çelişki kimliklerindeyse
-    /// alıntı uyarısı verilmez; model doğru alıntılarını gereksiz yere değiştirmeye yönlendirilmez. Ret yolunun
-    /// hatırlatılması ise modeli, var olmayan bir dayanak için alıntı uydurmaya zorlamamak içindir: düzeltme turu yanıtı
-    /// kurtarmak için vardır, bilgi yoksa reddetmek yine doğru sonuçtur.
+    /// demek, sıcaklık 0 altında aynı hatanın tekrarlanmasına yol açabilirdi. Sorun yalnızca çelişki kayıtlarındaysa
+    /// alıntı uyarısı verilmez; model doğru alıntılarını gereksiz yere değiştirmeye yönlendirilmez. Geçerli kaynağa atıf
+    /// uyarısı, eşit öncelikli kaynaklarda bağlamdan hiçbir bölüm çıkarılmadığında ikinci isteği ilkinden ayıran tek
+    /// şeydir. Ret yolunun hatırlatılması ise modeli, var olmayan bir dayanak için alıntı uydurmaya zorlamamak içindir:
+    /// düzeltme turu yanıtı kurtarmak için vardır, bilgi yoksa reddetmek yine doğru sonuçtur.
     /// </remarks>
-    /// <param name="feedback">Kabul edilmeyen atıfları ve geçersiz çelişki kimliklerini bildiren geri bildirim.</param>
+    /// <param name="feedback">Kabul edilmeyen atıfları, geçersiz çelişki kimliklerini ve atıfsız geçerli kaynağı bildiren geri bildirim.</param>
     private static string BuildCorrection(AnswerFeedback feedback)
     {
         var builder = new StringBuilder("DÜZELTME: Önceki yanıtın kabul edilmedi.");
@@ -270,6 +271,12 @@ internal static partial class AnswerPrompt
         {
             builder.Append("\nÇelişki kayıtlarındaki kaynak kimlikleri yukarıdaki KAYNAKLAR'la eşleşmiyordu. ")
                 .Append("Bir çelişki bildiriyorsan seçilen ve elenen kaynakları yalnızca verilen kimliklerle (C1, C2…) yaz.");
+        }
+
+        if (feedback.WinnerNotCited)
+        {
+            builder.Append("\nBildirdiğin çelişkide geçerli olan kaynağa yanıtta atıf yapmadın. ")
+                .Append("Yanıtı o kaynağa dayandır ve ona atıf yap.");
         }
 
         builder.Append("\nYanıtı yeniden üret");

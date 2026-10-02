@@ -53,8 +53,9 @@ public interface IGroundedAnswerGenerator
 
 /// <summary>
 /// Handler'ın düzeltme turunda modele ilettiği geri bildirim: önceki yanıtın hiçbir atfı kabul edilemedi (alıntılar
-/// atıf yapılan bölümün metninde birebir bulunamadı ya da atıflar verilen kaynaklara dayanmıyordu) ve/veya yanıttaki
-/// çelişki kayıtları verilen kaynaklarda olmayan kimliklere işaret ediyordu.
+/// atıf yapılan bölümün metninde birebir bulunamadı ya da atıflar verilen kaynaklara dayanmıyordu), yanıttaki çelişki
+/// kayıtları verilen kaynaklarda olmayan kimliklere işaret ediyordu ve/veya bildirilen bir çelişkinin geçerli kaynağına
+/// yanıtta atıf yapılmamıştı.
 /// </summary>
 /// <remarks>
 /// Sıcaklık 0 ve sabit seed ile aynı istek aynı hatalı alıntıyı yeniden üretirdi; ikinci denemenin işe yaraması için
@@ -74,7 +75,17 @@ public interface IGroundedAnswerGenerator
 /// Önceki yanıtın çelişki kayıtları verilen kaynaklarda olmayan ya da eksik kimlikler içeriyorduysa true. Böyle bir kayıt
 /// denetlenemez: öncelik kuralının kazananı ve kaybedeni belirlenemez.
 /// </param>
-public sealed record AnswerFeedback(IReadOnlyList<string> UnverifiedQuotes, bool CitationsRejected = true, bool InvalidConflictReferences = false);
+/// <param name="WinnerNotCited">
+/// Önceki yanıt bir çelişkide kurala uygun seçim yaptığı (seçtiği kaynak öncelik kuralının kazananı olduğu) hâlde o
+/// kaynağın dokümanına hiç atıf yapmadıysa true. Model kuralı çiğnediyse false kalır: o durumda sunucu kaybedeni
+/// bağlamdan çıkarır ve modelin geçerli saydığı kaynak artık bağlamda değildir. Eşit öncelikli kaynaklarda bağlamdan
+/// çıkarılacak bir bölüm olmadığı için, düzeltme turundaki isteği ilkinden ayıran tek şey bu geri bildirimdir.
+/// </param>
+public sealed record AnswerFeedback(
+    IReadOnlyList<string> UnverifiedQuotes,
+    bool CitationsRejected = true,
+    bool InvalidConflictReferences = false,
+    bool WinnerNotCited = false);
 
 /// <summary>
 /// Modele verilen tek bir bağlam bölümü: indeks bölümü ve ona bu istek için atanan kısa etiket.

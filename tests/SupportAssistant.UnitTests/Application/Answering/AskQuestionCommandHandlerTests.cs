@@ -713,6 +713,39 @@ public sealed class AskQuestionCommandHandlerTests : IAsyncLifetime
     }
 
     /// <summary>
+    /// Eşit öncelikli kaynaklar arasındaki bir çelişkide (aynı dokümanın iki bölümü: aynı tür, aynı tarih) model seçtiği
+    /// kaynağa atıf yapmazsa, düzeltme turunun bunu söyleyen bir geri bildirimle yapıldığını ve ikinci yanıtın kabul
+    /// edildiğini doğrular.
+    /// </summary>
+    /// <remarks>
+    /// Kod incelemesinde bulundu: eşitlikte kurala göre kaybeden olmadığı için bağlamdan hiçbir bölüm çıkarılmaz. Geri
+    /// bildirim de verilmeseydi ikinci istek ilkinin birebir aynısı olurdu; sıcaklık 0 ve sabit seed altında aynı yanıt
+    /// gelir, ikinci çağrı boşa gider ve yanıt <c>UnresolvedConflict</c> ile reddedilirdi.
+    /// </remarks>
+    [Fact]
+    public async Task A_tied_conflict_without_a_cited_winner_gets_feedback_in_the_correction_round()
+    {
+        _generator.Respond = (_, context) =>
+        {
+            if (_generator.Calls > 1)
+            {
+                return AnswerFrom(context, "iade-v2", ReturnShippingSection);
+            }
+
+            var answer = AnswerWithConflict(context, "iade-v2", ReturnShippingSection, "iade-v2", "2. İade Süresi");
+            var shipping = context.Single(source => source.Chunk.DocumentId == "kargo");
+            return answer with { Citations = [new GeneratedCitation(shipping.Label, shipping.Chunk.Content)] };
+        };
+
+        var result = await AskAsync("İade kargo ücretini kim öder?");
+
+        _generator.Calls.ShouldBe(2);
+        _generator.Feedbacks[1].ShouldNotBeNull().WinnerNotCited.ShouldBeTrue();
+        result.Data!.Answerable.ShouldBeTrue();
+        result.Data.Sources.ShouldHaveSingleItem().DocumentId.ShouldBe("iade-v2");
+    }
+
+    /// <summary>
     /// Çelişki kayıtlarının yalnızca yanıtın dayandığı dokümanlar için gösterildiğini doğrular: ilk yanıt politika ile SSS
     /// arasındaki çelişkiyi bildirip kargo dokümanına dayanır; düzeltme turundaki yanıt da yalnızca kargo dokümanına dayanır
     /// ve kabul edilir. Politikaya hiç atıf olmadığı için çelişki kaydı yanıtta yer almaz.

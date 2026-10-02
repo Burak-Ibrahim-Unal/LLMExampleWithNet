@@ -231,6 +231,31 @@ public sealed class OpenAiCompatibleAnswerGeneratorTests
     }
 
     /// <summary>
+    /// Yalnızca çelişkinin geçerli kaynağına atıf yapılmadığında (atıflar kabul edilmişken) düzeltme bloğunun bunu
+    /// söylediğini, alıntı uyarısı içermediğini doğrular.
+    /// </summary>
+    /// <remarks>
+    /// Eşit öncelikli kaynaklarda bağlamdan çıkarılacak bir bölüm olmadığından, bu cümle düzeltme turundaki isteği
+    /// ilkinden ayıran tek şeydir; model neyi düzelteceğini buradan öğrenir.
+    /// </remarks>
+    [Fact]
+    public async Task Feedback_about_an_uncited_conflict_winner_names_only_that_problem()
+    {
+        var client = new ScriptedChatClient(ValidReply);
+
+        await Create(client).GenerateAsync(
+            "İade süresi kaç gün?",
+            Context,
+            new AnswerFeedback([], CitationsRejected: false, WinnerNotCited: true),
+            cancellationToken: TestContext.Current.CancellationToken);
+
+        var prompt = client.Requests.ShouldHaveSingleItem().Last(message => message.Role == ChatRole.User).Text;
+        prompt.ShouldContain("DÜZELTME:");
+        prompt.ShouldContain("çelişkide geçerli olan kaynağa");
+        prompt.ShouldNotContain("birebir geçmiyor");
+    }
+
+    /// <summary>
     /// Yalnızca çelişki kimlikleri geçersiz olduğunda (atıflar kabul edilmişken) düzeltme bloğunun yalnızca bunu
     /// söylediğini doğrular: çelişki kimlikleri uyarısı vardır, alıntı uyarısı yoktur.
     /// </summary>

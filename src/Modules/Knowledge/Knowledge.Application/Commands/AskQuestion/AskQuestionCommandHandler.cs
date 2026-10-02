@@ -234,9 +234,16 @@ public sealed class AskQuestionCommandHandler(
             var (conflicts, invalidConflictReferences) = CheckConflicts(generated.Conflicts, context);
             var losers = conflicts.SelectMany(conflict => conflict.Losers).ToHashSet();
             var citedDocuments = accepted.Select(citation => citation.Source.Chunk.DocumentId).ToHashSet(StringComparer.Ordinal);
-            var violatesPrecedence = conflicts.Any(conflict => !conflict.RuleSatisfied || !citedDocuments.Contains(conflict.Winner.Chunk.DocumentId))
+            var winnerNotCited = conflicts.Any(conflict => !citedDocuments.Contains(conflict.Winner.Chunk.DocumentId));
+            var violatesPrecedence = conflicts.Any(conflict => !conflict.RuleSatisfied)
+                || winnerNotCited
                 || accepted.Any(citation => losers.Contains(citation.Source));
             var hasInvalidConflictReferences = invalidConflictReferences > 0;
+
+            // Model kurala uygun seçim yaptığı (seçtiği kaynak kuralın kazananı olduğu) hâlde ona atıf yapmadıysa bunu
+            // ayrıca söylemek gerekir. Model kuralı çiğnediyse söylenmez: sunucu kaybedeni bağlamdan çıkarır ve modelin
+            // "geçerli" saydığı kaynak artık bağlamda değildir; böyle bir uyarı modeli yanıltırdı.
+            var chosenWinnerNotCited = conflicts.Any(conflict => conflict.RuleSatisfied && !citedDocuments.Contains(conflict.Winner.Chunk.DocumentId));
 
             if (accepted.Count == 0 || violatesPrecedence || hasInvalidConflictReferences)
             {
@@ -253,15 +260,17 @@ public sealed class AskQuestionCommandHandler(
                     violatesPrecedence,
                     invalidConflictReferences);
 
-                // Düzeltme turu: doğrulanamayan alıntılar ve geçersiz çelişki kimlikleri modele geri bildirim olarak
-                // gösterilir; öncelik ihlalinde kurala göre kaybeden bölümler bağlamdan çıkarılır ve bağlam yeniden C1..Cn
-                // diye etiketlenir. Sunucunun kararı çelişki kaydı olarak saklanır, çünkü kaybeden kaynak artık bağlamda
-                // olmadığından model çelişkiyi bir daha bildiremez.
-                feedback = accepted.Count == 0 || hasInvalidConflictReferences
+                // Düzeltme turu: doğrulanamayan alıntılar, geçersiz çelişki kimlikleri ve atıf yapılmayan geçerli kaynak
+                // modele geri bildirim olarak gösterilir; öncelik ihlalinde kurala göre kaybeden bölümler bağlamdan çıkarılır
+                // ve bağlam yeniden C1..Cn diye etiketlenir. Eşit öncelikli kaynaklarda kaybeden yoktur; ikinci isteği
+                // ilkinden ayıran tek şey o zaman bu geri bildirimdir. Sunucunun kararı çelişki kaydı olarak saklanır, çünkü
+                // kaybeden kaynak artık bağlamda olmadığından model çelişkiyi bir daha bildiremez.
+                feedback = accepted.Count == 0 || hasInvalidConflictReferences || chosenWinnerNotCited
                     ? new AnswerFeedback(
                         accepted.Count == 0 ? citations.Where(citation => !citation.QuoteVerified).Select(citation => citation.Quote).ToList() : [],
                         CitationsRejected: accepted.Count == 0,
-                        InvalidConflictReferences: hasInvalidConflictReferences)
+                        InvalidConflictReferences: hasInvalidConflictReferences,
+                        WinnerNotCited: chosenWinnerNotCited)
                     : null;
 
                 if (violatesPrecedence)

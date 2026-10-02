@@ -107,5 +107,12 @@ public static class Messages
         /// </summary>
         public const string PromptInjectionRefused =
             "Soru, asistanın çalışma talimatlarını değiştirmeye yönelik ifadeler içerdiği için yanıtlanmadı. Lütfen yalnızca destek sorunuzu yazın.";
+        /// <summary>
+        /// Modelin çıktısı güvenlik denetiminden geçmediğinde (sistem prompt'u sızıntısı) yanıt metni ve 200 zarfının
+        /// mesajı. Hangi denetimin tetiklendiği bilerek söylenmez; prompt injection reddindeki gibi saldırgana kalıpların
+        /// etrafından dolaşması için ipucu verilmez.
+        /// </summary>
+        public const string UnsafeOutputRefused =
+            "Üretilen yanıt güvenlik denetiminden geçmediği için gösterilmedi. Lütfen sorunuzu farklı bir şekilde yeniden sorun.";
     }
 }

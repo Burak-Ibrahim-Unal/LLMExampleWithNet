@@ -108,6 +108,11 @@ public sealed record ContextChunk(string Label, IndexedChunk Chunk);
 /// Bu yanıt için sunucuya gerçekte giden model isteği sayısı (geçersiz çıktı yüzünden yapılan yeniden deneme dahil).
 /// Handler soru başına çağrı bütçesini ve tanılamadaki <c>modelCalls</c> değerini bu sayıyla tutar.
 /// </param>
+/// <param name="LeaksSystemPrompt">
+/// Modelin serbest metin alanlarından biri (yanıt, eksik bilgi açıklaması, çelişki konusu ya da gerekçesi) sistem
+/// prompt'undan bir cümleyi tekrarlıyorsa true. Sistem prompt'unu yalnızca üretici bildiği için tespit üreticide yapılır;
+/// handler böyle bir yanıtı göstermeden <c>UnsafeOutput</c> gerekçesiyle reddeder.
+/// </param>
 public sealed record GeneratedAnswer(
     bool Answerable,
     string Answer,
@@ -117,7 +122,8 @@ public sealed record GeneratedAnswer(
     string Model,
     long? InputTokens,
     long? OutputTokens,
-    int Attempts = 1);
+    int Attempts = 1,
+    bool LeaksSystemPrompt = false);
 
 /// <summary>Modelin tek bir atfı: hangi kaynağa dayandığı ve o kaynaktan alıntıladığı metin.</summary>
 /// <param name="ChunkLabel">

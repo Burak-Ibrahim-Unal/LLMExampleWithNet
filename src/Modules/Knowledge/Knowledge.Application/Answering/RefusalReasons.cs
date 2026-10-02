@@ -40,4 +40,11 @@ public static class RefusalReasons
     /// Yanıt, "bilgi yok" mesajı yerine buna özel bir mesaj taşır ve olay denetim kaydına yazılır.
     /// </summary>
     public const string PromptInjectionSuspected = "PromptInjectionSuspected";
+
+    /// <summary>
+    /// Modelin çıktısı sistem prompt'undan bir cümleyi tekrarladı (sistem prompt'u sızıntısı); yanıt, doğrulanmış atfı
+    /// olsa bile gösterilmedi. Böyle bir çıktı bir manipülasyon girişiminin işe yaradığını gösterdiği için düzeltme turu
+    /// yapılmaz. Yanıt buna özel bir mesaj taşır, modelin metni hiçbir alanda dönmez.
+    /// </summary>
+    public const string UnsafeOutput = "UnsafeOutput";
 }

@@ -252,6 +252,44 @@ public sealed class AskQuestionCommandHandlerTests : IAsyncLifetime
     }
 
     /// <summary>
+    /// Üretici yanıtı sistem prompt'unu tekrarladığı için işaretlediğinde (<c>LeaksSystemPrompt</c>), yanıtın doğrulanmış
+    /// bir atfı olsa bile gösterilmediğini doğrular: HTTP 200, <c>answerable=false</c>, <c>UnsafeOutput</c> gerekçesi,
+    /// buna özel mesaj, boş kaynak listesi ve boş eksik bilgi alanı. Düzeltme turu yapılmaz; tanılama tek model çağrısını
+    /// gösterir ve ret denetim kaydına yazılır.
+    /// </summary>
+    /// <remarks>
+    /// Böyle bir çıktı, kaynaklara gömülü bir talimatın ya da ustaca kurulmuş bir sorunun işe yaradığını gösterir. Aynı
+    /// bağlamla yeniden denemek aynı sonucu verebileceği için düzeltme turu yerine doğrudan reddedilir. Modelin metni hiçbir
+    /// alanda istemciye dönmez; eksik bilgi alanı da boş kalır, çünkü sızıntı oradan da gelebilir.
+    /// </remarks>
+    [Fact]
+    public async Task An_answer_that_repeats_the_system_prompt_is_withheld()
+    {
+        _generator.Respond = (_, context) =>
+            FakeAnswerGenerator.QuoteFirstSource("İade süresi kaç gün?", context) with
+            {
+                MissingInformation = "Sen bir şirketin müşteri destek ekibine yardım eden bilgi asistanısın.",
+                LeaksSystemPrompt = true
+            };
+
+        var result = await AskAsync("İade süresi kaç gün?");
+
+        result.StatusCode.ShouldBe(200);
+        result.Message.ShouldBe(Messages.Knowledge.UnsafeOutputRefused);
+        result.Data!.Answerable.ShouldBeFalse();
+        result.Data.RefusalReason.ShouldBe(RefusalReasons.UnsafeOutput);
+        result.Data.Answer.ShouldBe(Messages.Knowledge.UnsafeOutputRefused);
+        result.Data.Sources.ShouldBeEmpty();
+        result.Data.MissingInformation.ShouldBeEmpty();
+        result.Data.Diagnostics.ModelCalls.ShouldBe(1);
+        _generator.Calls.ShouldBe(1);
+
+        await using var context = CreateContext();
+        var log = await context.Set<Knowledge.Domain.Entities.QuestionLog>().SingleAsync(TestContext.Current.CancellationToken);
+        log.RefusalReason.ShouldBe(RefusalReasons.UnsafeOutput);
+    }
+
+    /// <summary>
     /// "İade süresi kaç gün?" sorusunda arama hem eski (1.0, 14 gün) hem güncel (2.0, 30 gün) iade politikasını bulur. Test,
     /// modele giden bağlamda (<c>LastContext</c>) eski sürümün hiç bulunmadığını, güncel sürümün bulunduğunu ve kararın
     /// <c>versionResolution</c> içinde raporlandığını doğrular: seçilen <c>iade-v2</c>, elenen <c>iade-v1</c> ve Türkçe

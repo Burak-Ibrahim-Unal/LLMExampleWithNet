@@ -185,7 +185,9 @@ public sealed class OpenAiCompatibleAnswerGenerator(
     /// güvenilmez. Kimliği boş atıflar burada atılır; etiketin verilen kaynaklardan birine eşlenmesi ve alıntının
     /// doğrulanması Application tarafındaki <c>CitationValidator</c>'ın işidir. Model adı olarak sunucunun döndürdüğü
     /// kimlik değil, yapılandırılan ad raporlanır. Çağrı sayısı ve token kullanımı, şema yeniden denemesi dahil bütün
-    /// denemelerin toplamıdır.
+    /// denemelerin toplamıdır. Serbest metin alanları (yanıt, eksik bilgi, çelişki konusu ve gerekçesi)
+    /// <see cref="SystemPromptLeakDetector"/> ile taranır ve sistem prompt'unu tekrarlayan yanıt
+    /// <see cref="GeneratedAnswer.LeaksSystemPrompt"/> ile işaretlenir; reddetme kararı handler'ındır.
     /// </remarks>
     /// <param name="payload">Ayrıştırılmış ve eksiksiz olduğu denetlenmiş model yanıtı.</param>
     /// <param name="settings">Raporlanacak model adının alındığı yapılandırma.</param>
@@ -194,27 +196,38 @@ public sealed class OpenAiCompatibleAnswerGenerator(
     /// <param name="outputTokens">Bütün denemelerin toplam çıktı token sayısı; sağlayıcı bildirmediyse null.</param>
     private static GeneratedAnswer ToGeneratedAnswer(AnswerPayload payload, LlmOptions settings, int attempts, long? inputTokens, long? outputTokens)
     {
+        var answer = payload.Answer ?? string.Empty;
+        var missingInformation = payload.MissingInformation ?? string.Empty;
+        var conflicts = (payload.Conflicts ?? [])
+            .Select(conflict => new GeneratedConflict(
+                conflict.Topic ?? string.Empty,
+                conflict.ChosenChunkId ?? string.Empty,
+                conflict.RejectedChunkIds ?? [],
+                conflict.Reason ?? string.Empty))
+            .ToList();
+
+        // Çıktı koruması: istemciye dönebilecek serbest metin alanlarından biri sistem prompt'unu tekrarlıyorsa yanıt
+        // işaretlenir. Alıntılar taranmaz; onlar ancak kaynak metninde birebir doğrulanırsa gösterilir.
+        var leaksSystemPrompt = SystemPromptLeakDetector.Repeats(answer)
+            || SystemPromptLeakDetector.Repeats(missingInformation)
+            || conflicts.Any(conflict => SystemPromptLeakDetector.Repeats(conflict.Topic) || SystemPromptLeakDetector.Repeats(conflict.Reason));
+
         return new GeneratedAnswer(
             payload.Answerable,
-            payload.Answer ?? string.Empty,
+            answer,
             (payload.Citations ?? [])
                 .Where(citation => !string.IsNullOrWhiteSpace(citation.ChunkId))
                 .Select(citation => new GeneratedCitation(citation.ChunkId, citation.Quote ?? string.Empty))
                 .ToList(),
-            payload.MissingInformation ?? string.Empty,
-            (payload.Conflicts ?? [])
-                .Select(conflict => new GeneratedConflict(
-                    conflict.Topic ?? string.Empty,
-                    conflict.ChosenChunkId ?? string.Empty,
-                    conflict.RejectedChunkIds ?? [],
-                    conflict.Reason ?? string.Empty))
-                .ToList(),
+            missingInformation,
+            conflicts,
             // response.ModelId değil, yapılandırılan ad: llama.cpp orada yerel model dosyasının yolunu döndürür ve bu
             // yol yanıtın diagnostics bölümüne ve denetim kaydına makine ayrıntısı sızdırırdı.
             settings.ChatModel,
             inputTokens,
             outputTokens,
-            attempts);
+            attempts,
+            leaksSystemPrompt);
     }
 
     /// <summary>Bilinen token sayılarını toplar; yeni değer bilinmiyorsa (null) mevcut toplamı korur.</summary>

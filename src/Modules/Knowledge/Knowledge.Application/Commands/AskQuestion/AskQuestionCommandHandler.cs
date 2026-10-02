@@ -20,11 +20,13 @@ namespace Knowledge.Application.Commands.AskQuestion;
 /// <summary>
 /// Soru-cevap hattının kalbi: bir soruyu yalnızca bilgi tabanındaki, bugün yürürlükte olan kaynaklara dayanarak
 /// yanıtlar ya da "dokümanlarda yeterli bilgi yok" diyerek açıkça reddeder. Adımlar sırasıyla:
-/// iş kuralları (boş soru, 500 karakter sınırı, indeksin hazır olması) → hibrit arama (BM25 + varsa vektör benzerliği,
-/// RRF ile birleştirilir) → Kapı 1 (<see cref="AnswerabilityPolicy"/>: bilgi tabanında soruya yeterince yakın bir şey
-/// var mı?) → sürüm çözümleme (<see cref="VersionResolver"/>: her doküman ailesinde yalnızca yürürlükteki sürüm kalır,
-/// sadece eski sürüm eşleştiyse güncel sürümün bölümleri onun yerine konur, yürürlükte kaynak kalmazsa
-/// <c>NoSourceInEffect</c> reddi) → dil modeli → Kapı 2 (modelin kendi <c>answerable</c> kararı) → Kapı 3
+/// iş kuralları (boş soru, 500 karakter sınırı, indeksin hazır olması) → prompt injection denetimi
+/// (<see cref="PromptInjectionDetector"/>; yakalanan soru aramaya ve modele ulaşmaz) → hibrit arama (BM25 + varsa vektör
+/// benzerliği, RRF ile birleştirilir) → Kapı 1 (<see cref="AnswerabilityPolicy"/>: bilgi tabanında soruya yeterince yakın
+/// bir şey var mı?) → sürüm çözümleme (<see cref="VersionResolver"/>: her doküman ailesinde yalnızca yürürlükteki sürüm
+/// kalır, sadece eski sürüm eşleştiyse güncel sürümün bölümleri onun yerine konur, yürürlükte kaynak kalmazsa
+/// <c>NoSourceInEffect</c> reddi) → dil modeli → çıktı koruması (sistem prompt'unu tekrarlayan yanıt
+/// <c>UnsafeOutput</c> ile reddedilir) → Kapı 2 (modelin kendi <c>answerable</c> kararı) → Kapı 3
 /// (<see cref="CitationValidator"/>: yanıt, modele verilen bir bölümde birebir geçen en az bir alıntıya dayanıyor mu?)
 /// → kaynaklar arası çelişkide öncelik kuralının zorlanması (<see cref="SourcePrecedence"/>) → yanıt metninin
 /// temizlenmesi (<see cref="AnswerText"/>) → <see cref="QuestionLog"/> denetim kaydı.
@@ -196,6 +198,22 @@ public sealed class AskQuestionCommandHandler(
             usage.Add(generated);
             var diagnostics = Diagnostics(retrieval, candidateDocumentIds, context, generated.Model, stopwatch, usage);
 
+            // Çıktı koruması: model sistem prompt'unu tekrarladıysa yanıt, doğrulanmış atfı olsa bile gösterilmez. Böyle bir
+            // çıktı bir manipülasyonun (kaynağa gömülü talimat ya da ustaca kurulmuş soru) işe yaradığını gösterir; aynı
+            // bağlamla yeniden denemek aynı sonucu verebileceği için düzeltme turu yapılmaz. Sızıntı eksik bilgi
+            // açıklamasında da olabileceğinden modelin hiçbir metni istemciye dönmez.
+            if (generated.LeaksSystemPrompt)
+            {
+                logger.LogWarning("The model's output repeated the system prompt; the answer was withheld.");
+                return await RefuseAsync(
+                    question,
+                    RefusalReasons.UnsafeOutput,
+                    string.Empty,
+                    diagnostics,
+                    cancellationToken,
+                    Messages.Knowledge.UnsafeOutputRefused);
+            }
+
             // Kapı 2: model verilen kaynakları yetersiz bulduysa yanıt uydurmaz; neyin eksik olduğunu belirterek reddeder.
             // Bu geçerli bir karardır, düzeltme turu gerektirmez.
             if (!generated.Answerable)
@@ -308,8 +326,8 @@ public sealed class AskQuestionCommandHandler(
     /// <remarks>
     /// Ret bir hata değil geçerli bir iş sonucudur: istemci <c>answerable=false</c>, boş <c>sources</c> ve yanıt alanında
     /// sabit bir Türkçe mesaj alır; modelin ürettiği metin retlerde hiçbir zaman yanıt gibi gösterilmez. Mesaj varsayılan
-    /// olarak "dokümanlarda yeterli bilgi yok" cümlesidir; sorun dokümanlarda değil sorunun kendisinde olduğunda (prompt
-    /// injection) buna özel mesaj verilir. Retler sürüm kararı taşımaz (yalnızca kural metni, boş listeler): sürüm kararları
+    /// olarak "dokümanlarda yeterli bilgi yok" cümlesidir; sorun dokümanlarda değil sorunun kendisinde (prompt injection)
+    /// ya da modelin çıktısında (çıktı koruması) olduğunda buna özel mesaj verilir. Retler sürüm kararı taşımaz (yalnızca kural metni, boş listeler): sürüm kararları
     /// bir yanıtın kaynaklarını açıklamak içindir, yanıt yoksa açıklanacak kaynak da yoktur. Tanılama ise bilerek
     /// doldurulur; neyin bulunduğu ve modele neyin gösterildiği görülebilsin, "neden reddedildi?" sorusu yanıttan ve
     /// denetim kaydından cevaplanabilsin.

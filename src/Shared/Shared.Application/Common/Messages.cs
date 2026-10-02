@@ -141,5 +141,11 @@ public static class Messages
         /// </summary>
         public const string ReindexDisabled =
             "Yeniden indeksleme ucu kapalı: sunucuda yönetici anahtarı (Security__AdminApiKey) tanımlı değil.";
+
+        /// <summary>
+        /// İstek gövdesi izin verilen boyutu aştığında 413 yanıtının mesajı; <c>{0}</c> bayt cinsinden sınırdır. Bir destek
+        /// sorusu en fazla 500 karakterdir, sınır bunun çok üstündedir; aşan istek okunmadan reddedilir.
+        /// </summary>
+        public const string RequestTooLarge = "İstek gövdesi çok büyük; en fazla {0} bayt gönderilebilir.";
     }
 }

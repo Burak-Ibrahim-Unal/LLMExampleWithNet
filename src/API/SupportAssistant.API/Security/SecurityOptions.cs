@@ -25,4 +25,14 @@ public sealed class SecurityOptions
     /// etkilenmez.
     /// </remarks>
     public string AdminApiKey { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Kabul edilen en büyük istek gövdesi, bayt (varsayılan 16384 = 16 KB). 0 ya da negatif değer sınırı kapatır.
+    /// </summary>
+    /// <remarks>
+    /// En büyük meşru gövde, 500 karakterlik bir soruyu taşıyan JSON'dur: Türkçe karakterler UTF-8'de iki bayt tuttuğu
+    /// için bile 1–2 KB'ı geçmez. 16 KB bu yüzden geniş bir paydır; Kestrel'in 30 MB'lık varsayılanı ise her isteğin
+    /// megabaytlarca veriyi belleğe almasına izin verirdi.
+    /// </remarks>
+    public long MaxRequestBodyBytes { get; set; } = 16 * 1024;
 }

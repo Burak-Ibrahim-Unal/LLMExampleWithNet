@@ -5,6 +5,7 @@ using Knowledge.Service.Abstractions;
 using Scalar.AspNetCore;
 using Shared.Application.Abstractions;
 using SupportAssistant.API.Extensions;
+using SupportAssistant.API.Security;
 
 // Yerel geliştirme kolaylığı: git'e alınmayan .env dosyasındaki değerler (bkz. .env.example) ortam değişkenine
 // dönüşür. Gerçek ortam değişkenleri her zaman kazanır (NoClobber var olan bir değişkenin üzerine yazmaz); Development
@@ -31,7 +32,10 @@ builder.Services.AddInfrastructureServices(builder.Configuration);
 
 var app = builder.Build();
 
-// Hız sınırı uç noktalardan önce çalışır; politika yalnızca onu isteyen uca (POST /v1/questions) uygulanır.
+// Koruma katmanları uç noktalardan önce ve bu sırayla çalışır: güvenlik başlıkları her yanıta (reddedilenler dahil)
+// eklenir; boyutu aşan gövde okunmadan 413 alır; hız sınırı yalnızca onu isteyen uca (POST /v1/questions) uygulanır.
+app.UseMiddleware<SecurityHeadersMiddleware>();
+app.UseMiddleware<RequestBodyLimitMiddleware>();
 app.UseRateLimiter();
 
 // Tüm uç noktalar "v1" önekiyle yayınlanır (ör. /v1/questions). Sözleşme ileride uyumsuz biçimde değişirse yeni bir

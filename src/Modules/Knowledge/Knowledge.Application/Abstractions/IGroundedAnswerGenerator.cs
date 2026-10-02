@@ -32,10 +32,34 @@ public interface IGroundedAnswerGenerator
     /// </remarks>
     /// <param name="question">Kırpılmış ve iş kurallarından geçmiş soru.</param>
     /// <param name="context">Sürüm çözümünden sonra modele verilecek, C1..Cn etiketli bölümler.</param>
+    /// <param name="feedback">
+    /// Handler'ın düzeltme turunda verdiği geri bildirim; ilk denemede null. Doluysa adaptör, önceki yanıtın neden kabul
+    /// edilmediğini modele aynı istekte söyler.
+    /// </param>
     /// <param name="cancellationToken">İsteğin iptal belirteci.</param>
     /// <exception cref="Exceptions.AnswerGenerationException">Modele ulaşılamıyorsa ya da model geçersiz çıktı vermeyi sürdürüyorsa (adaptör bir kez yeniden dener).</exception>
-    Task<GeneratedAnswer> GenerateAsync(string question, IReadOnlyList<ContextChunk> context, CancellationToken cancellationToken = default);
+    Task<GeneratedAnswer> GenerateAsync(
+        string question,
+        IReadOnlyList<ContextChunk> context,
+        AnswerFeedback? feedback = null,
+        CancellationToken cancellationToken = default);
 }
+
+/// <summary>
+/// Handler'ın düzeltme turunda modele ilettiği geri bildirim: önceki yanıtın hiçbir atfı kabul edilemedi, çünkü
+/// alıntılar atıf yapılan bölümün metninde birebir bulunamadı (ya da atıflar verilen kaynaklara dayanmıyordu).
+/// </summary>
+/// <remarks>
+/// Sıcaklık 0 ve sabit seed ile aynı istek aynı hatalı alıntıyı yeniden üretirdi; ikinci denemenin işe yaraması için
+/// modelin neyin yanlış olduğunu görmesi gerekir. Geri bildirim bilerek yalnızca veri taşır: modele gidecek Türkçe
+/// talimatın metni Infrastructure katmanındaki prompt sınıfında kurulur, böylece Application katmanı prompt
+/// ayrıntısına bağlanmaz.
+/// </remarks>
+/// <param name="UnverifiedQuotes">
+/// Önceki yanıtta doğrulanamayan alıntılar, modelin yazdığı hâliyle. Atıfların hiçbiri verilen bir kaynağa
+/// dayanmıyorsa boş olabilir.
+/// </param>
+public sealed record AnswerFeedback(IReadOnlyList<string> UnverifiedQuotes);
 
 /// <summary>
 /// Modele verilen tek bir bağlam bölümü: indeks bölümü ve ona bu istek için atanan kısa etiket.

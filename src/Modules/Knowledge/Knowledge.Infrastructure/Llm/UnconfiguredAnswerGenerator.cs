@@ -27,8 +27,13 @@ public sealed class UnconfiguredAnswerGenerator : IGroundedAnswerGenerator
     /// <summary>
     /// Her zaman <see cref="AnswerGenerationFailure.Unavailable"/> nedeniyle <see cref="AnswerGenerationException"/>
     /// fırlatır. Komut işleyicisi bunu gerçek bir erişim hatasıyla aynı yoldan 503'e çevirir; böylece "model yok"
-    /// durumu için ayrı bir kod yolu gerekmez.
+    /// durumu için ayrı bir kod yolu gerekmez. Geri bildirim parametresi yalnızca port sözleşmesi gereği vardır; ilk
+    /// çağrı zaten hata verdiği için düzeltme turu hiç oluşmaz.
     /// </summary>
-    public Task<GeneratedAnswer> GenerateAsync(string question, IReadOnlyList<ContextChunk> context, CancellationToken cancellationToken = default)
+    public Task<GeneratedAnswer> GenerateAsync(
+        string question,
+        IReadOnlyList<ContextChunk> context,
+        AnswerFeedback? feedback = null,
+        CancellationToken cancellationToken = default)
         => throw new AnswerGenerationException(AnswerGenerationFailure.Unavailable, "No language model is configured (Llm:BaseUrl is empty).");
 }

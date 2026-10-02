@@ -6,8 +6,8 @@ using Knowledge.Application.Contracts;
 namespace Knowledge.Infrastructure.Llm;
 
 /// <summary>
-/// Dil modeline gönderilen metinleri tek yerde toplar: sistem prompt'u, yeniden deneme talimatı ve kaynakları
-/// etiketleyen kullanıcı mesajı. Prompt'u taşıma (SDK/HTTP) kodundan ayırmak, prompt değişikliklerinin tek başına
+/// Dil modeline gönderilen metinleri tek yerde toplar: sistem prompt'u, yeniden deneme talimatı, kaynakları etiketleyen
+/// kullanıcı mesajı ve handler'ın düzeltme turundaki geri bildirim bloğu. Prompt'u taşıma (SDK/HTTP) kodundan ayırmak, prompt değişikliklerinin tek başına
 /// gözden geçirilmesini ve mesaj biçiminin birim testleriyle doğrulanmasını kolaylaştırır.
 /// </summary>
 internal static class AnswerPrompt
@@ -92,10 +92,16 @@ internal static class AnswerPrompt
     /// <c>kilavuz</c>, <c>sss</c>) verilir. "KAYNAKLAR" başlığı sistem prompt'undaki adlandırmayla aynıdır. Soru en
     /// sonda olduğundan model uzun bağlamı okuduktan sonra doğrudan soruya yanıt üretir.
     /// </para>
+    /// <para>
+    /// Düzeltme turunda (<paramref name="feedback"/> dolu) kaynaklarla soru arasına <see cref="BuildCorrection"/>
+    /// bloğu girer. Ayrı bir kullanıcı mesajı yerine aynı mesaja eklenir, çünkü bazı sohbet şablonları (Gemma dahil) art
+    /// arda iki kullanıcı mesajını reddeder; soru yine en sonda kalır.
+    /// </para>
     /// </remarks>
     /// <param name="question">Temsilcinin sorusu (iş kurallarından geçmiş, en fazla 500 karakter).</param>
     /// <param name="context">Sürüm çözümünden geçmiş ve sırayla C1..Cn diye etiketlenmiş bağlam bölümleri.</param>
-    public static string BuildUserMessage(string question, IReadOnlyList<ContextChunk> context)
+    /// <param name="feedback">Handler'ın düzeltme turunda verdiği geri bildirim; ilk denemede null.</param>
+    public static string BuildUserMessage(string question, IReadOnlyList<ContextChunk> context, AnswerFeedback? feedback = null)
     {
         var builder = new StringBuilder("KAYNAKLAR:\n\n");
 
@@ -112,6 +118,49 @@ internal static class AnswerPrompt
                 .Append(chunk.Content).Append("\n\n");
         }
 
+        if (feedback is not null)
+        {
+            builder.Append(BuildCorrection(feedback)).Append("\n\n");
+        }
+
         return builder.Append("SORU: ").Append(question).ToString();
+    }
+
+    /// <summary>
+    /// Düzeltme turunun talimat bloğunu kurar: önceki yanıtın atıflarının neden kabul edilmediğini söyler, kaynak
+    /// metninde birebir bulunamayan alıntıları tırnak içinde listeler ve modelden alıntıları kelimesi kelimesine
+    /// kopyalamasını ister. Kaynaklar soruyu gerçekten yanıtlamıyorsa açık ret (<c>answerable=false</c>) yolu da
+    /// hatırlatılır.
+    /// </summary>
+    /// <remarks>
+    /// Alıntıların aynen gösterilmesi modele neyi düzeltmesi gerektiğini somut olarak söyler; yalnızca "doğru alıntı yap"
+    /// demek, sıcaklık 0 altında aynı hatanın tekrarlanmasına yol açabilirdi. Ret yolunun hatırlatılması ise modeli, var
+    /// olmayan bir dayanak için alıntı uydurmaya zorlamamak içindir: düzeltme turu yanıtı kurtarmak için vardır, bilgi
+    /// yoksa reddetmek yine doğru sonuçtur. Liste boşsa (atıflar verilen kaynaklara hiç dayanmıyorsa) yalnızca etiket
+    /// uyarısı verilir.
+    /// </remarks>
+    /// <param name="feedback">Doğrulanamayan alıntıları taşıyan geri bildirim.</param>
+    private static string BuildCorrection(AnswerFeedback feedback)
+    {
+        var builder = new StringBuilder("DÜZELTME: Önceki yanıtının atıfları kabul edilmedi.");
+
+        if (feedback.UnverifiedQuotes.Count == 0)
+        {
+            builder.Append(" Atıflar yukarıdaki KAYNAKLAR'ın kimliklerinden (C1, C2…) birine dayanmıyordu.");
+        }
+        else
+        {
+            builder.Append(" Şu alıntılar atıf yapılan kaynağın metninde birebir geçmiyor:");
+
+            foreach (var quote in feedback.UnverifiedQuotes)
+            {
+                builder.Append("\n- \"").Append(quote).Append('"');
+            }
+        }
+
+        return builder
+            .Append("\nYanıtı yeniden üret: her alıntıyı atıf yaptığın kaynaktan kelimesi kelimesine kopyala. ")
+            .Append("KAYNAKLAR soruyu yanıtlamaya yetmiyorsa answerable=false yap.")
+            .ToString();
     }
 }

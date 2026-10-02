@@ -119,7 +119,7 @@ public sealed class OpenAiCompatibleAnswerGeneratorTests
     {
         var client = new ScriptedChatClient(ValidReply);
 
-        await Create(client).GenerateAsync("İade süresi kaç gün?", Context, TestContext.Current.CancellationToken);
+        await Create(client).GenerateAsync("İade süresi kaç gün?", Context, cancellationToken: TestContext.Current.CancellationToken);
 
         var messages = client.Requests.ShouldHaveSingleItem();
         messages[0].Role.ShouldBe(ChatRole.System);
@@ -132,6 +132,35 @@ public sealed class OpenAiCompatibleAnswerGeneratorTests
         prompt.ShouldContain("2. İade Süresi");
         prompt.ShouldContain("Müşteriler ürünü 30 gün içinde iade edebilir.");
         prompt.ShouldContain("İade süresi kaç gün?");
+        prompt.ShouldNotContain("DÜZELTME");
+    }
+
+    /// <summary>
+    /// Handler'ın düzeltme turunda verdiği geri bildirimin (<c>AnswerFeedback</c>) prompt'a eklendiğini doğrular:
+    /// kullanıcı mesajı bir "DÜZELTME" bloğu içerir, kaynak metninde birebir bulunamayan alıntıyı aynen gösterir ve soru
+    /// yine mesajın sonunda kalır. Geri bildirim aynı kullanıcı mesajına eklenir; ayrı bir mesaj gönderilmez, çünkü
+    /// bazı sohbet şablonları (Gemma dahil) art arda iki kullanıcı mesajını kabul etmez.
+    /// </summary>
+    /// <remarks>
+    /// Sıcaklık 0 ve sabit seed ile aynı istek aynı hatalı alıntıyı yeniden üretirdi; düzeltme turunun işe yaraması için
+    /// modelin neyin yanlış olduğunu görmesi gerekir. Bu test kırılırsa ikinci deneme ilkinin kopyası olur ve doğrulanamayan
+    /// alıntılar boşuna bir model çağrısından sonra yine reddedilir.
+    /// </remarks>
+    [Fact]
+    public async Task Feedback_about_unverified_quotes_is_added_to_the_prompt()
+    {
+        var client = new ScriptedChatClient(ValidReply);
+
+        await Create(client).GenerateAsync(
+            "İade süresi kaç gün?",
+            Context,
+            new AnswerFeedback(["İade süresi 900 gündür."]),
+            TestContext.Current.CancellationToken);
+
+        var prompt = client.Requests.ShouldHaveSingleItem().Last(message => message.Role == ChatRole.User).Text;
+        prompt.ShouldContain("DÜZELTME");
+        prompt.ShouldContain("\"İade süresi 900 gündür.\"");
+        prompt.ShouldEndWith("SORU: İade süresi kaç gün?");
     }
 
     /// <summary>
@@ -146,7 +175,7 @@ public sealed class OpenAiCompatibleAnswerGeneratorTests
     [Fact]
     public async Task The_structured_reply_is_mapped_to_the_generated_answer()
     {
-        var answer = await Create(new ScriptedChatClient(ValidReply)).GenerateAsync("İade süresi kaç gün?", Context, TestContext.Current.CancellationToken);
+        var answer = await Create(new ScriptedChatClient(ValidReply)).GenerateAsync("İade süresi kaç gün?", Context, cancellationToken: TestContext.Current.CancellationToken);
 
         answer.Answerable.ShouldBeTrue();
         answer.Answer.ShouldBe("30 gün içinde iade edebilirsiniz.");
@@ -172,7 +201,7 @@ public sealed class OpenAiCompatibleAnswerGeneratorTests
         var client = new ScriptedChatClient(ValidReply);
 
         await Create(client, new LlmOptions { ChatModel = "gemma-test", Temperature = 0, Seed = 42, MaxOutputTokens = 3000 })
-            .GenerateAsync("İade süresi kaç gün?", Context, TestContext.Current.CancellationToken);
+            .GenerateAsync("İade süresi kaç gün?", Context, cancellationToken: TestContext.Current.CancellationToken);
 
         var options = client.Options.ShouldHaveSingleItem().ShouldNotBeNull();
         options.Temperature.ShouldBe(0f);
@@ -195,7 +224,7 @@ public sealed class OpenAiCompatibleAnswerGeneratorTests
     {
         var client = new ScriptedChatClient("bu json değil", ValidReply);
 
-        var answer = await Create(client).GenerateAsync("İade süresi kaç gün?", Context, TestContext.Current.CancellationToken);
+        var answer = await Create(client).GenerateAsync("İade süresi kaç gün?", Context, cancellationToken: TestContext.Current.CancellationToken);
 
         answer.Answerable.ShouldBeTrue();
         client.Requests.Count.ShouldBe(2);
@@ -217,7 +246,7 @@ public sealed class OpenAiCompatibleAnswerGeneratorTests
             """{"answerable":true,"answer":"","citations":[{"chunkId":"C1","quote":"30 gün"}],"missingInformation":"","conflicts":[]}""",
             ValidReply);
 
-        var answer = await Create(client).GenerateAsync("İade süresi kaç gün?", Context, TestContext.Current.CancellationToken);
+        var answer = await Create(client).GenerateAsync("İade süresi kaç gün?", Context, cancellationToken: TestContext.Current.CancellationToken);
 
         client.Requests.Count.ShouldBe(2);
         answer.Answer.ShouldBe("30 gün içinde iade edebilirsiniz.");
@@ -235,7 +264,7 @@ public sealed class OpenAiCompatibleAnswerGeneratorTests
         var generator = Create(new ScriptedChatClient("bozuk", "yine bozuk"));
 
         var exception = await Should.ThrowAsync<AnswerGenerationException>(
-            () => generator.GenerateAsync("İade süresi kaç gün?", Context, TestContext.Current.CancellationToken));
+            () => generator.GenerateAsync("İade süresi kaç gün?", Context, cancellationToken: TestContext.Current.CancellationToken));
 
         exception.Failure.ShouldBe(AnswerGenerationFailure.InvalidOutput);
     }
@@ -252,7 +281,7 @@ public sealed class OpenAiCompatibleAnswerGeneratorTests
         var client = new ScriptedChatClient(ValidReply) { Failure = new HttpRequestException("connection refused") };
 
         var exception = await Should.ThrowAsync<AnswerGenerationException>(
-            () => Create(client).GenerateAsync("İade süresi kaç gün?", Context, TestContext.Current.CancellationToken));
+            () => Create(client).GenerateAsync("İade süresi kaç gün?", Context, cancellationToken: TestContext.Current.CancellationToken));
 
         exception.Failure.ShouldBe(AnswerGenerationFailure.Unavailable);
     }

@@ -29,9 +29,14 @@ public sealed class FakeAnswerGenerator : IGroundedAnswerGenerator
     /// <summary>
     /// İlk bağlam bölümünün içeriğini yanıt ve alıntı olarak döndürür; eksik bilgi, çelişki ve token sayısı bildirmez.
     /// <c>context[0]</c> güvenle kullanılır: handler bağlam boş kaldığında modeli hiç çağırmadan <c>NoSourceInEffect</c>
-    /// ile reddeder.
+    /// ile reddeder. <paramref name="feedback"/> yok sayılır: alıntı bölüm metninin kendisi olduğundan her zaman
+    /// doğrulanır ve handler bu üreticiyle hiçbir zaman düzeltme turuna girmez.
     /// </summary>
-    public Task<GeneratedAnswer> GenerateAsync(string question, IReadOnlyList<ContextChunk> context, CancellationToken cancellationToken = default)
+    public Task<GeneratedAnswer> GenerateAsync(
+        string question,
+        IReadOnlyList<ContextChunk> context,
+        AnswerFeedback? feedback = null,
+        CancellationToken cancellationToken = default)
     {
         var first = context[0];
         return Task.FromResult(new GeneratedAnswer(

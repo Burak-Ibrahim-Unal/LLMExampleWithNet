@@ -79,14 +79,24 @@ public sealed class OpenAiCompatibleAnswerGenerator(
     /// <see cref="AnswerGenerationFailure.InvalidOutput"/> nedeniyle <see cref="AnswerGenerationException"/> olarak
     /// fırlatılır. Çağıranın kendi iptal isteği ise sarmalanmaz, iptal olarak yukarı taşınır.
     /// </para>
+    /// <para>
+    /// <paramref name="feedback"/> handler'ın düzeltme turuna aittir ve buradaki şema yeniden denemesinden ayrıdır:
+    /// şema denemesi ayrıştırılamayan çıktıyı onarır, handler'ın turu ise ayrıştırılmış ama kabul edilmeyen yanıtı
+    /// (doğrulanamayan alıntılar) yeniden ister. Geri bildirim kullanıcı mesajına eklenir
+    /// (<see cref="AnswerPrompt.BuildUserMessage"/>).
+    /// </para>
     /// </remarks>
-    public async Task<GeneratedAnswer> GenerateAsync(string question, IReadOnlyList<ContextChunk> context, CancellationToken cancellationToken = default)
+    public async Task<GeneratedAnswer> GenerateAsync(
+        string question,
+        IReadOnlyList<ContextChunk> context,
+        AnswerFeedback? feedback = null,
+        CancellationToken cancellationToken = default)
     {
         var settings = options.Value;
         var messages = new List<ChatMessage>
         {
             new(ChatRole.System, AnswerPrompt.System),
-            new(ChatRole.User, AnswerPrompt.BuildUserMessage(question, context))
+            new(ChatRole.User, AnswerPrompt.BuildUserMessage(question, context, feedback))
         };
         var chatOptions = new ChatOptions
         {

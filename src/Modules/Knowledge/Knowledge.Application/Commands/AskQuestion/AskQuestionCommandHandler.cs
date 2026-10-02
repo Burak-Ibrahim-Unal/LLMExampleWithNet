@@ -139,7 +139,7 @@ public sealed class AskQuestionCommandHandler(
 
         try
         {
-            generated = await generator.GenerateAsync(question, context, cancellationToken);
+            generated = await generator.GenerateAsync(question, context, cancellationToken: cancellationToken);
         }
         catch (AnswerGenerationException exception)
         {

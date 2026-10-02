@@ -8,8 +8,9 @@ namespace SupportAssistant.UnitTests.TestDoubles;
 /// </summary>
 /// <remarks>
 /// Yanıt hattı testleri böylece gerçek bir LLM sunucusu olmadan, hızlı ve her çalıştırmada aynı sonuçla koşar. Fake hem
-/// model davranışını yönlendirmeye (<see cref="Respond"/>, <see cref="Failure"/>) hem de modelin çağrılıp çağrılmadığını
-/// ve neyi gördüğünü gözlemlemeye (<see cref="Calls"/>, <see cref="LastContext"/>) olanak verir.
+/// model davranışını yönlendirmeye (<see cref="Respond"/>, <see cref="Failure"/>) hem de modelin çağrılıp çağrılmadığını,
+/// neyi gördüğünü ve hangi geri bildirimi aldığını gözlemlemeye (<see cref="Calls"/>, <see cref="LastContext"/>,
+/// <see cref="Feedbacks"/>) olanak verir.
 /// </remarks>
 internal sealed class FakeAnswerGenerator : IGroundedAnswerGenerator
 {
@@ -38,6 +39,13 @@ internal sealed class FakeAnswerGenerator : IGroundedAnswerGenerator
     public IReadOnlyList<ContextChunk> LastContext { get; private set; } = [];
 
     /// <summary>
+    /// Her çağrıda verilen geri bildirim, çağrı sırasıyla (ilk deneme için null). Düzeltme turu testleri ikinci çağrının
+    /// doğrulanamayan alıntıları modele bildirdiğini, çelişki düzeltmesinde ise geri bildirim gerekmediğini buna bakarak
+    /// doğrular.
+    /// </summary>
+    public List<AnswerFeedback?> Feedbacks { get; } = [];
+
+    /// <summary>
     /// Sorudan ve bağlamdan modelin "yanıtını" üreten temsilci; varsayılanı <see cref="QuoteFirstSource"/>. Testler bunu
     /// değiştirerek ret (<see cref="NotAnswerable"/>), verilmemiş bir kaynağa atıf, çelişki raporu ya da yalnızca kaynak
     /// işaretinden oluşan yanıt gibi model davranışlarını taklit eder.
@@ -51,15 +59,21 @@ internal sealed class FakeAnswerGenerator : IGroundedAnswerGenerator
     public Exception? Failure { get; set; }
 
     /// <summary>
-    /// Çağrıyı ve bağlamı kaydeder; ardından <see cref="Failure"/> doluysa hata veren bir görev, değilse
+    /// Çağrıyı, bağlamı ve geri bildirimi kaydeder; ardından <see cref="Failure"/> doluysa hata veren bir görev, değilse
     /// <see cref="Respond"/> sonucunu döndürür. Kayıt hatadan önce yapılır, böylece başarısız çağrılar da sayılır. İstisna
     /// senkron fırlatılmak yerine görevin içinde döner; gerçek asenkron üreticide olduğu gibi <c>await</c> sırasında
-    /// ortaya çıkar.
+    /// ortaya çıkar. <see cref="Respond"/> çağrıldığında <see cref="Calls"/> zaten artırılmıştır; çağrıya göre farklı
+    /// davranan senaryolar (ilk denemede hatalı, düzeltme turunda doğru yanıt) bunu kullanır.
     /// </summary>
-    public Task<GeneratedAnswer> GenerateAsync(string question, IReadOnlyList<ContextChunk> context, CancellationToken cancellationToken = default)
+    public Task<GeneratedAnswer> GenerateAsync(
+        string question,
+        IReadOnlyList<ContextChunk> context,
+        AnswerFeedback? feedback = null,
+        CancellationToken cancellationToken = default)
     {
         Calls++;
         LastContext = context;
+        Feedbacks.Add(feedback);
 
         return Failure is not null ? Task.FromException<GeneratedAnswer>(Failure) : Task.FromResult(Respond(question, context));
     }

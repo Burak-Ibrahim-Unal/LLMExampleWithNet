@@ -253,6 +253,103 @@ public sealed class OpenAiCompatibleAnswerGeneratorTests
     }
 
     /// <summary>
+    /// Boş bir JSON nesnesinin (<c>{}</c>) "bilgi yok" kararı sayılmadığını doğrular: zorunlu alanlar eksik olduğu için
+    /// yanıt geçersiz çıktıdır, bir kez yeniden denenir ve ikinci <c>{}</c> da <c>InvalidOutput</c> (502) ile sonuçlanır.
+    /// </summary>
+    /// <remarks>
+    /// C# varsayılanlarıyla doldurulan bir nesnede <c>answerable</c> false görünür; bu, modelin kaynakları okuyup verdiği
+    /// bir ret değil, bozuk bir çıktıdır. İkisini karıştırmak teknik bir arızayı "dokümanlarda bilgi yok" diye kullanıcıya
+    /// gösterir ve değerlendirmede cevapsız soruları haksız yere geçirir. Grammar ile zorlanan şemada bu olası değildir;
+    /// şemayı zorlamayan sağlayıcılarda ya da <c>UseJsonSchema=false</c> yapılandırmasında gerçek bir risktir.
+    /// </remarks>
+    [Fact]
+    public async Task An_empty_object_is_invalid_output_not_a_refusal()
+    {
+        var client = new ScriptedChatClient("{}", "{}");
+
+        var exception = await Should.ThrowAsync<AnswerGenerationException>(
+            () => Create(client).GenerateAsync("İade süresi kaç gün?", Context, cancellationToken: TestContext.Current.CancellationToken));
+
+        exception.Failure.ShouldBe(AnswerGenerationFailure.InvalidOutput);
+        client.Requests.Count.ShouldBe(2);
+    }
+
+    /// <summary>
+    /// Listelerde <c>null</c> öğe bulunan bir yanıtın (atıf, çelişki ya da elenen kimlik) geçersiz çıktı sayılıp bir kez
+    /// yeniden denendiğini ve ikinci, geçerli yanıtın kullanıldığını doğrular.
+    /// </summary>
+    /// <remarks>
+    /// Null olamaz işaretleri liste öğelerine uygulanmaz; böyle bir öğe ayrıştırmadan geçer ve ilk kullanıldığı yerde
+    /// <c>NullReferenceException</c> ile 500 hatasına dönüşürdü. Düzeltme denemesine yönlendirmek hem kullanıcıya anlamlı
+    /// bir sonuç verir hem de arızayı 502/503 ayrımının içinde tutar.
+    /// </remarks>
+    [Theory]
+    [InlineData("""{"answerable":true,"answer":"30 gün.","citations":[null],"missingInformation":"","conflicts":[]}""")]
+    [InlineData("""{"answerable":true,"answer":"30 gün.","citations":[{"chunkId":"C1","quote":"30 gün"}],"missingInformation":"","conflicts":[null]}""")]
+    [InlineData("""{"answerable":true,"answer":"30 gün.","citations":[{"chunkId":"C1","quote":"30 gün"}],"missingInformation":"","conflicts":[{"topic":"t","chosenChunkId":"C1","rejectedChunkIds":[null],"reason":"r"}]}""")]
+    public async Task Null_list_items_are_treated_as_invalid_output(string reply)
+    {
+        var client = new ScriptedChatClient(reply, ValidReply);
+
+        var answer = await Create(client).GenerateAsync("İade süresi kaç gün?", Context, cancellationToken: TestContext.Current.CancellationToken);
+
+        client.Requests.Count.ShouldBe(2);
+        answer.Answer.ShouldBe("30 gün içinde iade edebilirsiniz.");
+    }
+
+    /// <summary>
+    /// Tüm alanları dolu, geçerli bir ret yanıtının (<c>answerable=false</c> ve eksik bilgi açıklaması) tek istekte ret
+    /// olarak döndüğünü doğrular.
+    /// </summary>
+    /// <remarks>
+    /// Zorunlu alan denetimi bozuk çıktıyı yakalamalı, gerçek retleri değil: model kaynakları yetersiz bulduğunda bu
+    /// karar Kapı 2'nin ta kendisidir ve yeniden denenmemelidir.
+    /// </remarks>
+    [Fact]
+    public async Task A_complete_refusal_is_still_a_refusal()
+    {
+        var client = new ScriptedChatClient(
+            """{"answerable":false,"answer":"","citations":[],"missingInformation":"Kaynaklarda bu bilgi yok.","conflicts":[]}""");
+
+        var answer = await Create(client).GenerateAsync("İade süresi kaç gün?", Context, cancellationToken: TestContext.Current.CancellationToken);
+
+        client.Requests.Count.ShouldBe(1);
+        answer.Answerable.ShouldBeFalse();
+        answer.MissingInformation.ShouldBe("Kaynaklarda bu bilgi yok.");
+    }
+
+    /// <summary>
+    /// Modele gönderilen JSON şemasında her alanın zorunlu (<c>required</c>) işaretlendiğini doğrular: kök nesnede
+    /// answerable, answer, citations, missingInformation ve conflicts; atıf öğesinde chunkId ve quote; çelişki öğesinde
+    /// topic, chosenChunkId, rejectedChunkIds ve reason.
+    /// </summary>
+    /// <remarks>
+    /// llama.cpp şemayı bir grammar'a çevirir ve zorunlu olmayan alanları çıktıda atlanabilir sayar; zorunlu işaretleri
+    /// eksik bir şema, modelin <c>{}</c> gibi eksik bir nesne üretmesine izin verirdi. Bu test, ayrıştırma tarafındaki
+    /// zorunlu alan denetiminin şema tarafında da karşılığı olduğunu korur.
+    /// </remarks>
+    [Fact]
+    public async Task The_schema_marks_every_field_as_required()
+    {
+        var client = new ScriptedChatClient(ValidReply);
+
+        await Create(client).GenerateAsync("İade süresi kaç gün?", Context, cancellationToken: TestContext.Current.CancellationToken);
+
+        var format = client.Options.ShouldHaveSingleItem().ShouldNotBeNull().ResponseFormat.ShouldBeOfType<ChatResponseFormatJson>();
+        var schema = format.Schema.ShouldNotBeNull();
+        Required(schema).ShouldBe(["answerable", "answer", "citations", "missingInformation", "conflicts"], ignoreOrder: true);
+        Required(schema.GetProperty("properties").GetProperty("citations").GetProperty("items")).ShouldBe(["chunkId", "quote"], ignoreOrder: true);
+        Required(schema.GetProperty("properties").GetProperty("conflicts").GetProperty("items"))
+            .ShouldBe(["topic", "chosenChunkId", "rejectedChunkIds", "reason"], ignoreOrder: true);
+    }
+
+    /// <summary>Bir JSON şeması düğümünün <c>required</c> dizisindeki alan adlarını döndürür (dizi yoksa boş).</summary>
+    private static string[] Required(System.Text.Json.JsonElement schema) =>
+        schema.TryGetProperty("required", out var required)
+            ? required.EnumerateArray().Select(name => name.GetString()!).ToArray()
+            : [];
+
+    /// <summary>
     /// Art arda iki geçersiz yanıttan sonra yeniden denemeden vazgeçildiğini ve <c>InvalidOutput</c> türünde bir
     /// <c>AnswerGenerationException</c> fırlatıldığını doğrular. API bu durumu 502 (<c>LlmInvalidOutput</c>) olarak
     /// döndürür: sunucu erişilebilir ama kullanılabilir bir yanıt üretemedi. Sınırsız yeniden deneme yerine hızlı ve

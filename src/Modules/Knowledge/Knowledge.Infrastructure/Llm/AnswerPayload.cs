@@ -2,9 +2,10 @@ using System.ComponentModel;
 
 namespace Knowledge.Infrastructure.Llm;
 
-// Modele JSON şeması olarak gönderilen yapılandırılmış çıktı sözleşmesi (bu dosyadaki üç sınıf). Hiçbir özellik null
-// olamaz: llama.cpp şemayı bir grammar'a çevirir ve sade türler (null yerine boş metin / boş liste) en güvenilir
-// biçimde dönüşür. [Description] metinleri şemaya alan açıklaması olarak girer; bu yüzden Türkçedir ve modele hitap eder.
+// Modele JSON şeması olarak gönderilen yapılandırılmış çıktı sözleşmesi (bu dosyadaki üç sınıf). Her özellik zorunludur
+// (required) ve hiçbiri null olamaz: llama.cpp şemayı bir grammar'a çevirir, zorunlu alanlar çıktıda atlanamaz ve sade
+// türler (null yerine boş metin / boş liste) en güvenilir biçimde dönüşür. [Description] metinleri şemaya alan açıklaması
+// olarak girer; bu yüzden Türkçedir ve modele hitap eder.
 
 /// <summary>
 /// Modelden istenen yanıtın kök nesnesi. <see cref="OpenAiCompatibleAnswerGenerator"/> bu türden JSON şeması üretir ve
@@ -16,6 +17,12 @@ namespace Knowledge.Infrastructure.Llm;
 /// <para>
 /// Null yerine boş metin ve boş liste kullanılır: llama.cpp'nin şema→grammar dönüşümünde sade türler en güvenilir
 /// sonucu verir ve aşağı akıştaki kod null yerine yalnızca boşluk kontrolü yapar.
+/// </para>
+/// <para>
+/// Bütün özellikler <c>required</c> işaretlidir. Bunun iki etkisi vardır: üretilen şema her alanı zorunlu listeler,
+/// böylece grammar modelin bir alanı atlamasına izin vermez; ayrıştırmada da eksik bir alan hata olur. İşaret olmasaydı
+/// <c>{}</c> gibi eksik bir çıktı C# varsayılanlarıyla dolar ve <c>answerable=false</c> görünerek modelin bilinçli bir
+/// "bilgi yok" kararı sanılırdı; oysa bu, düzeltme denemesine gitmesi gereken bozuk bir çıktıdır.
 /// </para>
 /// <para>
 /// <see cref="DescriptionAttribute"/> metinleri şemada alan açıklaması (<c>description</c>) olur. Prompt, kaynaklar ve
@@ -31,7 +38,7 @@ public sealed class AnswerPayload
     /// "bilgi yok" mesajıyla ve <c>ModelInsufficientContext</c> gerekçesiyle döner.
     /// </summary>
     [Description("Kaynaklar soruyu yanıtlamaya yetiyorsa true, yetmiyorsa false.")]
-    public bool Answerable { get; set; }
+    public required bool Answerable { get; set; }
 
     /// <summary>
     /// Temsilciye gösterilecek yanıt metni. Sunucu, içine kaçmış atıf işaretlerini ve tırnak içine kopyalanmış uzun
@@ -39,7 +46,7 @@ public sealed class AnswerPayload
     /// denemeyi tetikler.
     /// </summary>
     [Description("Temsilcinin müşteriye iletebileceği kısa Türkçe yanıt. Kaynak kimliği içermez. Yanıtlanamıyorsa boş.")]
-    public string Answer { get; set; } = string.Empty;
+    public required string Answer { get; set; }
 
     /// <summary>
     /// Yanıtı destekleyen atıflar. Kapı 3'te yalnızca etiketi modele verilen kaynaklardan birine (C1..Cn) karşılık gelen
@@ -48,7 +55,7 @@ public sealed class AnswerPayload
     /// (doküman ve bölüm) gösterme gereksinimi bu alana dayanır.
     /// </summary>
     [Description("Yanıttaki her bilgiyi destekleyen kaynaklar.")]
-    public List<CitationPayload> Citations { get; set; } = [];
+    public required List<CitationPayload> Citations { get; set; }
 
     /// <summary>
     /// Sorunun kaynaklarla yanıtlanamayan kısmı. Hem yanıtlarda hem de model çağrıldıktan sonra verilen retlerde
@@ -56,7 +63,7 @@ public sealed class AnswerPayload
     /// olduğunu da söyler.
     /// </summary>
     [Description("Kaynaklarda bulunmayan, sorunun yanıtlanamayan kısmı; yoksa boş.")]
-    public string MissingInformation { get; set; } = string.Empty;
+    public required string MissingInformation { get; set; }
 
     /// <summary>
     /// Modelin farklı dokümanlar arasında tespit ettiği çelişkiler. Sunucu her kaydı verilen kaynaklarla eşler,
@@ -64,7 +71,7 @@ public sealed class AnswerPayload
     /// göre kaybeden bölümler bağlamdan çıkarılıp model yeniden çağrılır. Modelin beyanına körü körüne güvenilmez.
     /// </summary>
     [Description("Kaynaklar arasında tespit edilen çelişkiler; yoksa boş liste.")]
-    public List<ConflictPayload> Conflicts { get; set; } = [];
+    public required List<ConflictPayload> Conflicts { get; set; }
 }
 
 /// <summary>
@@ -78,7 +85,7 @@ public sealed class CitationPayload
     /// sunucu etiketi normalize eder; modele verilen kaynaklardan birine karşılık gelmeyen atıf atılır.
     /// </summary>
     [Description("Kaynak kimliği, örneğin C1.")]
-    public string ChunkId { get; set; } = string.Empty;
+    public required string ChunkId { get; set; }
 
     /// <summary>
     /// Kaynaktan birebir kopyalanması istenen kısa alıntı. Sunucu alıntının bölüm metninde gerçekten geçip geçmediğini
@@ -86,7 +93,7 @@ public sealed class CitationPayload
     /// kaynaktaki sırasıyla). Doğrulanamayan alıntının atfı yanıtın kaynağı olamaz.
     /// </summary>
     [Description("Kaynaktan birebir kopyalanmış kısa alıntı.")]
-    public string Quote { get; set; } = string.Empty;
+    public required string Quote { get; set; }
 }
 
 /// <summary>
@@ -98,14 +105,14 @@ public sealed class ConflictPayload
 {
     /// <summary>Çelişkinin konusu; yanıtın <c>conflicts</c> listesinde olduğu gibi gösterilir.</summary>
     [Description("Çelişkinin konusu.")]
-    public string Topic { get; set; } = string.Empty;
+    public required string Topic { get; set; }
 
     /// <summary>
     /// Geçerli sayılan kaynağın etiketi. Modele verilen kaynaklardan birine karşılık gelmiyorsa sunucu bu çelişki
     /// kaydını yok sayar.
     /// </summary>
     [Description("Geçerli kabul edilen kaynağın kimliği.")]
-    public string ChosenChunkId { get; set; } = string.Empty;
+    public required string ChosenChunkId { get; set; }
 
     /// <summary>
     /// Elenen kaynakların etiketleri. Sunucu yalnızca verilen kaynaklara ait olanları tutar ve seçilen kaynağın
@@ -113,12 +120,12 @@ public sealed class ConflictPayload
     /// kalmazsa kayıt yok sayılır.
     /// </summary>
     [Description("Elenen kaynakların kimlikleri.")]
-    public List<string> RejectedChunkIds { get; set; } = [];
+    public required List<string> RejectedChunkIds { get; set; }
 
     /// <summary>
     /// Modelin seçim gerekçesi; temsilciye olduğu gibi gösterilir. Sunucunun kural denetimi bu metne değil, kaynakların
     /// türüne ve yürürlük tarihine dayanır.
     /// </summary>
     [Description("Seçim gerekçesi.")]
-    public string Reason { get; set; } = string.Empty;
+    public required string Reason { get; set; }
 }

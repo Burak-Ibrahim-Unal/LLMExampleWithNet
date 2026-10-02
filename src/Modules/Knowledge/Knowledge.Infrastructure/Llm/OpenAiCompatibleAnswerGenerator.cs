@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 using Knowledge.Application.Abstractions;
 using Knowledge.Application.Exceptions;
@@ -11,8 +12,10 @@ namespace Knowledge.Infrastructure.Llm;
 /// <see cref="IGroundedAnswerGenerator"/> portunun gerçek adaptörü: OpenAI-uyumlu bir sohbet ucunu
 /// Microsoft.Extensions.AI üzerinden çağırır ve yanıtı JSON şemasıyla kısıtlanmış yapıda (<see cref="AnswerPayload"/>)
 /// ister. llama.cpp şemayı bir grammar'a çevirdiği için yanıt normalde her zaman ayrıştırılır; yine de ayrıştırılamayan
-/// (ör. token sınırında yarım kalan ya da şema desteği olmayan bir sunucudan gelen) veya <c>answerable=true</c> olduğu
-/// hâlde yanıt metni boş olan bir çıktı, düzeltici bir mesajla bir kez yeniden denenir.
+/// (ör. token sınırında yarım kalan ya da şema desteği olmayan bir sunucudan gelen), zorunlu bir alanı eksik olan
+/// (<c>{}</c> gibi), listelerinde <c>null</c> öğe bulunan ya da <c>answerable=true</c> olduğu hâlde yanıt metni boş olan
+/// bir çıktı, düzeltici bir mesajla bir kez yeniden denenir. Böylece bozuk bir çıktı hiçbir zaman modelin "bilgi yok"
+/// kararı sanılmaz.
 /// </summary>
 /// <remarks>
 /// Hatalar Application katmanının tanıdığı tek bir istisna türüne çevrilir: uca ulaşılamaması, zaman aşımı veya uçtan
@@ -127,8 +130,9 @@ public sealed class OpenAiCompatibleAnswerGenerator(
                 throw new AnswerGenerationException(AnswerGenerationFailure.Unavailable, $"The language model endpoint failed: {exception.Message}", exception);
             }
 
-            // Şemaya uymak yetmez: yanıt metni olmadan "answerable" ne bir yanıttır ne de bir ret.
-            if (response.TryGetResult(out var payload) && payload is not null && !(payload.Answerable && string.IsNullOrWhiteSpace(payload.Answer)))
+            // Şemaya uymak yetmez: listelerde null öğe olmamalı ve yanıt metni olmadan "answerable" ne bir yanıttır ne de
+            // bir ret. Eksik zorunlu alanlar ise ayrıştırmada hata verir ve TryGetResult false döner.
+            if (response.TryGetResult(out var payload) && IsComplete(payload) && !(payload.Answerable && string.IsNullOrWhiteSpace(payload.Answer)))
             {
                 return ToGeneratedAnswer(payload, response, settings);
             }
@@ -145,6 +149,21 @@ public sealed class OpenAiCompatibleAnswerGenerator(
             messages.Add(new ChatMessage(ChatRole.User, AnswerPrompt.RetryInstruction));
         }
     }
+
+    /// <summary>
+    /// Ayrıştırılmış yanıtın kullanılabilir olup olmadığını denetler: nesne null değildir ve atıf, çelişki ve elenen
+    /// kimlik listelerinde <c>null</c> öğe yoktur.
+    /// </summary>
+    /// <remarks>
+    /// Null olamaz işaretleri (<c>RespectNullableAnnotations</c>) özelliklerin kendisine uygulanır, liste öğelerine
+    /// uygulanmaz: <c>"citations":[null]</c> ayrıştırmadan geçer ve ilk kullanıldığı yerde <c>NullReferenceException</c>
+    /// ile 500 hatasına dönüşürdü. Böyle bir çıktı da şemaya uymayan çıktı gibi düzeltme denemesine yönlendirilir; yine
+    /// olmazsa 502 olur.
+    /// </remarks>
+    private static bool IsComplete([NotNullWhen(true)] AnswerPayload? payload) =>
+        payload is not null
+        && payload.Citations.All(citation => citation is not null)
+        && payload.Conflicts.All(conflict => conflict is not null && conflict.RejectedChunkIds.All(label => label is not null));
 
     /// <summary>
     /// Model yanıtını (<see cref="AnswerPayload"/>) Application katmanının sağlayıcıdan bağımsız

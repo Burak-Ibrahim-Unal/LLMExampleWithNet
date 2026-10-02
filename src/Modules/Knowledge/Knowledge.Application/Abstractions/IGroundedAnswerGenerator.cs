@@ -36,12 +36,18 @@ public interface IGroundedAnswerGenerator
     /// Handler'ın düzeltme turunda verdiği geri bildirim; ilk denemede null. Doluysa adaptör, önceki yanıtın neden kabul
     /// edilmediğini modele aynı istekte söyler.
     /// </param>
+    /// <param name="maxAttempts">
+    /// Bu çağrıda yapılabilecek en fazla model isteği (geçersiz çıktının yeniden denenmesi dahil). Handler soru başına
+    /// tek bir bütçe tutar ve adaptöre yalnızca kalanını verir; böylece adaptörün kendi yeniden denemesi ile handler'ın
+    /// düzeltme turu toplanıp bütçeyi aşamaz.
+    /// </param>
     /// <param name="cancellationToken">İsteğin iptal belirteci.</param>
-    /// <exception cref="Exceptions.AnswerGenerationException">Modele ulaşılamıyorsa ya da model geçersiz çıktı vermeyi sürdürüyorsa (adaptör bir kez yeniden dener).</exception>
+    /// <exception cref="Exceptions.AnswerGenerationException">Modele ulaşılamıyorsa ya da model, deneme bütçesi boyunca geçerli çıktı vermediyse.</exception>
     Task<GeneratedAnswer> GenerateAsync(
         string question,
         IReadOnlyList<ContextChunk> context,
         AnswerFeedback? feedback = null,
+        int maxAttempts = 2,
         CancellationToken cancellationToken = default);
 }
 
@@ -89,6 +95,10 @@ public sealed record ContextChunk(string Label, IndexedChunk Chunk);
 /// </param>
 /// <param name="InputTokens">Girdi token sayısı; sağlayıcı kullanım bilgisi döndürmezse null.</param>
 /// <param name="OutputTokens">Çıktı token sayısı; sağlayıcı kullanım bilgisi döndürmezse null.</param>
+/// <param name="Attempts">
+/// Bu yanıt için sunucuya gerçekte giden model isteği sayısı (geçersiz çıktı yüzünden yapılan yeniden deneme dahil).
+/// Handler soru başına çağrı bütçesini ve tanılamadaki <c>modelCalls</c> değerini bu sayıyla tutar.
+/// </param>
 public sealed record GeneratedAnswer(
     bool Answerable,
     string Answer,
@@ -97,7 +107,8 @@ public sealed record GeneratedAnswer(
     IReadOnlyList<GeneratedConflict> Conflicts,
     string Model,
     long? InputTokens,
-    long? OutputTokens);
+    long? OutputTokens,
+    int Attempts = 1);
 
 /// <summary>Modelin tek bir atfı: hangi kaynağa dayandığı ve o kaynaktan alıntıladığı metin.</summary>
 /// <param name="ChunkLabel">

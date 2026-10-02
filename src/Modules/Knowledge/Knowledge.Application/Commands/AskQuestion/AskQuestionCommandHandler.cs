@@ -64,10 +64,15 @@ public sealed class AskQuestionCommandHandler(
     private const int SubstituteSectionCount = 2;
 
     /// <summary>
-    /// Soru başına en fazla model çağrısı: ilk deneme ve tek bir düzeltme turu. Yerel model her çağrıda saniyeler
-    /// harcadığından sınır bilinçli olarak düşük tutulur; ikinci denemede de kabul edilmeyen yanıt açıkça reddedilir.
-    /// Alıntı ve öncelik düzeltmeleri gerekirse aynı ikinci çağrıda birlikte uygulanır.
+    /// Soru başına en fazla gerçek model isteği; üreticinin geçersiz çıktı için yaptığı yeniden deneme de bu bütçeden
+    /// düşer. Yerel model her çağrıda saniyeler harcadığından sınır bilinçli olarak düşük tutulur: tipik akış tek
+    /// istektir, ikinci istek ya üreticinin şema düzeltmesine ya da handler'ın düzeltme turuna harcanır. Bütçe bittiğinde
+    /// kabul edilmeyen yanıt açıkça reddedilir; alıntı ve öncelik düzeltmeleri gerekirse aynı istekte birlikte uygulanır.
     /// </summary>
+    /// <remarks>
+    /// Bütçe tek bir yerde tutulur ve üreticiye her çağrıda yalnızca kalanı verilir. Önceden handler'ın iki denemesi ile
+    /// üreticinin iki denemesi çarpılıp sunucuya dört istek gidebiliyor, tanılama ise iki diyordu.
+    /// </remarks>
     private const int MaxModelCalls = 2;
 
     /// <summary>
@@ -150,17 +155,17 @@ public sealed class AskQuestionCommandHandler(
         AnswerFeedback? feedback = null;
         var enforcedConflicts = new List<ConflictDto>();
 
-        // Döngünün koşulu yoktur: her tur ya bir yanıt ya bir ret döndürür ya da tek düzeltme turuna geçer
-        // (en fazla MaxModelCalls çağrı).
-        for (var attempt = 1; ; attempt++)
+        // Döngünün koşulu yoktur: her tur ya bir yanıt ya bir ret döndürür ya da düzeltme turuna geçer. Bütün turlar
+        // birlikte en fazla MaxModelCalls gerçek model isteği yapabilir.
+        while (true)
         {
-            // Dil modeli çağrısı. Buradaki hatalar "bilgi yok" reddi değil gerçek hatalardır: erişilemeyen sunucu 503,
-            // adaptörün kendi şema denemesinden sonra da şemaya uymayan çıktı 502 olarak döner.
+            // Dil modeli çağrısı; üreticiye yalnızca kalan bütçe verilir. Buradaki hatalar "bilgi yok" reddi değil gerçek
+            // hatalardır: erişilemeyen sunucu 503, üreticinin bütçesi içinde şemaya uymayan çıktı 502 olarak döner.
             GeneratedAnswer generated;
 
             try
             {
-                generated = await generator.GenerateAsync(question, context, feedback, cancellationToken);
+                generated = await generator.GenerateAsync(question, context, feedback, MaxModelCalls - usage.Calls, cancellationToken);
             }
             catch (AnswerGenerationException exception)
             {
@@ -195,7 +200,8 @@ public sealed class AskQuestionCommandHandler(
 
             if (accepted.Count == 0 || violatesPrecedence)
             {
-                if (attempt == MaxModelCalls)
+                // Bütçe bittiyse (üreticinin şema düzeltmesi ikinci isteği harcadıysa da) düzeltme turu yapılamaz.
+                if (usage.Calls >= MaxModelCalls)
                 {
                     var reason = accepted.Count == 0 ? RefusalReasons.NoValidCitations : RefusalReasons.UnresolvedConflict;
                     return await RefuseAsync(question, reason, generated.MissingInformation, diagnostics, cancellationToken);
@@ -566,16 +572,18 @@ public sealed class AskQuestionCommandHandler(
     }
 
     /// <summary>
-    /// Bir sorudaki model çağrılarının sayısını ve toplam token kullanımını biriktirir; düzeltme turu yapıldığında
-    /// tanılama iki çağrının toplamını gösterir.
+    /// Bir sorudaki gerçek model isteklerinin sayısını ve toplam token kullanımını biriktirir; soru başına çağrı bütçesi
+    /// ve tanılamadaki <c>modelCalls</c> buradan gelir.
     /// </summary>
     /// <remarks>
-    /// Yalnızca son çağrının token sayısını raporlamak düzeltme turunun maliyetini gizlerdi. Sağlayıcı kullanım bilgisi
-    /// döndürmezse toplam null kalır; bilinmeyen bir değer 0 diye gösterilmez.
+    /// Sayım üreticinin bildirdiği gerçek istek sayısıyla (<see cref="GeneratedAnswer.Attempts"/>) yapılır; şema
+    /// düzeltmesi için yapılan yeniden deneme de sayılır. Yalnızca son çağrının token sayısını raporlamak düzeltme turunun
+    /// maliyetini gizlerdi. Sağlayıcı kullanım bilgisi döndürmezse toplam null kalır; bilinmeyen bir değer 0 diye
+    /// gösterilmez.
     /// </remarks>
     private sealed class ModelUsage
     {
-        /// <summary>Şimdiye kadar yapılan model çağrısı sayısı.</summary>
+        /// <summary>Şimdiye kadar sunucuya giden model isteği sayısı (üreticinin yeniden denemeleri dahil).</summary>
         public int Calls { get; private set; }
 
         /// <summary>Toplam girdi token sayısı; hiçbir çağrı bildirmediyse null.</summary>
@@ -584,10 +592,12 @@ public sealed class AskQuestionCommandHandler(
         /// <summary>Toplam çıktı token sayısı; hiçbir çağrı bildirmediyse null.</summary>
         public long? OutputTokens { get; private set; }
 
-        /// <summary>Bir model yanıtını sayaçlara ekler.</summary>
+        /// <summary>
+        /// Bir model yanıtını sayaçlara ekler; yanıtın gerektirdiği istek sayısı kadar bütçe harcanır (en az bir).
+        /// </summary>
         public void Add(GeneratedAnswer generated)
         {
-            Calls++;
+            Calls += Math.Max(1, generated.Attempts);
             InputTokens = Sum(InputTokens, generated.InputTokens);
             OutputTokens = Sum(OutputTokens, generated.OutputTokens);
         }

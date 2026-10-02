@@ -46,6 +46,13 @@ internal sealed class FakeAnswerGenerator : IGroundedAnswerGenerator
     public List<AnswerFeedback?> Feedbacks { get; } = [];
 
     /// <summary>
+    /// Her çağrıda handler'ın verdiği deneme bütçesi, çağrı sırasıyla. Bütçe testleri ilk çağrıya tam bütçenin (2),
+    /// düzeltme turuna yalnızca kalanın (1) verildiğini buna bakarak doğrular. Fake gerçek bir yeniden deneme yapmaz;
+    /// üreticinin kendi denemesini taklit etmek için yanıtın <c>Attempts</c> değeri <see cref="Respond"/> içinde ayarlanır.
+    /// </summary>
+    public List<int> MaxAttempts { get; } = [];
+
+    /// <summary>
     /// Sorudan ve bağlamdan modelin "yanıtını" üreten temsilci; varsayılanı <see cref="QuoteFirstSource"/>. Testler bunu
     /// değiştirerek ret (<see cref="NotAnswerable"/>), verilmemiş bir kaynağa atıf, çelişki raporu ya da yalnızca kaynak
     /// işaretinden oluşan yanıt gibi model davranışlarını taklit eder.
@@ -59,7 +66,7 @@ internal sealed class FakeAnswerGenerator : IGroundedAnswerGenerator
     public Exception? Failure { get; set; }
 
     /// <summary>
-    /// Çağrıyı, bağlamı ve geri bildirimi kaydeder; ardından <see cref="Failure"/> doluysa hata veren bir görev, değilse
+    /// Çağrıyı, bağlamı, geri bildirimi ve deneme bütçesini kaydeder; ardından <see cref="Failure"/> doluysa hata veren bir görev, değilse
     /// <see cref="Respond"/> sonucunu döndürür. Kayıt hatadan önce yapılır, böylece başarısız çağrılar da sayılır. İstisna
     /// senkron fırlatılmak yerine görevin içinde döner; gerçek asenkron üreticide olduğu gibi <c>await</c> sırasında
     /// ortaya çıkar. <see cref="Respond"/> çağrıldığında <see cref="Calls"/> zaten artırılmıştır; çağrıya göre farklı
@@ -69,11 +76,13 @@ internal sealed class FakeAnswerGenerator : IGroundedAnswerGenerator
         string question,
         IReadOnlyList<ContextChunk> context,
         AnswerFeedback? feedback = null,
+        int maxAttempts = 2,
         CancellationToken cancellationToken = default)
     {
         Calls++;
         LastContext = context;
         Feedbacks.Add(feedback);
+        MaxAttempts.Add(maxAttempts);
 
         return Failure is not null ? Task.FromException<GeneratedAnswer>(Failure) : Task.FromResult(Respond(question, context));
     }

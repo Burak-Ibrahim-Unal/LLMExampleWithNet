@@ -441,6 +441,51 @@ public sealed class AskQuestionCommandHandlerTests : IAsyncLifetime
     }
 
     /// <summary>
+    /// Üreticinin kendi şema düzeltmesiyle yaptığı çağrıların da soru başına model çağrısı bütçesinden düştüğünü doğrular:
+    /// üretici ilk yanıt için iki çağrı harcadıysa (<c>Attempts = 2</c>) bütçe biter; alıntı doğrulanamasa bile düzeltme
+    /// turu yapılmaz, yanıt <c>NoValidCitations</c> ile reddedilir ve tanılama iki gerçek çağrıyı gösterir.
+    /// </summary>
+    /// <remarks>
+    /// Arkadaş incelemesinin ikinci geçişte bulduğu açık: handler'ın düzeltme turu ile üreticinin şema yeniden denemesi
+    /// birleşince sunucuya 4 istek gidebiliyor, tanılama ise 2 diyordu. Bütçe artık gerçek çağrıları sayar; "en fazla iki
+    /// çağrı" sözü hem gecikme hem maliyet için doğrudur.
+    /// </remarks>
+    [Fact]
+    public async Task The_model_call_budget_includes_the_generator_retries()
+    {
+        _generator.Respond = (_, context) =>
+            FakeAnswerGenerator.Answer("İade süresi 900 gündür.", Cite(context, "iade-v2", "2. İade Süresi", "İade süresi 900 gündür.")) with { Attempts = 2 };
+
+        var result = await AskAsync("İade süresi kaç gün?");
+
+        _generator.Calls.ShouldBe(1);
+        result.Data!.RefusalReason.ShouldBe(RefusalReasons.NoValidCitations);
+        result.Data.Diagnostics.ModelCalls.ShouldBe(2);
+    }
+
+    /// <summary>
+    /// Düzeltme turunda üreticiye yalnızca kalan bütçenin verildiğini doğrular: ilk çağrıya 2, düzeltme turuna 1 deneme
+    /// hakkı geçilir; düzeltilmiş yanıt kabul edilir ve tanılama toplam iki çağrı gösterir.
+    /// </summary>
+    /// <remarks>
+    /// Düzeltme turu bütçenin tamamıyla çağrılsaydı üretici o turda da kendi şema denemesini yapabilir ve toplam çağrı
+    /// sayısı üçe çıkabilirdi.
+    /// </remarks>
+    [Fact]
+    public async Task The_correction_round_gets_only_the_remaining_budget()
+    {
+        _generator.Respond = (question, context) => _generator.Calls == 1
+            ? FakeAnswerGenerator.Answer("İade süresi 900 gündür.", Cite(context, "iade-v2", "2. İade Süresi", "İade süresi 900 gündür."))
+            : FakeAnswerGenerator.QuoteFirstSource(question, context);
+
+        var result = await AskAsync("İade süresi kaç gün?");
+
+        _generator.MaxAttempts.ShouldBe([2, 1]);
+        result.Data!.Answerable.ShouldBeTrue();
+        result.Data.Diagnostics.ModelCalls.ShouldBe(2);
+    }
+
+    /// <summary>
     /// Modelin raporladığı dokümanlar arası çelişkinin sunucu tarafında öncelik kuralıyla (<c>SourcePrecedence</c>)
     /// denetlendiğini doğrular. Senaryo gerçek bir çelişkidir: güncel iade politikası iade kargosunun ücretsiz olduğunu,
     /// eski tarihli SSS ise ücretin müşteriye ait olduğunu söyler. Model politikayı seçip SSS'yi elediğinde seçim kurala

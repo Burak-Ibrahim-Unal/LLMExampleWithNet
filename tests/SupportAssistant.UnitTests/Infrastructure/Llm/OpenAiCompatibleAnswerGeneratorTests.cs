@@ -155,7 +155,7 @@ public sealed class OpenAiCompatibleAnswerGeneratorTests
             "İade süresi kaç gün?",
             Context,
             new AnswerFeedback(["İade süresi 900 gündür."]),
-            TestContext.Current.CancellationToken);
+            cancellationToken: TestContext.Current.CancellationToken);
 
         var prompt = client.Requests.ShouldHaveSingleItem().Last(message => message.Role == ChatRole.User).Text;
         prompt.ShouldContain("DÜZELTME");
@@ -348,6 +348,47 @@ public sealed class OpenAiCompatibleAnswerGeneratorTests
         schema.TryGetProperty("required", out var required)
             ? required.EnumerateArray().Select(name => name.GetString()!).ToArray()
             : [];
+
+    /// <summary>
+    /// Üreticinin yaptığı gerçek model çağrısı sayısını yanıtla birlikte bildirdiğini doğrular: ilk denemede geçerli yanıt
+    /// 1, şema düzeltmesinden sonra gelen geçerli yanıt 2 çağrı olarak raporlanır.
+    /// </summary>
+    /// <remarks>
+    /// Handler soru başına model çağrısı bütçesini bu sayıyla tutar ve tanılamada (<c>modelCalls</c>) gösterir. Şema
+    /// düzeltmesi sayılmasaydı tanılama 2 derken sunucuya 4 istek gidebilirdi; bütçe de gecikme de yanlış raporlanırdı.
+    /// </remarks>
+    [Theory]
+    [InlineData(false, 1)]
+    [InlineData(true, 2)]
+    public async Task The_number_of_model_calls_is_reported(bool firstReplyInvalid, int expectedAttempts)
+    {
+        var client = firstReplyInvalid ? new ScriptedChatClient("bu json değil", ValidReply) : new ScriptedChatClient(ValidReply);
+
+        var answer = await Create(client).GenerateAsync("İade süresi kaç gün?", Context, cancellationToken: TestContext.Current.CancellationToken);
+
+        answer.Attempts.ShouldBe(expectedAttempts);
+        client.Requests.Count.ShouldBe(expectedAttempts);
+    }
+
+    /// <summary>
+    /// Çağıranın verdiği deneme bütçesine uyulduğunu doğrular: <c>maxAttempts: 1</c> ile geçersiz bir yanıt yeniden
+    /// denenmez, tek istekten sonra <c>InvalidOutput</c> olarak bildirilir.
+    /// </summary>
+    /// <remarks>
+    /// Handler'ın düzeltme turu kendi bütçesinin kalanıyla çağrı yapar; üretici bu sınırı aşıp kendi şema denemesini
+    /// eklerse soru başına çağrı sayısı sınırı (2) fiilen 4'e çıkar. Bütçenin ortak olması bu açığı kapatır.
+    /// </remarks>
+    [Fact]
+    public async Task The_attempt_budget_given_by_the_caller_is_respected()
+    {
+        var client = new ScriptedChatClient("bu json değil", ValidReply);
+
+        var exception = await Should.ThrowAsync<AnswerGenerationException>(() => Create(client).GenerateAsync(
+            "İade süresi kaç gün?", Context, maxAttempts: 1, cancellationToken: TestContext.Current.CancellationToken));
+
+        exception.Failure.ShouldBe(AnswerGenerationFailure.InvalidOutput);
+        client.Requests.ShouldHaveSingleItem();
+    }
 
     /// <summary>
     /// Art arda iki geçersiz yanıttan sonra yeniden denemeden vazgeçildiğini ve <c>InvalidOutput</c> türünde bir

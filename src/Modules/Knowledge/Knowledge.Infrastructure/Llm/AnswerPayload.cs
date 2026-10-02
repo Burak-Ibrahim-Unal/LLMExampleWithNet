@@ -7,6 +7,13 @@ namespace Knowledge.Infrastructure.Llm;
 // türler (null yerine boş metin / boş liste) en güvenilir biçimde dönüşür. [Description] metinleri şemaya alan açıklaması
 // olarak girer; bu yüzden Türkçedir ve modele hitap eder.
 
+// TODO(halüsinasyon-2): İddia başına atıf. Bu şema yanıtı tek bir metin (Answer) ve ondan bağımsız atıflar (Citations)
+// olarak alır; sunucu alıntıları doğrular ama metindeki her iddianın bir alıntıya dayandığını bilemez. Şema, her biri
+// kendi alıntısını taşıyan bir iddia listesine (ör. Claims: [{ Text, ChunkId, Quote }]) dönüşebilir: sunucu her iddiayı
+// CitationValidator ile doğrular, desteksiz iddiaları düşürür ya da düzeltme turuna gönderir ve yanıt metnini yalnızca
+// doğrulanmış iddialardan kurar. Prompt (AnswerPrompt), şema, handler ve değerlendirme birlikte değişir; değerlendirme
+// yeniden koşulmalıdır. Bkz. README, Halüsinasyon.
+
 /// <summary>
 /// Modelden istenen yanıtın kök nesnesi. <see cref="OpenAiCompatibleAnswerGenerator"/> bu türden JSON şeması üretir ve
 /// model yanıtını bu türe ayrıştırır. Alanlar cevaplama hattının kapılarına karşılık gelir: <see cref="Answerable"/>

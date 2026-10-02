@@ -416,6 +416,31 @@ public sealed class EvalChecksTests
     }
 
     /// <summary>
+    /// Kayıtlı koşularda görülmemiş ama doğru olan yazımların da gerçek beklentilerden geçtiğini doğrular: "750 TL üstü",
+    /// "750 TL veya üzeri", eşiğin altındaki siparişler için doğru bir olumsuzlama ("ücretsiz kargo uygulanmaz") ve
+    /// sorunun kendi kalıbıyla verilen "5 iş gününde".
+    /// </summary>
+    /// <remarks>
+    /// Kod incelemesi, ilk koşul ve yasak ifade listelerinin bu doğru yanıtları kaldırdığını gösterdi; kayıtlı koşular
+    /// yalnızca model bilgi tabanının ifadesini kopyaladığı için geçiyordu. Liste genişletildi ve ters yazımları yakalayan
+    /// yasak ifadeler eşiğe bağlı biçimlere daraltıldı; ters yazımlar yine kalır (yukarıdaki test).
+    /// </remarks>
+    [Theory]
+    [InlineData("N04", "Kargo, 750 TL üstü siparişlerde ücretsizdir.")]
+    [InlineData("N04", "750 TL veya üzeri siparişlerde kargo ücretsizdir.")]
+    [InlineData("N04", "750 TL ve üzeri siparişlerde kargo ücretsizdir; 750 TL altındaki siparişlerde ücretsiz kargo uygulanmaz.")]
+    [InlineData("C02", "İade edilen ürün depoya ulaşıp kontrol edildikten sonra paranız 5 iş gününde hesabınıza geçer.")]
+    [InlineData("N08", "Ürün depoya ulaşıp kontrol edildikten sonra ücret 5 iş gününde kartınıza iade edilir.")]
+    public void Plausible_correct_phrasings_pass_the_real_expectations(string id, string answer)
+    {
+        var question = RealQuestion(id);
+
+        var checks = EvalChecks.Evaluate(question.Expect, CitingExpected(question, answer), question.Question, KnowledgeBaseTexts.Value);
+
+        checks.ShouldAllBe(check => check.Passed);
+    }
+
+    /// <summary>
     /// Değerlendirme setinin gerçek dosyası (<c>eval/questions.json</c>); depo kökü çalışma klasöründen yukarı doğru,
     /// değerlendirme aracının kullandığı yolla bulunur.
     /// </summary>

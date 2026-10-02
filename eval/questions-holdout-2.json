@@ -1,0 +1,143 @@
+{
+  "questions": [
+    {
+      "id": "H13",
+      "category": "normal",
+      "question": "Şirketim adına fatura kestirebilir miyim, hangi bilgileri vermem gerekiyor?",
+      "expectedAnswer": "Evet. Sipariş sırasında \"Kurumsal fatura istiyorum\" seçeneğini işaretleyip firma unvanı, vergi dairesi ve vergi numarasını girmeniz yeterlidir.",
+      "expect": {
+        "answerable": true,
+        "sourcesAnyOf": ["sss-genel"],
+        "mustContain": [["Kurumsal fatura"], ["vergi"], ["unvan", "firma adı", "şirket adı"]],
+        "sectionsAnyOf": ["Kurumsal fatura alabilir miyim"]
+      }
+    },
+    {
+      "id": "H14",
+      "category": "normal",
+      "question": "Termostatın yazılımı ne zaman güncelleniyor, güncelleme sırasında nelere dikkat etmeliyim?",
+      "expectedAnswer": "Cihaz yazılımı her gece 03:00'te otomatik olarak güncellenir (manuel güncelleme: Cihaz Ayarları > Yazılım Güncelleme). Güncelleme sırasında LED turuncu yanıp söner; bu sırada cihazın elektriğini kesmeyin.",
+      "expect": {
+        "answerable": true,
+        "sourcesAnyOf": ["sorun-giderme-baglanti"],
+        "mustContain": [["03:00", "3:00", "saat 3", "gece 3"], ["kesmeyin", "kesmemelisiniz", "kesmemeniz", "kesilmemeli", "kesilmemesi"]],
+        "sectionsAnyOf": ["Yazılım (Firmware) Güncellemesi"]
+      }
+    },
+    {
+      "id": "H15",
+      "category": "normal",
+      "question": "Kombim tamamen çalışmıyor çünkü termostat kombiyi çalıştırmıyor. Destek ekibi ne kadar sürede dönüş yapar?",
+      "expectedAnswer": "Isıtma sisteminin tamamen devre dışı kaldığı arızalar öncelikli kuyruğa alınır; teknik ekip 2 saat içinde geri dönüş yapar (Destek Kanalları v2.0, Öncelikli Destek).",
+      "expect": {
+        "answerable": true,
+        "sourcesAnyOf": ["destek-kanallari-v2"],
+        "forbiddenSources": ["destek-kanallari-v1"],
+        "mustContain": [["2 saat", "iki saat"]],
+        "sectionsAnyOf": ["Öncelikli Destek"]
+      }
+    },
+    {
+      "id": "H16",
+      "category": "normal",
+      "question": "Lumora Termo'nun kutusundan hangi parçalar çıkıyor?",
+      "expectedAnswer": "Lumora Termo cihazı, duvar montaj plakası, 2 adet vida ve dübel, kablo etiketleri ve hızlı başlangıç kartı.",
+      "expect": {
+        "answerable": true,
+        "sourcesAnyOf": ["kurulum-kilavuzu-lumora-termo"],
+        "mustContain": [["montaj plaka"], ["vida"], ["hızlı başlangıç"]],
+        "sectionsAnyOf": ["Kutu İçeriği"]
+      }
+    },
+    {
+      "id": "H17",
+      "category": "normal",
+      "question": "Kredi kartıyla alışverişte kaç taksit yapabiliyorsunuz?",
+      "expectedAnswer": "Anlaşmalı bankaların kredi kartlarına 6 aya kadar taksit seçeneği sunulur.",
+      "expect": {
+        "answerable": true,
+        "sourcesAnyOf": ["sss-genel"],
+        "mustContain": [["6 ay", "altı ay", "6 taksit", "altı taksit"]],
+        "sectionsAnyOf": ["Taksitle ödeme yapabilir miyim"]
+      }
+    },
+    {
+      "id": "H18",
+      "category": "normal",
+      "question": "wifi baglantisi kopuyor, modem ile termostat arasi ne kadar olmali",
+      "expectedAnswer": "Cihaz ile modem arasındaki mesafeyi 10 metrenin altına indirin (ayrıca modemin 2.4 GHz yayın yaptığını kontrol edin; modemi kapatıp 30 saniye sonra yeniden açın).",
+      "expect": {
+        "answerable": true,
+        "sourcesAnyOf": ["sorun-giderme-baglanti"],
+        "mustContain": [["10 metre", "on metre"]],
+        "sectionsAnyOf": ["Cihaz Wi-Fi Ağına Bağlanmıyor"]
+      }
+    },
+    {
+      "id": "H19",
+      "category": "cevapsiz",
+      "question": "Lumora Termo'yu kombi yerine klimayla kullanabilir miyim?",
+      "expectedAnswer": "Dokümanlarda klima uyumluluğundan bahsedilmiyor (kurulum yalnızca kombi bağlantısını anlatıyor); bilgi olmadığı belirtilmeli.",
+      "expect": { "answerable": false }
+    },
+    {
+      "id": "H20",
+      "category": "cevapsiz",
+      "question": "Fatura adresimi sipariş verdikten sonra değiştirebilir miyim?",
+      "expectedAnswer": "Dokümanlarda fatura adresi değişikliği yok; yalnızca teslimat adresinin kargoya verilmeden önce değiştirilebileceği anlatılıyor. Teslimat adresi kuralı fatura adresine uygulanmamalı; bilgi olmadığı belirtilmeli.",
+      "expect": { "answerable": false }
+    },
+    {
+      "id": "H21",
+      "category": "cevapsiz",
+      "question": "Termostatın çalışma sıcaklığı aralığı nedir?",
+      "expectedAnswer": "Dokümanlarda cihazın teknik özellikleri (çalışma sıcaklığı aralığı) yok; bilgi olmadığı belirtilmeli.",
+      "expect": { "answerable": false }
+    },
+    {
+      "id": "H22",
+      "category": "celiskili",
+      "question": "Cumartesi saat 20:00'de çağrı merkezine ulaşabilir miyim?",
+      "expectedAnswer": "Evet. Güncel sürüme (v2.0) göre çağrı merkezi hafta sonu ve resmî tatiller dahil her gün 08:00–22:00 arasında hizmet verir. v1.0'daki 'hafta sonu destek verilmez' kuralı geçersiz.",
+      "expect": {
+        "answerable": true,
+        "sourcesAnyOf": ["destek-kanallari-v2"],
+        "forbiddenSources": ["destek-kanallari-v1"],
+        "mustContain": [["evet", "ulaşabilirsiniz"], ["22:00"]],
+        "mustNotContain": ["destek hizmeti verilmez", "18:00"],
+        "discardedVersions": ["destek-kanallari-v1"],
+        "sectionsAnyOf": ["Telefon Desteği"]
+      }
+    },
+    {
+      "id": "H23",
+      "category": "celiskili",
+      "question": "Ambalajını hiç açmadığım ürünü teslim aldıktan 20 gün sonra iade edebilir miyim?",
+      "expectedAnswer": "Evet. Güncel politikaya (v2.0) göre teslimattan itibaren 30 gün içinde iade talebinde bulunulabilir. v1.0'daki 14 günlük süre geçersiz; eski kurala göre yanıt 'hayır' olurdu.",
+      "expect": {
+        "answerable": true,
+        "sourcesAnyOf": ["iade-politikasi-v2"],
+        "forbiddenSources": ["iade-politikasi-v1"],
+        "mustContain": [["30 gün"], ["evet", "edebilirsiniz", "iade edilebilir"]],
+        "mustNotContain": ["14 gün", "kabul edilmez"],
+        "discardedVersions": ["iade-politikasi-v1"],
+        "sectionsAnyOf": ["İade Süresi"]
+      }
+    },
+    {
+      "id": "H24",
+      "category": "celiskili",
+      "question": "İade ettiğim ürünün ücreti 7 iş günüdür hesabıma yatmadı. Para iadesi ne kadar sürmeli?",
+      "expectedAnswer": "Güncel politikaya (v2.0) göre ürün depoya ulaşıp kontrol edildikten sonra ücret 5 iş günü içinde ödemenin yapıldığı karta veya hesaba iade edilir; bankanın yansıtma süresi bu süreye dahil değildir. v1.0'daki 10 iş günü geçersiz.",
+      "expect": {
+        "answerable": true,
+        "sourcesAnyOf": ["iade-politikasi-v2"],
+        "forbiddenSources": ["iade-politikasi-v1"],
+        "mustContain": [["5 iş günü", "beş iş günü"]],
+        "mustNotContain": ["10 iş günü"],
+        "discardedVersions": ["iade-politikasi-v1"],
+        "sectionsAnyOf": ["Para İadesi"]
+      }
+    }
+  ]
+}

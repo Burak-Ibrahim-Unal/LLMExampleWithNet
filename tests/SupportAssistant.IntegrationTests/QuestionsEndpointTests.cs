@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
+using System.Text;
 using Shouldly;
 using SupportAssistant.IntegrationTests.Infrastructure;
 
@@ -91,6 +92,32 @@ public sealed class QuestionsEndpointTests(SupportAssistantApiFactory factory) :
         response.Data.GetProperty("refusalReason").GetString().ShouldBe("PromptInjectionSuspected");
         response.Data.GetProperty("sources").GetArrayLength().ShouldBe(0);
         response.Data.GetProperty("diagnostics").GetProperty("modelCalls").GetInt32().ShouldBe(0);
+    }
+
+    /// <summary>
+    /// Okunamayan bir istek gövdesinin (JSON olmayan metin, yarım kalmış JSON, yanlış türde alan) uç noktaya ulaşmadan 400
+    /// ile ve diğer bütün hatalar gibi <c>ApiResult</c> zarfında, Türkçe mesajla reddedildiğini doğrular.
+    /// </summary>
+    /// <remarks>
+    /// Canlı API denemesinde bu isteklerin çerçevenin İngilizce varsayılan hata biçimiyle ("One or more errors occurred!")
+    /// döndüğü görüldü; README ise bütün hataların aynı zarfla döndüğünü söylüyordu. İstemcinin hata işleme kodu tek bir
+    /// biçime güvenebilmelidir.
+    /// </remarks>
+    [Theory]
+    [InlineData("bu json değil")]
+    [InlineData("{\"question\": ")]
+    [InlineData("{\"question\": 42}")]
+    public async Task An_unreadable_body_is_rejected_in_the_envelope(string body)
+    {
+        var cancellationToken = TestContext.Current.CancellationToken;
+        using var client = factory.CreateClient();
+
+        using var raw = await client.PostAsync("/v1/questions", new StringContent(body, Encoding.UTF8, "application/json"), cancellationToken);
+        using var response = await ApiResponse.ReadAsync(raw, cancellationToken);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        response.Success.ShouldBeFalse();
+        response.Message.ShouldStartWith("İstek okunamadı");
     }
 
     /// <summary>

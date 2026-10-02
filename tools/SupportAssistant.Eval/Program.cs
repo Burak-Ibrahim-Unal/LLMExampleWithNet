@@ -30,10 +30,9 @@ catch (ArgumentException exception)
 //    istek gövdesi ve API yanıtları aynı ayarla okunup yazılır.
 var json = new JsonSerializerOptions(JsonSerializerDefaults.Web);
 
-// TODO(halüsinasyon-5): Halüsinasyon odaklı soru seti (ör. eval/questions-hallucination.json): modeli genel bilgiye
-// çeken sorular ("Yasal cayma hakkı kaç gündür?"), yanıtı neredeyse dokümanda olan sorular ve sayı tuzakları; sonuç
-// "desteksiz iddia oranı" olarak raporlanmalı. Aynı kontroller denetim kaydındaki (question_logs) gerçek yanıtlara da
-// düzenli uygulanarak üretimdeki halüsinasyon izlenebilir. Bkz. README, Halüsinasyon.
+// TODO(halüsinasyon-5): Halüsinasyon seti (eval/questions-hallucination.json) ve rapor tarafı ("desteksiz iddia oranı",
+// HallucinationSignals) yapıldı. Kalan: aynı kontrollerin denetim kaydındaki (question_logs) gerçek yanıtlara düzenli
+// uygulanmasıyla üretimdeki halüsinasyonun izlenmesi. Bkz. README, Halüsinasyon.
 
 // Göreli yol depo köküne göre çözülür (bkz. EvalOptions.ResolveFromRepository). Dosyanın içeriği JSON null ise sıfır
 // soruyla sessizce devam etmek yerine dosya yolunu gösteren bir hatayla durulur.
@@ -120,9 +119,12 @@ foreach (var question in suite.Questions)
 var outputDirectory = EvalOptions.ResolveFromRepository(options.Label is null ? options.OutputPath : Path.Combine(options.OutputPath, options.Label));
 await ReportWriter.WriteAsync(outputDirectory, options, status, results);
 
-// 7) Özet ve çıkış kodu: bir soru bile kaldıysa 1 döner; başarı oranı bu satırda ve raporda okunur.
+// 7) Özet ve çıkış kodu: bir soru bile kaldıysa 1 döner; başarı oranı bu satırda ve raporda okunur. Halüsinasyon
+//    sinyali çıkış kodunu ayrıca etkilemez: her sinyal kalan bir kontrolden geldiği için o soru zaten kalmıştır.
 var passed = results.Count(result => result.Passed);
-Console.WriteLine($"\n{passed}/{results.Count} soru geçti. Rapor: {Path.Combine(outputDirectory, "report.md")}");
+var hallucination = HallucinationSignals.Summarize(results);
+Console.WriteLine($"\n{passed}/{results.Count} soru geçti. Halüsinasyon sinyali: {hallucination.Flagged}/{hallucination.Answered} yanıtta.");
+Console.WriteLine($"Rapor: {Path.Combine(outputDirectory, "report.md")}");
 return passed == results.Count ? 0 : 1;
 
 // Yerel fonksiyon: bir soruyu POST /v1/questions ucuna sorar ve HTTP kodunu, zarfı ve (varsa) neden okunamadığını döndürür.

@@ -1,6 +1,6 @@
 # Değerlendirme Raporu
 
-- **Tarih:** 2026-10-02 10:09
+- **Tarih:** 2026-10-02 13:50
 - **Çalıştırma:** holdout-rerun
 - **Dil modeli:** gemma-4-26b-a4b-it · **Embedding:** bge-m3 · **Arama modu:** hybrid
 - **Sonuç:** 10/12 soru geçti
@@ -15,23 +15,30 @@
 | **Toplam** | **12** | **10** |
 
 **Arama isabeti** (beklenen kaynak, sunucunun varsayılan topK değeri kadar arama sonucu içinde — sürüm çözümünden önce; 9 soru): yalnız BM25 9/9 · hibrit 9/9  
-**Yanıt süresi:** medyan 1,4 sn, ortalama 2,9 sn, en uzun 19,2 sn (Kapı 1'de reddedilen sorular modele gitmediği için ~0 sn)  
-**Düzeltme turu:** 0 soruda model ikinci kez çağrıldı
+**Yanıt süresi:** medyan 1,4 sn, ortalama 2,0 sn, en uzun 8,8 sn (Kapı 1'de reddedilen sorular modele gitmediği için ~0 sn)  
+**Düzeltme turu:** 0 soruda model ikinci kez çağrıldı  
+**Halüsinasyon sinyali:** 0/8 yanıtta (desteksiz iddia oranı; ayrıntı aşağıda)
 
 | ID | Kategori | Soru | Beklenen | Sonuç | Süre |
 |---|---|---|---|---|---:|
-| H01 | Normal | sifremi unuttum uygulamaya giris yapamiyorum ne yapmaliyim | yanıt | ✅ | 19,2 sn |
+| H01 | Normal | sifremi unuttum uygulamaya giris yapamiyorum ne yapmaliyim | yanıt | ✅ | 8,8 sn |
 | H02 | Normal | 749 TL'lik bir sipariş verdim, kargo için ücret ödeyecek miyim? | yanıt | ✅ | 1,3 sn |
-| H03 | Normal | Termostatımı 2 yıl 3 ay önce aldım ve bozuldu. Garanti kapsamında ücretsiz onarılır mı? | yanıt | ❌ | 1,3 sn |
-| H04 | Normal | Lumora Termo hangi Wi-Fi frekansında çalışır ve Amazon Alexa ile kullanılabilir mi? | yanıt | ✅ | 1,6 sn |
-| H05 | Normal | Kargo takip numarası bana nasıl iletilir? Sipariş kargoya verildikten sonra teslimat adresini değiştirebilir miyim? | yanıt | ❌ | 1,7 sn |
+| H03 | Normal | Termostatımı 2 yıl 3 ay önce aldım ve bozuldu. Garanti kapsamında ücretsiz onarılır mı? | yanıt | ❌ | 1,4 sn |
+| H04 | Normal | Lumora Termo hangi Wi-Fi frekansında çalışır ve Amazon Alexa ile kullanılabilir mi? | yanıt | ✅ | 1,5 sn |
+| H05 | Normal | Kargo takip numarası bana nasıl iletilir? Sipariş kargoya verildikten sonra teslimat adresini değiştirebilir miyim? | yanıt | ❌ | 1,6 sn |
 | H06 | Cevapsız | Termostatın kurulumunu sizin teknisyeniniz evime gelip yapabilir mi, ücreti ne kadar? | bilgi yok | ✅ | 0,0 sn |
 | H07 | Cevapsız | Lumora Termo'nun pili kaç ay dayanır? | bilgi yok | ✅ | 1,0 sn |
-| H08 | Cevapsız | Garantisi biten cihazımı ücretli olarak onarıyor musunuz, onarım ücreti ne kadar? | bilgi yok | ✅ | 1,1 sn |
-| H09 | Çelişkili | İade talebimi e-posta ile gönderebilir miyim? | yanıt | ✅ | 1,4 sn |
+| H08 | Cevapsız | Garantisi biten cihazımı ücretli olarak onarıyor musunuz, onarım ücreti ne kadar? | bilgi yok | ✅ | 1,2 sn |
+| H09 | Çelişkili | İade talebimi e-posta ile gönderebilir miyim? | yanıt | ✅ | 1,5 sn |
 | H10 | Çelişkili | Ürünü geri gönderirken kargo parasını ben mi ödüyorum? | yanıt | ✅ | 2,2 sn |
 | H11 | Çelişkili | Destek ekibine e-posta atarsam ne kadar sürede cevap gelir? | yanıt | ✅ | 1,4 sn |
-| H12 | Çelişkili | Kutusunu açıp kurulumunu yaptığım termostatı iade edebilir miyim? | yanıt | ✅ | 2,1 sn |
+| H12 | Çelişkili | Kutusunu açıp kurulumunu yaptığım termostatı iade edebilir miyim? | yanıt | ✅ | 2,2 sn |
+
+## Halüsinasyon sinyalleri
+
+Deterministik vekil ölçülerdir, kanıt değildir: cevapsız soruya yanıt, atıf yapılan dokümanlarda geçmeyen sayı, kaynakta birebir bulunamayan alıntı ve yasak ifade (ters karar, eski kural ya da bilgi tabanında olmayan genel bilgi). Sayı içermeyen ve yasak listesinde olmayan bir uydurma yakalanmaz; yanıtlar ayrıca elle okunur.
+
+Hiçbir yanıtta sinyal yok.
 
 ## Soru bazında karşılaştırma
 
@@ -42,7 +49,7 @@
 **Gerçek:** Lumora uygulamasının giriş ekranındaki "Şifremi Unuttum" bağlantısına dokunmanız yeterlidir; bu işlemden sonra şifre sıfırlama bağlantısı e-posta adresinize gönderilecektir.  
 **Kaynak:** `sss-genel` v1.0 (2024-02-01) › Hesap > Şifremi unuttum, ne yapmalıyım? — "Lumora uygulamasının giriş ekranındaki "Şifremi Unuttum" bağlantısına dokunun; şifre sıfırlama bağlantısı e-posta adresinize gönderilir." *(alıntı doğrulandı)*  
 **Kontroller:** ✅ yanıtlanabilirlik · ✅ kaynak · ✅ bölüm · ✅ alıntı doğrulandı · ✅ içerik · ✅ içerik  
-**Arama isabeti:** BM25 ✅ · hibrit ✅ · **Süre:** 19,2 sn · **Model çağrısı:** 1
+**Arama isabeti:** BM25 ✅ · hibrit ✅ · **Süre:** 8,8 sn · **Model çağrısı:** 1
 
 ### H02 · Normal · ✅ geçti
 
@@ -58,19 +65,19 @@
 **Soru:** Termostatımı 2 yıl 3 ay önce aldım ve bozuldu. Garanti kapsamında ücretsiz onarılır mı?  
 **Beklenen:** Hayır. Garanti süresi fatura tarihinden itibaren 2 yıldır; 2 yıl 3 ay geçtiği için cihaz artık garanti kapsamında değildir.  
 **Gerçek:** Bu soruyu yanıtlamak için dokümanlarda yeterli bilgi bulunamadı. *(refusalReason: ModelInsufficientContext)*  
-**Eksik bilgi (model):** Ürünün satın alma tarihi (fatura tarihi) üzerinden 2 yıl geçtiği için garanti süresinin dolup dolmadığı ve arızanın neden kaynaklandığı (üretim hatası mı yoksa kullanım hatası mı olduğu) bilinmemektedir.  
+**Eksik bilgi (model):** Ürünün garanti süresinin dolup dolmadığını belirlemek için satın alma tarihine ihtiyaç vardır; ancak mevcut bilgilerde ürünün 2 yıl garantili olduğu belirtilmektedir. Ayrıca arızanın neden kaynaklandığı (üretim hatası mı yoksa kullanım hatası mı olduğu) bilinmemektedir.  
 **Kontroller:** ❌ yanıtlanabilirlik (beklenen: yanıt, gerçek: bilgi yok (ModelInsufficientContext))  
-**Arama isabeti:** BM25 ✅ · hibrit ✅ · **Süre:** 1,3 sn · **Model çağrısı:** 1
+**Arama isabeti:** BM25 ✅ · hibrit ✅ · **Süre:** 1,4 sn · **Model çağrısı:** 1
 
 ### H04 · Normal · ✅ geçti
 
 **Soru:** Lumora Termo hangi Wi-Fi frekansında çalışır ve Amazon Alexa ile kullanılabilir mi?  
 **Beklenen:** Yalnızca 2.4 GHz Wi-Fi ağlarını destekler (5 GHz desteklenmez). Alexa uyumluluğu hakkında dokümanlarda bilgi yok; bu kısım yanıtlanamaz (kısmi yanıt).  
-**Gerçek:** Lumora Termo yalnızca 2.4 GHz Wi-Fi ağlarını desteklemektedir; 5 GHz ağlara bağlanamaz.  
+**Gerçek:** Lumora Termo yalnızca 2.4 GHz Wi-Fi ağlarını destekler; 5 GHz ağlara bağlanamaz.  
 **Eksik bilgi (model):** Amazon Alexa ile uyumluluğu hakkında bilgi verilmemiştir.  
 **Kaynak:** `kurulum-kilavuzu-lumora-termo` v1.0 (2025-02-01) › 2. Kurulumdan Önce — "Lumora Termo yalnızca 2.4 GHz Wi-Fi ağlarını destekler; 5 GHz ağlara bağlanamaz." *(alıntı doğrulandı)*  
 **Kontroller:** ✅ yanıtlanabilirlik · ✅ kaynak · ✅ alıntı doğrulandı · ✅ sayılar kaynakta · ✅ içerik  
-**Arama isabeti:** BM25 ✅ · hibrit ✅ · **Süre:** 1,6 sn · **Model çağrısı:** 1
+**Arama isabeti:** BM25 ✅ · hibrit ✅ · **Süre:** 1,5 sn · **Model çağrısı:** 1
 
 ### H05 · Normal · ❌ kaldı
 
@@ -80,7 +87,7 @@
 **Kaynak:** `kargo-ve-teslimat` v1.0 (2025-03-01) › 3. Sipariş Takibi — "Siparişiniz kargoya verildiğinde takip numarası SMS ve e-posta ile gönderilir." *(alıntı doğrulandı)*  
 **Kaynak:** `kargo-ve-teslimat` v1.0 (2025-03-01) › 5. Adres Değişikliği — "Kargoya verilmiş siparişlerde adres değişikliği yapılamaz." *(alıntı doğrulandı)*  
 **Kontroller:** ✅ yanıtlanabilirlik · ✅ kaynak · ✅ bölüm · ✅ alıntı doğrulandı · ✅ içerik · ❌ içerik ('yapılamaz' | 'değiştirilemez' | 'değiştiremezsiniz' | 'mümkün değil' | 'hayır')  
-**Arama isabeti:** BM25 ✅ · hibrit ✅ · **Süre:** 1,7 sn · **Model çağrısı:** 1
+**Arama isabeti:** BM25 ✅ · hibrit ✅ · **Süre:** 1,6 sn · **Model çağrısı:** 1
 
 ### H06 · Cevapsız · ✅ geçti
 
@@ -95,7 +102,7 @@
 **Soru:** Lumora Termo'nun pili kaç ay dayanır?  
 **Beklenen:** Dokümanlarda pil veya pil ömrüyle ilgili bilgi yok; bilgi olmadığı belirtilmeli.  
 **Gerçek:** Bu soruyu yanıtlamak için dokümanlarda yeterli bilgi bulunamadı. *(refusalReason: ModelInsufficientContext)*  
-**Eksik bilgi (model):** Lumora Termo'nun pil ömrü veya pil dayanıklılığı ile ilgili bilgi kaynaklarda bulunmamaktadır.  
+**Eksik bilgi (model):** Lumora Termo'nun pil ömrüne dair bilgi kaynaklarda bulunmamaktadır.  
 **Kontroller:** ✅ yanıtlanabilirlik · ✅ ret sözleşmesi  
 **Arama isabeti:** BM25 — · hibrit — · **Süre:** 1,0 sn · **Model çağrısı:** 1
 
@@ -106,17 +113,17 @@
 **Gerçek:** Bu soruyu yanıtlamak için dokümanlarda yeterli bilgi bulunamadı. *(refusalReason: ModelInsufficientContext)*  
 **Eksik bilgi (model):** Garantisi biten cihazların ücretli onarımıyla ilgili bir bilgi veya onarım ücretine dair bir tutar kaynaklarda yer almamaktadır.  
 **Kontroller:** ✅ yanıtlanabilirlik · ✅ ret sözleşmesi  
-**Arama isabeti:** BM25 — · hibrit — · **Süre:** 1,1 sn · **Model çağrısı:** 1
+**Arama isabeti:** BM25 — · hibrit — · **Süre:** 1,2 sn · **Model çağrısı:** 1
 
 ### H09 · Çelişkili · ✅ geçti
 
 **Soru:** İade talebimi e-posta ile gönderebilir miyim?  
 **Beklenen:** Hayır. Güncel politikaya (v2.0) göre iade talebi Lumora uygulamasında Siparişlerim > İade Talebi Oluştur adımlarıyla oluşturulur; e-posta ile gönderilen talepler işleme alınmaz. v1.0'daki e-posta yöntemi geçersiz.  
-**Gerçek:** Hayır, e-posta ile gönderilen iade talepleri işleme alınmamaktadır. İade talebinizi Lumora mobil uygulaması üzerinden oluşturmanız gerekmektedir.  
+**Gerçek:** Hayır, e-posta ile gönderilen iade talepleri işleme alınmamaktadır. İade talebinizi Lumora mobil uygulaması üzerinden Siparişlerim > ilgili sipariş > İade Talebi Oluştur adımlarını izleyerek oluşturmanız gerekmektedir.  
 **Kaynak:** `iade-politikasi-v2` v2.0 (2025-06-01) › 4. İade Talebi Nasıl Oluşturulur? — "E-posta ile gönderilen iade talepleri işleme alınmaz." *(alıntı doğrulandı)*  
 **Sürüm kararı:** `iade-politikasi-v1` v1.0 elendi — 2.0 sürümü (2025-06-01) tarafından geçersiz kılındı.  
 **Kontroller:** ✅ yanıtlanabilirlik · ✅ kaynak · ✅ yasak kaynak yok · ✅ bölüm · ✅ alıntı doğrulandı · ✅ içerik · ✅ içerik · ✅ eski sürüm elendi  
-**Arama isabeti:** BM25 ✅ · hibrit ✅ · **Süre:** 1,4 sn · **Model çağrısı:** 1
+**Arama isabeti:** BM25 ✅ · hibrit ✅ · **Süre:** 1,5 sn · **Model çağrısı:** 1
 
 ### H10 · Çelişkili · ✅ geçti
 
@@ -149,5 +156,5 @@
 **Kaynak:** `iade-politikasi-v2` v2.0 (2025-06-01) › 3. İade Koşulları — "Cihazı göndermeden önce Lumora uygulamasında hesabınızdan kaldırın ve fabrika ayarlarına döndürün." *(alıntı doğrulandı)*  
 **Sürüm kararı:** `iade-politikasi-v1` v1.0 elendi — 2.0 sürümü (2025-06-01) tarafından geçersiz kılındı.  
 **Kontroller:** ✅ yanıtlanabilirlik · ✅ kaynak · ✅ yasak kaynak yok · ✅ bölüm · ✅ alıntı doğrulandı · ✅ içerik · ✅ yasak ifade · ✅ eski sürüm elendi  
-**Arama isabeti:** BM25 ✅ · hibrit ✅ · **Süre:** 2,1 sn · **Model çağrısı:** 1
+**Arama isabeti:** BM25 ✅ · hibrit ✅ · **Süre:** 2,2 sn · **Model çağrısı:** 1
 

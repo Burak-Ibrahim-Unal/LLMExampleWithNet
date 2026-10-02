@@ -40,7 +40,8 @@ public static class ReportWriter
 
     /// <summary>
     /// Çıktı klasörünü (yoksa) oluşturur ve aynı sonuçları <c>results.json</c> ile <c>report.md</c> olarak yazar.
-    /// JSON'a koşu bilgileri (zaman, API adresi, etiket, sağlık durumu) ve her soru için yanıtın tamamı dahil edilir.
+    /// JSON'a koşu bilgileri (zaman, API adresi, etiket, sağlık durumu), halüsinasyon sinyali özeti ve her soru için yanıtın
+    /// tamamı dahil edilir.
     /// </summary>
     public static async Task WriteAsync(string directory, EvalOptions options, SystemStatusDto? status, IReadOnlyList<QuestionResult> results)
     {
@@ -54,6 +55,7 @@ public static class ReportWriter
             Status = status,
             Passed = results.Count(result => result.Passed),
             Total = results.Count,
+            Hallucination = HallucinationSignals.Summarize(results),
             Results = results.Select(result => new
             {
                 result.Question,
@@ -74,13 +76,16 @@ public static class ReportWriter
 
     /// <summary>
     /// Markdown raporunu üretir: başlık (tarih, koşu etiketi, model/embedding/arama modu, toplam sonuç), kategori özeti,
-    /// arama isabeti ve yanıt süresi satırları, soru tablosu ve soru bazında ayrıntılı karşılaştırma.
+    /// arama isabeti, yanıt süresi, düzeltme turu ve halüsinasyon sinyali satırları, soru tablosu, halüsinasyon sinyalleri
+    /// tablosu ve soru bazında ayrıntılı karşılaştırma.
     /// </summary>
     /// <remarks>
     /// Arama isabeti yalnızca beklenen kaynağı olan sorular üzerinden ve iki mod için ayrı verilir; BM25 ile hibrit arasındaki
     /// fark vektör aramasının katkısını gösterir. Yanıt süresinde ortalamanın yanında medyan ve en uzun süre de yazılır;
     /// Kapı 1'de reddedilen soruların modele gitmediği için ~0 sn sürdüğü raporda açıkça not edilir. Düzeltme turuna giren
-    /// (modelin iki kez çağrıldığı) soru sayısı da verilir.
+    /// (modelin iki kez çağrıldığı) soru sayısı da verilir. Halüsinasyon sinyalleri (bkz. <see cref="HallucinationSignals"/>)
+    /// geçen/kalan sayısından ayrı raporlanır: kalan bir soru eksik ya da yanlış bir yanıttan, bir sinyal ise dayanaksız bir
+    /// iddiadan haber verir.
     /// </remarks>
     private static string BuildMarkdown(EvalOptions options, SystemStatusDto? status, IReadOnlyList<QuestionResult> results)
     {
@@ -119,7 +124,11 @@ public static class ReportWriter
         // Düzeltme turu (doğrulanamayan alıntı ya da öncelik ihlali yüzünden ikinci model çağrısı) gecikmeyi artırır ve
         // modelin ilk denemede kabul edilebilir bir yanıt veremediğini gösterir; sayısı ayrıca izlenir.
         var corrected = results.Count(result => result.Answer?.Diagnostics.ModelCalls > 1);
-        report.AppendLine($"**Düzeltme turu:** {corrected} soruda model ikinci kez çağrıldı").AppendLine();
+        report.AppendLine($"**Düzeltme turu:** {corrected} soruda model ikinci kez çağrıldı  ");
+
+        // Desteksiz iddia oranı: en az bir sinyal taşıyan yanıt / yanıt verilen soru. Ret ve hata zarfları paydaya girmez.
+        var hallucination = HallucinationSignals.Summarize(results);
+        report.AppendLine($"**Halüsinasyon sinyali:** {hallucination.Flagged}/{hallucination.Answered} yanıtta (desteksiz iddia oranı; ayrıntı aşağıda)").AppendLine();
 
         report.AppendLine("| ID | Kategori | Soru | Beklenen | Sonuç | Süre |").AppendLine("|---|---|---|---|---|---:|");
 
@@ -127,6 +136,25 @@ public static class ReportWriter
         {
             report.AppendLine($"| {result.Question.Id} | {CategoryTitle(result.Question.Category)} | {Cell(result.Question.Question)} | " +
                 $"{(result.Question.Expect.Answerable ? "yanıt" : "bilgi yok")} | {(result.Passed ? "✅" : "❌")} | {Seconds(result.LatencyMs)} |");
+        }
+
+        report.AppendLine().AppendLine("## Halüsinasyon sinyalleri").AppendLine();
+        report.AppendLine("Deterministik vekil ölçülerdir, kanıt değildir: cevapsız soruya yanıt, atıf yapılan dokümanlarda geçmeyen sayı, " +
+            "kaynakta birebir bulunamayan alıntı ve yasak ifade (ters karar, eski kural ya da bilgi tabanında olmayan genel bilgi). " +
+            "Sayı içermeyen ve yasak listesinde olmayan bir uydurma yakalanmaz; yanıtlar ayrıca elle okunur.").AppendLine();
+
+        if (hallucination.Signals.Count == 0)
+        {
+            report.AppendLine("Hiçbir yanıtta sinyal yok.");
+        }
+        else
+        {
+            report.AppendLine("| ID | Sinyal | Ayrıntı |").AppendLine("|---|---|---|");
+
+            foreach (var signal in hallucination.Signals)
+            {
+                report.AppendLine($"| {signal.QuestionId} | {signal.Kind} | {Cell(signal.Detail)} |");
+            }
         }
 
         report.AppendLine().AppendLine("## Soru bazında karşılaştırma").AppendLine();

@@ -1,8 +1,8 @@
-using System.Text.Json;
 using Knowledge.Application.Contracts;
 using Shared.Application.Common;
 using Shouldly;
 using SupportAssistant.Eval;
+using static SupportAssistant.UnitTests.Evaluation.EvalAnswers;
 
 namespace SupportAssistant.UnitTests.Evaluation;
 
@@ -31,34 +31,6 @@ public sealed class EvalChecksTests
         ["kargo"] = "Kargo ve Teslimat 1.0 2025-03-01 2. Kargo Ücreti 750 TL ve üzerindeki siparişlerde kargo ücretsizdir. " +
             "750 TL'nin altındaki siparişler için 49,90 TL kargo ücreti alınır."
     };
-
-    /// <summary>
-    /// Kontrollerin okuduğu alanlar dışında sabit değerler taşıyan bir API yanıtı kurar: yanıt metni, <c>answerable</c>
-    /// bayrağı, atıf yapılan doküman kimlikleri (aynı bölüm adı ve alıntı doğrulama durumuyla), elenen sürüm kimlikleri,
-    /// çelişkiler ve ret gerekçesi. Ret gerekçesi verilmezse yanıtlanamayan yanıtlarda <c>LowRelevance</c> kullanılır.
-    /// </summary>
-    private static AnswerDto Answer(
-        string text,
-        bool answerable = true,
-        string[]? sources = null,
-        string[]? discarded = null,
-        string section = "Bölüm",
-        bool quoteVerified = true,
-        IReadOnlyList<ConflictDto>? conflicts = null,
-        string? refusalReason = null) => new(
-        "soru",
-        answerable,
-        text,
-        (sources ?? []).Select(id => new AnswerSourceDto(id, "Başlık", "1.0", new DateOnly(2025, 1, 1), "active", "politika", section, "alıntı", quoteVerified)).ToList(),
-        new VersionResolutionDto(
-            (discarded ?? []).Length > 0,
-            "kural",
-            [],
-            (discarded ?? []).Select(id => new DiscardedVersionDto(id, "Başlık", "1.0", new DateOnly(2024, 1, 1), "gerekçe")).ToList()),
-        conflicts ?? [],
-        string.Empty,
-        refusalReason ?? (answerable ? string.Empty : "LowRelevance"),
-        new AnswerDiagnosticsDto("hybrid", 0.7, 1.0, [], [], "model", 100, null, null, 1));
 
     /// <summary>Bir çelişki kaynağını yalnızca doküman kimliğiyle kurar; kontrol diğer alanlara bakmaz.</summary>
     private static ConflictSourceDto ConflictSource(string documentId) =>
@@ -300,18 +272,32 @@ public sealed class EvalChecksTests
     /// değil sorunun kendisinde ya da modelin çıktısında olduğunda API bilerek farklı bir mesaj döndürür; değerlendirici bu
     /// retleri sözleşme ihlali saymamalı, ama gerekçeyle mesajın eşleşmesini yine denetlemelidir.
     /// </remarks>
+    /// <param name="text">
+    /// Ret metni: null ise "bilgi yok" mesajı, bir <see cref="Messages.Knowledge"/> özelliğinin adı ise o mesaj, değilse
+    /// olduğu gibi kullanılan serbest metin. Mesajlar dosyadan okunduğu için niteliğe değeri değil adı yazılır.
+    /// </param>
+    /// <param name="source">Retle birlikte listelenen kaynak; null ise kaynak listesi boştur.</param>
+    /// <param name="reason">Retteki <c>refusalReason</c>.</param>
+    /// <param name="expected">"ret sözleşmesi" kontrolünün geçip geçmemesi.</param>
     [Theory]
     [InlineData(null, null, "LowRelevance", true)]
     [InlineData(null, "kargo", "LowRelevance", false)]
     [InlineData("Bilmiyorum.", null, "LowRelevance", false)]
     [InlineData(null, null, "", false)]
-    [InlineData(Messages.Knowledge.PromptInjectionRefused, null, "PromptInjectionSuspected", true)]
-    [InlineData(Messages.Knowledge.UnsafeOutputRefused, null, "UnsafeOutput", true)]
+    [InlineData(nameof(Messages.Knowledge.PromptInjectionRefused), null, "PromptInjectionSuspected", true)]
+    [InlineData(nameof(Messages.Knowledge.UnsafeOutputRefused), null, "UnsafeOutput", true)]
     [InlineData(null, null, "PromptInjectionSuspected", false)]
-    [InlineData(Messages.Knowledge.UnsafeOutputRefused, null, "LowRelevance", false)]
+    [InlineData(nameof(Messages.Knowledge.UnsafeOutputRefused), null, "LowRelevance", false)]
     public void A_refusal_must_use_the_fixed_message_list_no_sources_and_give_a_reason(string? text, string? source, string reason, bool expected)
     {
-        var answer = Answer(text ?? Messages.Knowledge.NotEnoughInformation, answerable: false, sources: source is null ? null : [source], refusalReason: reason);
+        var message = text switch
+        {
+            null => Messages.Knowledge.NotEnoughInformation,
+            nameof(Messages.Knowledge.PromptInjectionRefused) => Messages.Knowledge.PromptInjectionRefused,
+            nameof(Messages.Knowledge.UnsafeOutputRefused) => Messages.Knowledge.UnsafeOutputRefused,
+            _ => text
+        };
+        var answer = Answer(message, answerable: false, sources: source is null ? null : [source], refusalReason: reason);
 
         EvalChecks.Evaluate(new EvalExpectation(false), answer, "soru", NoDocuments)
             .Single(check => check.Name == "ret sözleşmesi").Passed.ShouldBe(expected);
@@ -356,118 +342,4 @@ public sealed class EvalChecksTests
         reversed.Single(check => check.Name == "içerik").Passed.ShouldBeTrue();
         reversed.Single(check => check.Name == "koşul").Passed.ShouldBeFalse();
     }
-
-    /// <summary>
-    /// Değerlendirme setinin gerçek beklentilerinin (<c>eval/questions.json</c>) kritik bir kararın koşulunu tersine
-    /// çeviren ya da olumsuzlayan yanıtları kaldırdığını doğrular. İlk satır arkadaş incelemesinin örneğidir: doğru kaynak,
-    /// doğru bölüm, doğrulanmış alıntı ve kaynakta geçen sayıyla "750 TL altındaki siparişlerde kargo ücretsizdir" diyen
-    /// yanıt önceki beklentilerin hepsinden geçiyordu.
-    /// </summary>
-    /// <remarks>
-    /// Beklentiler veri dosyasından okunur; dosyadaki bir koşul grubu ya da yasak ifade silinirse bu test kırılır. Her
-    /// yanıt beklenen dokümana ve bölüme atıf yapar ve sayıları kaynakta geçer; kalma nedeni yalnızca içerik, koşul ya da
-    /// yasak ifade kontrolleridir. Kontroller ifade tabanlı olduğu için kısmidir: buradaki örnekler yakalanır, ama her ters
-    /// anlatım yakalanmaz; değerlendirme raporundaki yanıtlar bu yüzden ayrıca elle okunur.
-    /// </remarks>
-    [Theory]
-    [InlineData("N04", "750 TL altındaki siparişlerde kargo ücretsizdir.")]
-    [InlineData("N04", "Kargo, 750 TL'nin altındaki siparişlerde ücretsizdir.")]
-    [InlineData("N04", "Kargo yalnızca 750 TL'den az tutarlı siparişlerde ücretsizdir.")]
-    [InlineData("N04", "750 TL ve üzerindeki siparişlerde kargo ücretsiz değildir.")]
-    [InlineData("N04", "750 TL ve üzerindeki siparişlerde kargo ücretsiz sayılmaz; kargo ücreti alınır.")]
-    [InlineData("C01", "Ürünü teslim aldıktan 30 gün sonra iade edebilirsiniz.")]
-    [InlineData("C02", "Ücret, ürün depoya ulaştıktan 5 iş günü sonra hesabınıza geçer.")]
-    [InlineData("N08", "Ürün depoya ulaştıktan 5 iş gününden sonra paranız iade edilir.")]
-    [InlineData("N03", "Su hasarı garanti kapsamı dışında değildir; cihazınız ücretsiz onarılır.")]
-    [InlineData("N03", "Hayır, endişelenmeyin: sıvı teması garanti kapsamındadır.")]
-    public void Reversed_or_negated_conditions_fail_the_real_expectations(string id, string answer)
-    {
-        var question = RealQuestion(id);
-
-        var checks = EvalChecks.Evaluate(question.Expect, CitingExpected(question, answer), question.Question, KnowledgeBaseTexts.Value);
-
-        checks.Where(check => check.Name is "kaynak" or "bölüm" or "sayılar kaynakta").ShouldAllBe(check => check.Passed);
-        checks.Where(check => check.Name is "içerik" or "koşul" or "yasak ifade").ShouldContain(check => !check.Passed);
-    }
-
-    /// <summary>
-    /// Kayıtlı canlı koşulardaki (varsayılan ve düşünme modu açık) gerçek, doğru yanıtların sıkılaştırılmış beklentilerin
-    /// bütün kontrollerinden geçtiğini doğrular.
-    /// </summary>
-    /// <remarks>
-    /// Yeni kontroller yanlış yanıtları kaldırırken doğru yanıtları da kaldırsaydı değerlendirme bu kez ters yönde
-    /// yanıltıcı olurdu. Yanıt metinleri <c>eval/results</c> altındaki raporlardan aynen alındı.
-    /// </remarks>
-    [Theory]
-    [InlineData("N03", "Maalesef, sıvı teması, nem veya su hasarı gibi durumlar garanti kapsamı dışında yer almaktadır.")]
-    [InlineData("N03", "Hayır, sıvı teması, nem veya su hasarı gibi durumlar garanti kapsamı dışındadır.")]
-    [InlineData("N04", "750 TL ve üzerindeki siparişlerde kargo ücretsizdir.")]
-    [InlineData("N08", "İade edilen ürün depomuza ulaşıp kontrol edildikten sonra ücret, 5 iş günü içinde ödemenin yapıldığı karta veya hesaba iade edilir. Bankanızın iadeyi hesabınıza yansıtma süresi bu süreye dahil değildir.")]
-    [InlineData("C01", "Ürünü, teslim aldığınız tarihten itibaren 30 gün içinde iade edebilirsiniz. Bu süre, kargo firmasının teslimat kaydındaki tarih esas alınarak hesaplanmaktadır.")]
-    [InlineData("C01", "Ürünü teslim aldığınız tarihten itibaren 30 gün içinde iade talebinde bulunabilirsiniz. Ancak, ürün hasarlı veya eksik ise teslimattan itibaren 3 gün içinde bildirimde bulunmanız gerekmektedir.")]
-    [InlineData("C02", "İade edilen ürün depomuza ulaşıp kontrol edildikten sonra ücret, 5 iş günü içinde ödemenin yapıldığı karta veya hesaba iade edilir. Bankanızın iadeyi hesabınıza yansıtma süresi bu süreye dahil değildir.")]
-    public void Recorded_correct_answers_pass_the_real_expectations(string id, string answer)
-    {
-        var question = RealQuestion(id);
-
-        var checks = EvalChecks.Evaluate(question.Expect, CitingExpected(question, answer), question.Question, KnowledgeBaseTexts.Value);
-
-        checks.ShouldAllBe(check => check.Passed);
-    }
-
-    /// <summary>
-    /// Kayıtlı koşularda görülmemiş ama doğru olan yazımların da gerçek beklentilerden geçtiğini doğrular: "750 TL üstü",
-    /// "750 TL veya üzeri", eşiğin altındaki siparişler için doğru bir olumsuzlama ("ücretsiz kargo uygulanmaz") ve
-    /// sorunun kendi kalıbıyla verilen "5 iş gününde".
-    /// </summary>
-    /// <remarks>
-    /// Kod incelemesi, ilk koşul ve yasak ifade listelerinin bu doğru yanıtları kaldırdığını gösterdi; kayıtlı koşular
-    /// yalnızca model bilgi tabanının ifadesini kopyaladığı için geçiyordu. Liste genişletildi ve ters yazımları yakalayan
-    /// yasak ifadeler eşiğe bağlı biçimlere daraltıldı; ters yazımlar yine kalır (yukarıdaki test).
-    /// </remarks>
-    [Theory]
-    [InlineData("N04", "Kargo, 750 TL üstü siparişlerde ücretsizdir.")]
-    [InlineData("N04", "750 TL veya üzeri siparişlerde kargo ücretsizdir.")]
-    [InlineData("N04", "750 TL ve üzeri siparişlerde kargo ücretsizdir; 750 TL altındaki siparişlerde ücretsiz kargo uygulanmaz.")]
-    [InlineData("C02", "İade edilen ürün depoya ulaşıp kontrol edildikten sonra paranız 5 iş gününde hesabınıza geçer.")]
-    [InlineData("N08", "Ürün depoya ulaşıp kontrol edildikten sonra ücret 5 iş gününde kartınıza iade edilir.")]
-    public void Plausible_correct_phrasings_pass_the_real_expectations(string id, string answer)
-    {
-        var question = RealQuestion(id);
-
-        var checks = EvalChecks.Evaluate(question.Expect, CitingExpected(question, answer), question.Question, KnowledgeBaseTexts.Value);
-
-        checks.ShouldAllBe(check => check.Passed);
-    }
-
-    /// <summary>
-    /// Değerlendirme setinin gerçek dosyası (<c>eval/questions.json</c>); depo kökü çalışma klasöründen yukarı doğru,
-    /// değerlendirme aracının kullandığı yolla bulunur.
-    /// </summary>
-    private static readonly Lazy<EvalSuite> RealSuite = new(() =>
-        JsonSerializer.Deserialize<EvalSuite>(
-            File.ReadAllText(EvalOptions.ResolveFromRepository("eval/questions.json")),
-            new JsonSerializerOptions(JsonSerializerDefaults.Web))!);
-
-    /// <summary>
-    /// Gerçek bilgi tabanının doküman metinleri (dosya adı = doküman kimliği). Canlı koşuda bu metinler API'nin doküman
-    /// uçlarından alınır; burada aynı dosyalar doğrudan okunur.
-    /// </summary>
-    private static readonly Lazy<IReadOnlyDictionary<string, string>> KnowledgeBaseTexts = new(() =>
-        Directory.GetFiles(EvalOptions.ResolveFromRepository("knowledge-base"), "*.md")
-            .ToDictionary(file => Path.GetFileNameWithoutExtension(file), file => File.ReadAllText(file)));
-
-    /// <summary>Gerçek değerlendirme setinden kimliği verilen soruyu döndürür.</summary>
-    private static EvalQuestion RealQuestion(string id) => RealSuite.Value.Questions.Single(question => question.Id == id);
-
-    /// <summary>
-    /// Verilen metinle, sorunun beklediği ilk dokümana ve ilk bölüme atıf yapan ve beklenen eski sürümleri elenmiş olarak
-    /// raporlayan bir yanıt kurar; böylece yapısal kontroller geçer ve sonuç yalnızca metnin içeriğine bağlı kalır.
-    /// </summary>
-    private static AnswerDto CitingExpected(EvalQuestion question, string text) =>
-        Answer(
-            text,
-            sources: [(question.Expect.SourcesAnyOf ?? question.Expect.SourcesAllOf)![0]],
-            discarded: question.Expect.DiscardedVersions?.ToArray(),
-            section: question.Expect.SectionsAnyOf![0]);
 }

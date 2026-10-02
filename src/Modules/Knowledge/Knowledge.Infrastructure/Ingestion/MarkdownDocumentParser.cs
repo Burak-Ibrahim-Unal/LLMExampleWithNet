@@ -4,6 +4,7 @@ using System.Text;
 using Knowledge.Application.Abstractions;
 using Knowledge.Application.Exceptions;
 using Knowledge.Domain.Entities;
+using Shared.Application.Common;
 using YamlDotNet.Core;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
@@ -61,7 +62,7 @@ public static class MarkdownDocumentParser
 
         if (!normalized.StartsWith(Delimiter + "\n", StringComparison.Ordinal))
         {
-            throw Invalid(fileName, "dosya YAML front matter ('---') ile başlamalı");
+            throw Invalid(fileName, Messages.Ingestion.FrontMatterMissing);
         }
 
         // Kapanış satırı, açılış '---'nin bittiği konumdan (onu izleyen '\n' dahil) itibaren aranır; böylece açılışın hemen
@@ -70,7 +71,7 @@ public static class MarkdownDocumentParser
 
         if (closing < 0)
         {
-            throw Invalid(fileName, "front matter kapanış satırı ('---') bulunamadı");
+            throw Invalid(fileName, Messages.Ingestion.FrontMatterNotClosed);
         }
 
         // "---\n---\n": kapanış satırı açılışın hemen ardından geliyor, yani front matter boş. Eskiden bu durumda dilim
@@ -88,7 +89,7 @@ public static class MarkdownDocumentParser
         // Hiç içerik bölümü olmayan bir doküman aranamaz ve kaynak gösterilemez; sessizce atlanmak yerine reddedilir.
         if (sections.Count == 0)
         {
-            throw Invalid(fileName, "içerik bölümü bulunamadı");
+            throw Invalid(fileName, Messages.Ingestion.ContentMissing);
         }
 
         return new SourceDocument(
@@ -118,7 +119,7 @@ public static class MarkdownDocumentParser
         }
         catch (YamlException exception)
         {
-            throw Invalid(fileName, $"front matter okunamadı ({exception.Message})");
+            throw Invalid(fileName, string.Format(CultureInfo.InvariantCulture, Messages.Ingestion.FrontMatterUnreadable, exception.Message));
         }
     }
 
@@ -130,7 +131,7 @@ public static class MarkdownDocumentParser
     private static string Required(string fileName, string? value, string field)
     {
         return string.IsNullOrWhiteSpace(value)
-            ? throw Invalid(fileName, $"zorunlu front matter alanı eksik: {field}")
+            ? throw Invalid(fileName, string.Format(CultureInfo.InvariantCulture, Messages.Ingestion.FieldMissing, field))
             : value.Trim();
     }
 
@@ -143,7 +144,7 @@ public static class MarkdownDocumentParser
     {
         return DateOnly.TryParseExact(value, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var date)
             ? date
-            : throw Invalid(fileName, $"effectiveDate 'yyyy-MM-dd' biçiminde olmalı: {value}");
+            : throw Invalid(fileName, string.Format(CultureInfo.InvariantCulture, Messages.Ingestion.DateInvalid, value));
     }
 
     /// <summary>
@@ -158,7 +159,7 @@ public static class MarkdownDocumentParser
         {
             "active" => DocumentStatus.Active,
             "superseded" => DocumentStatus.Superseded,
-            _ => throw Invalid(fileName, $"bilinmeyen status: {value} (active | superseded)")
+            _ => throw Invalid(fileName, string.Format(CultureInfo.InvariantCulture, Messages.Ingestion.StatusUnknown, value))
         };
     }
 
@@ -176,12 +177,13 @@ public static class MarkdownDocumentParser
             "prosedur" => DocumentCategory.Procedure,
             "kilavuz" => DocumentCategory.Guide,
             "sss" => DocumentCategory.Faq,
-            _ => throw Invalid(fileName, $"bilinmeyen category: {value} (politika | prosedur | kilavuz | sss)")
+            _ => throw Invalid(fileName, string.Format(CultureInfo.InvariantCulture, Messages.Ingestion.CategoryUnknown, value))
         };
     }
 
     /// <summary>
-    /// "dosya: neden" biçiminde bir <see cref="KnowledgeBaseFormatException"/> oluşturur. Ingestion bu mesajı 422
+    /// "dosya: neden" biçiminde bir <see cref="KnowledgeBaseFormatException"/> oluşturur; nedenler
+    /// <see cref="Messages.Ingestion"/> metinleridir. Ingestion bu mesajı 422
     /// yanıtında olduğu gibi gösterdiğinden operatör bozuk dosyayı ve sorunu doğrudan görür.
     /// </summary>
     private static KnowledgeBaseFormatException Invalid(string fileName, string reason) => new($"{fileName}: {reason}");

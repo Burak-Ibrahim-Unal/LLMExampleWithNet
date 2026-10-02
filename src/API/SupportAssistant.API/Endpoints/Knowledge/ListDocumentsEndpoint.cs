@@ -25,7 +25,7 @@ public sealed class ListDocumentsEndpoint(IKnowledgeService knowledgeService) : 
         AllowAnonymous();
         Summary(summary =>
         {
-            summary.Summary = "Bilgi tabanındaki dokümanları sürüm bilgileriyle listeler.";
+            summary.Summary = Messages.ApiDocs.ListDocumentsSummary;
         });
     }
 

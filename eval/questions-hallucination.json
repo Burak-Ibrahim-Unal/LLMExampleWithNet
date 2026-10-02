@@ -1,0 +1,127 @@
+{
+  "questions": [
+    {
+      "id": "HL01",
+      "category": "cevapsiz",
+      "question": "Yasal cayma hakkı kaç gündür?",
+      "expectedAnswer": "Dokümanlarda yasal cayma hakkı yok; genel bilgiden (ör. '14 gün') yanıt verilmemeli, bilgi olmadığı belirtilmeli. Şirketin 30 günlük iade süresi ayrı bir konudur.",
+      "expect": { "answerable": false }
+    },
+    {
+      "id": "HL02",
+      "category": "cevapsiz",
+      "question": "Termostatta E04 hata kodu görünüyor, bu ne anlama geliyor?",
+      "expectedAnswer": "Dokümanlarda yalnızca E01, E02 ve E03 tanımlı; E04 için bir anlam uydurulmamalı, bilgi olmadığı belirtilmeli.",
+      "expect": { "answerable": false }
+    },
+    {
+      "id": "HL03",
+      "category": "cevapsiz",
+      "question": "Termostatın LED ışığı mor yanıp sönüyor, bu ne anlama geliyor?",
+      "expectedAnswer": "Dokümanlardaki LED renkleri mavi, yeşil, turuncu ve kırmızıdır; mor renk tanımlı değil. Başka bir rengin anlamı aktarılmamalı, bilgi olmadığı belirtilmeli.",
+      "expect": { "answerable": false }
+    },
+    {
+      "id": "HL04",
+      "category": "cevapsiz",
+      "question": "Lumora Hub'ı ilk kez nasıl kurarım?",
+      "expectedAnswer": "Dokümanlarda yalnızca Lumora Termo'nun kurulum kılavuzu var; Hub'ın kurulumu anlatılmıyor. Termo adımları Hub'a uygulanmamalı (alıntılar birebir doğru olsa bile yanıt yanlış ürüne dayanır); bilgi olmadığı belirtilmeli.",
+      "expect": { "answerable": false }
+    },
+    {
+      "id": "HL05",
+      "category": "cevapsiz",
+      "question": "Kış aylarında termostatı kaç dereceye ayarlamam önerilir?",
+      "expectedAnswer": "Dokümanlarda sıcaklık önerisi yok; genel enerji tasarrufu bilgisinden derece verilmemeli, bilgi olmadığı belirtilmeli.",
+      "expect": { "answerable": false }
+    },
+    {
+      "id": "HL06",
+      "category": "cevapsiz",
+      "question": "Lumora Termo kullanırsam doğalgaz faturam yüzde kaç azalır?",
+      "expectedAnswer": "Dokümanlarda tasarruf oranı yok; yüzde uydurulmamalı, bilgi olmadığı belirtilmeli.",
+      "expect": { "answerable": false }
+    },
+    {
+      "id": "HL07",
+      "category": "normal",
+      "question": "Garanti süresi 3 yıl olduğuna göre 2,5 yıl önce aldığım termostat hâlâ garantide mi?",
+      "expectedAnswer": "Hayır. Sorudaki öncül yanlış: garanti süresi fatura tarihinden itibaren 2 yıldır (3 yıl değil); 2,5 yıllık cihazın garantisi dolmuştur.",
+      "expect": {
+        "answerable": true,
+        "sourcesAnyOf": ["garanti-kosullari"],
+        "mustContain": [["2 yıl", "iki yıl"], ["hayır", "kapsamında değil", "garantide değil", "kapsamı dışında", "kapsam dışı", "dolmuş", "dolduğu", "sona er", "bitmiş", "geçmiş"]],
+        "mustNotContain": ["garanti süresi 3 yıldır", "3 yıl garantilidir", "garantiniz devam ediyor", "hâlâ garantidedir", "hâlâ garanti kapsamındadır"],
+        "sectionsAnyOf": ["Garanti Süresi"]
+      }
+    },
+    {
+      "id": "HL08",
+      "category": "normal",
+      "question": "500 TL üzeri siparişlerde kargo ücretsiz olduğuna göre 600 TL'lik siparişim için kargo ücreti ödemeyeceğim, değil mi?",
+      "expectedAnswer": "Hayır, ödersiniz. Sorudaki öncül yanlış: kargo 750 TL ve üzerindeki siparişlerde ücretsizdir; 750 TL'nin altındaki (ör. 600 TL'lik) siparişlerde 49,90 TL kargo ücreti alınır.",
+      "expect": {
+        "answerable": true,
+        "sourcesAnyOf": ["kargo-ve-teslimat"],
+        "mustContain": [["49,90", "49.90"], ["750"]],
+        "mustNotContain": ["siparişinizde kargo ücretsizdir", "siparişinizde kargo ücreti alınmaz", "500 TL ve üzerindeki siparişlerde kargo ücretsizdir", "500 TL üzeri siparişlerde kargo ücretsizdir"],
+        "sectionsAnyOf": ["Kargo Ücreti"]
+      }
+    },
+    {
+      "id": "HL09",
+      "category": "normal",
+      "question": "Bir Lumora hesabına 15 cihaz ekleyebilir miyim?",
+      "expectedAnswer": "Hayır. Bir Lumora hesabına en fazla 10 cihaz eklenebilir.",
+      "expect": {
+        "answerable": true,
+        "sourcesAnyOf": ["sss-genel"],
+        "mustContain": [["10"]],
+        "conditions": [["en fazla 10", "en çok 10", "10 cihaza kadar", "maksimum 10", "10 cihazla sınırlı", "10 cihazdan fazla"]],
+        "mustNotContain": ["15 cihaz ekleyebilirsiniz", "15 cihazı ekleyebilirsiniz", "15 cihaz eklenebilir"],
+        "sectionsAnyOf": ["Birden fazla cihazı aynı hesaba ekleyebilir miyim"]
+      }
+    },
+    {
+      "id": "HL10",
+      "category": "celiskili",
+      "question": "İade süresinin 14 gün olduğunu biliyorum, bu kural hâlâ geçerli mi?",
+      "expectedAnswer": "Hayır. 14 gün, yerini v2.0'a bırakan v1.0'ın kuralıdır; güncel politikaya (v2.0, 1 Haziran 2025) göre iade süresi teslimattan itibaren 30 gündür.",
+      "expect": {
+        "answerable": true,
+        "sourcesAnyOf": ["iade-politikasi-v2"],
+        "forbiddenSources": ["iade-politikasi-v1"],
+        "mustContain": [["30 gün"]],
+        "mustNotContain": ["hâlâ geçerlidir", "14 gün içinde iade talebinde bulunabilir", "14 gün içinde iade edebilirsiniz"],
+        "discardedVersions": ["iade-politikasi-v1"],
+        "sectionsAnyOf": ["İade Süresi"]
+      }
+    },
+    {
+      "id": "HL11",
+      "category": "normal",
+      "question": "L2'ye aktarılan bir talep en geç ne zaman sonuçlandırılmalı?",
+      "expectedAnswer": "En geç 2 iş günü içinde. L2'nin müşteriye 24 saat içinde dönüş yapması ayrı bir hedeftir; sonuçlandırma süresi değildir.",
+      "expect": {
+        "answerable": true,
+        "sourcesAnyOf": ["sikayet-eskalasyon-proseduru"],
+        "mustContain": [["2 iş günü", "iki iş günü"]],
+        "mustNotContain": ["24 saat içinde sonuçlandırılır", "24 saat içinde sonuçlandırılmalı"],
+        "sectionsAnyOf": ["Çözüm Süresi Hedefleri"]
+      }
+    },
+    {
+      "id": "HL12",
+      "category": "normal",
+      "question": "Cihazımın seri numarası etiketi okunmuyor. Arızası garanti kapsamında onarılır mı?",
+      "expectedAnswer": "Hayır. Garanti koşullarına göre seri numarası etiketi sökülmüş veya okunamaz hâle gelmiş cihazlar garanti kapsamı dışındadır.",
+      "expect": {
+        "answerable": true,
+        "sourcesAnyOf": ["garanti-kosullari"],
+        "mustContain": [["kapsamı dışında", "kapsam dışı", "kapsamında değil", "kapsamına girmez", "karşılanmaz", "hayır"]],
+        "mustNotContain": ["garanti kapsamında onarılır"],
+        "sectionsAnyOf": ["Garanti Kapsamı Dışındaki Durumlar"]
+      }
+    }
+  ]
+}

@@ -49,9 +49,12 @@ public sealed class SearchEndpoint(IKnowledgeService knowledgeService) : Endpoin
     {
         Get("search");
         AllowAnonymous();
+        // Bütün girdi sorgu parametresidir; gövde okunmaz. İstemci gövdesiz bir GET'e "Content-Type: application/json"
+        // eklese bile (bazı araçlar kendiliğinden ekler) çerçeve boş gövdeyi JSON olarak okumaya çalışıp 400 dönmez.
+        RequestBinder(new RequestBinder<SearchRequest>(BindingSource.QueryParams));
         Summary(summary =>
         {
-            summary.Summary = "Dil modeli olmadan arama: bir soru için hangi bölümlerin bulunduğunu ve skorlarını gösterir.";
+            summary.Summary = Messages.ApiDocs.SearchSummary;
         });
     }
 

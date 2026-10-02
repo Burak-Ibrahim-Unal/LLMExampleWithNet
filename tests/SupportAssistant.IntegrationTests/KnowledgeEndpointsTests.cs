@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
+using System.Text;
 using System.Text.Json;
 using Shared.Application.Common;
 using Shouldly;
@@ -128,6 +129,51 @@ public sealed class KnowledgeEndpointsTests(SupportAssistantApiFactory factory) 
 
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
         response.Message.ShouldBe(expectedMessage);
+    }
+
+    /// <summary>
+    /// Gövdesiz bir GET isteğinde <c>Content-Type: application/json</c> başlığı bulunsa bile arama ve doküman uçlarının
+    /// normal yanıt verdiğini doğrular.
+    /// </summary>
+    /// <remarks>
+    /// Canlı API denemesinde bu isteklerin 400 aldığı görüldü: çerçeve, başlığı görünce boş gövdeyi JSON olarak okumaya
+    /// çalışıyordu. Postman gibi bazı istemciler bu başlığı her isteğe kendiliğinden ekler. GET uçlarının bütün girdisi
+    /// sorgu ya da yol parametresidir; gövde okunmamalıdır.
+    /// </remarks>
+    [Theory]
+    [InlineData("/v1/search?q=iade%20s%C3%BCresi&topK=2")]
+    [InlineData("/v1/documents/iade-v2")]
+    public async Task Get_endpoints_ignore_a_json_content_type_without_a_body(string url)
+    {
+        var cancellationToken = TestContext.Current.CancellationToken;
+        using var client = factory.CreateClient();
+        using var request = new HttpRequestMessage(HttpMethod.Get, url)
+        {
+            Content = new StringContent(string.Empty, Encoding.UTF8, "application/json")
+        };
+
+        using var response = await ApiResponse.ReadAsync(await client.SendAsync(request, cancellationToken), cancellationToken);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        response.Success.ShouldBeTrue();
+    }
+
+    /// <summary>
+    /// Beklenen türe çevrilemeyen bir sorgu parametresinin (<c>topK=abc</c>) 400 ile, <c>ApiResult</c> zarfında ve sorunlu
+    /// alanı adıyla söyleyen Türkçe bir mesajla reddedildiğini doğrular.
+    /// </summary>
+    /// <remarks>
+    /// Bu hata iş kurallarından önce, istek bağlanırken oluşur; çerçevenin İngilizce varsayılan hata biçimi yerine diğer
+    /// bütün hatalarla aynı zarf kullanılmalıdır.
+    /// </remarks>
+    [Fact]
+    public async Task A_query_parameter_of_the_wrong_type_is_rejected_in_the_envelope()
+    {
+        using var response = await SendAsync(HttpMethod.Get, "/v1/search?q=iade&topK=abc");
+
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        response.Success.ShouldBeFalse();
+        response.Message.ShouldBe(string.Format(Messages.Request.UnreadableFields, "topK"));
     }
 
     /// <summary>

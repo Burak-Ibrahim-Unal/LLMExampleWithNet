@@ -28,7 +28,7 @@ public sealed class HealthEndpoint(IKnowledgeService knowledgeService) : Endpoin
         AllowAnonymous();
         Summary(summary =>
         {
-            summary.Summary = "İndeks, dil modeli ve embedding yapılandırmasının durumunu döndürür.";
+            summary.Summary = Messages.ApiDocs.HealthSummary;
         });
     }
 

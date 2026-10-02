@@ -8,7 +8,8 @@
       "expect": {
         "answerable": true,
         "sourcesAnyOf": ["kurulum-kilavuzu-lumora-termo", "sorun-giderme-baglanti"],
-        "mustContain": [["2.4 GHz", "2,4 GHz"]]
+        "mustContain": [["2.4 GHz", "2,4 GHz"]],
+        "sectionsAnyOf": ["Kurulumdan Önce", "Cihaz Wi-Fi Ağına Bağlanmıyor"]
       }
     },
     {
@@ -19,7 +20,8 @@
       "expect": {
         "answerable": true,
         "sourcesAnyOf": ["sorun-giderme-baglanti"],
-        "mustContain": [["Wi-Fi", "kablosuz"]]
+        "mustContain": [["Wi-Fi", "kablosuz"], ["yok", "olmadığını", "bulunmadığını", "kopuk", "bağlı değil", "kurulamadığını", "kesildiğini"]],
+        "sectionsAnyOf": ["LED Gösterge Renkleri"]
       }
     },
     {
@@ -30,7 +32,8 @@
       "expect": {
         "answerable": true,
         "sourcesAnyOf": ["garanti-kosullari"],
-        "mustContain": [["kapsam dışı", "kapsamı dışında", "kapsamında değil", "kapsamına girmez", "karşılanmaz", "hayır"]]
+        "mustContain": [["kapsam dışı", "kapsamı dışında", "kapsamında değil", "kapsamına girmez", "karşılanmaz", "hayır"]],
+        "sectionsAnyOf": ["Garanti Kapsamı Dışındaki Durumlar"]
       }
     },
     {
@@ -41,7 +44,9 @@
       "expect": {
         "answerable": true,
         "sourcesAnyOf": ["kargo-ve-teslimat"],
-        "mustContain": [["750"]]
+        "mustContain": [["750"], ["ücretsiz"]],
+        "mustNotContain": ["ücretsiz değil"],
+        "sectionsAnyOf": ["Kargo Ücreti"]
       }
     },
     {
@@ -52,7 +57,8 @@
       "expect": {
         "answerable": true,
         "sourcesAnyOf": ["sikayet-eskalasyon-proseduru"],
-        "mustContain": [["L2", "Seviye 2"]]
+        "mustContain": [["L2", "Seviye 2"]],
+        "sectionsAnyOf": ["Eskalasyon Kriterleri"]
       }
     },
     {
@@ -63,7 +69,8 @@
       "expect": {
         "answerable": true,
         "sourcesAnyOf": ["kurulum-kilavuzu-lumora-termo"],
-        "mustContain": [["10 saniye", "10 sn"]]
+        "mustContain": [["10 saniye", "10 sn"]],
+        "sectionsAnyOf": ["Fabrika Ayarlarına Döndürme"]
       }
     },
     {
@@ -74,7 +81,8 @@
       "expect": {
         "answerable": true,
         "sourcesAllOf": ["kargo-ve-teslimat", "kurulum-kilavuzu-lumora-termo"],
-        "mustContain": [["iş günü"], ["2.4 GHz", "2,4 GHz"]]
+        "mustContain": [["iş günü"], ["2.4 GHz", "2,4 GHz"]],
+        "sectionsAnyOf": ["Teslimat Süresi", "Kurulumdan Önce"]
       }
     },
     {
@@ -87,7 +95,8 @@
         "sourcesAnyOf": ["iade-politikasi-v2"],
         "forbiddenSources": ["iade-politikasi-v1"],
         "mustContain": [["5 iş günü", "beş iş günü"]],
-        "mustNotContain": ["10 iş günü"]
+        "mustNotContain": ["10 iş günü"],
+        "sectionsAnyOf": ["Para İadesi"]
       }
     },
     {
@@ -129,7 +138,8 @@
         "forbiddenSources": ["iade-politikasi-v1"],
         "mustContain": [["30 gün"]],
         "mustNotContain": ["14 gün"],
-        "discardedVersions": ["iade-politikasi-v1"]
+        "discardedVersions": ["iade-politikasi-v1"],
+        "sectionsAnyOf": ["İade Süresi"]
       }
     },
     {
@@ -143,7 +153,8 @@
         "forbiddenSources": ["iade-politikasi-v1"],
         "mustContain": [["5 iş günü", "beş iş günü"]],
         "mustNotContain": ["10 iş günü"],
-        "discardedVersions": ["iade-politikasi-v1"]
+        "discardedVersions": ["iade-politikasi-v1"],
+        "sectionsAnyOf": ["Para İadesi"]
       }
     },
     {
@@ -157,7 +168,8 @@
         "forbiddenSources": ["destek-kanallari-v1"],
         "mustContain": [["7/24", "7 gün", "24 saat", "her gün", "hafta sonu dahil"]],
         "mustNotContain": ["destek hizmeti verilmez"],
-        "discardedVersions": ["destek-kanallari-v1"]
+        "discardedVersions": ["destek-kanallari-v1"],
+        "sectionsAnyOf": ["Canlı Sohbet", "Telefon Desteği"]
       }
     },
     {
@@ -171,7 +183,9 @@
         "forbiddenSources": ["iade-politikasi-v1", "sss-genel"],
         "mustContain": [["ücretsiz", "Lumora karşıla", "Lumora tarafından karşılan", "ücret alınmaz"]],
         "mustNotContain": ["müşteriye aittir"],
-        "discardedVersions": ["iade-politikasi-v1"]
+        "discardedVersions": ["iade-politikasi-v1"],
+        "sectionsAnyOf": ["İade Kargo Ücreti"],
+        "expectConflict": { "chosen": "iade-politikasi-v2", "rejected": ["sss-genel"] }
       }
     }
   ]

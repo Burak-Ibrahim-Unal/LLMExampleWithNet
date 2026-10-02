@@ -44,8 +44,19 @@ public sealed record EvalQuestion(string Id, string Category, string Question, s
 /// Her iç liste bir VEYA grubudur; her gruptan en az bir ifade yanıtta geçmelidir (gruplar kendi aralarında VE ile
 /// bağlanır). Gruplar aynı bilginin farklı söylenişlerini kabul etmek içindir (ör. "5 iş günü" / "beş iş günü").
 /// </param>
-/// <param name="MustNotContain">Yanıtta geçmemesi gereken ifadeler (ör. eski kural: "14 gün").</param>
+/// <param name="MustNotContain">
+/// Yanıtta geçmemesi gereken ifadeler: eski kural ("14 gün") ya da ters karar ("ücretsiz değil"). Doğru sayıyı
+/// içeren ama kararı tersine çeviren bir yanıt yalnızca <c>MustContain</c> ile yakalanamaz.
+/// </param>
 /// <param name="DiscardedVersions">Yanıtın <c>versionResolution.discarded</c> listesinde elendiği raporlanması gereken eski sürümler.</param>
+/// <param name="SectionsAnyOf">
+/// Atıf yapılan bölümlerden en az biri bu bölüm adlarından birini içermelidir (ör. "Kargo Ücreti"). Doğru dokümana
+/// ama yanlış bölüme dayanan bir yanıt doküman kontrolünden geçerdi.
+/// </param>
+/// <param name="ExpectConflict">
+/// Yanıtta raporlanması gereken kaynaklar arası çelişki: seçilmesi gereken doküman, elenmesi gerekenler ve sunucunun
+/// kurala uygunluk onayı (<c>ruleSatisfied=true</c>).
+/// </param>
 public sealed record EvalExpectation(
     bool Answerable,
     IReadOnlyList<string>? SourcesAnyOf = null,
@@ -53,7 +64,17 @@ public sealed record EvalExpectation(
     IReadOnlyList<string>? ForbiddenSources = null,
     IReadOnlyList<IReadOnlyList<string>>? MustContain = null,
     IReadOnlyList<string>? MustNotContain = null,
-    IReadOnlyList<string>? DiscardedVersions = null);
+    IReadOnlyList<string>? DiscardedVersions = null,
+    IReadOnlyList<string>? SectionsAnyOf = null,
+    ExpectedConflict? ExpectConflict = null);
+
+/// <summary>
+/// Bir yanıtta görünmesi beklenen kaynaklar arası çelişki. Kaynaklar arası çelişkiyi model bildirir; bu beklenti, modelin
+/// çelişkiyi gerçekten fark ettiğini ve sunucunun öncelik kuralına göre doğru kaynağı seçtiğini birlikte denetler.
+/// </summary>
+/// <param name="Chosen">Geçerli kabul edilmesi gereken doküman (ör. güncel iade politikası).</param>
+/// <param name="Rejected">Elenmesi gereken dokümanlar (ör. eski bilgi taşıyan SSS).</param>
+public sealed record ExpectedConflict(string Chosen, IReadOnlyList<string> Rejected);
 
 /// <summary>
 /// API'nin <c>ApiResult</c> zarfı, istemcilerin aldığı biçimiyle (<c>success</c>, <c>message</c>, <c>data</c>,

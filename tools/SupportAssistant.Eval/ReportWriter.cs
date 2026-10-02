@@ -79,7 +79,8 @@ public static class ReportWriter
     /// <remarks>
     /// Arama isabeti yalnızca beklenen kaynağı olan sorular üzerinden ve iki mod için ayrı verilir; BM25 ile hibrit arasındaki
     /// fark vektör aramasının katkısını gösterir. Yanıt süresinde ortalamanın yanında medyan ve en uzun süre de yazılır;
-    /// Kapı 1'de reddedilen soruların modele gitmediği için ~0 sn sürdüğü raporda açıkça not edilir.
+    /// Kapı 1'de reddedilen soruların modele gitmediği için ~0 sn sürdüğü raporda açıkça not edilir. Düzeltme turuna giren
+    /// (modelin iki kez çağrıldığı) soru sayısı da verilir.
     /// </remarks>
     private static string BuildMarkdown(EvalOptions options, SystemStatusDto? status, IReadOnlyList<QuestionResult> results)
     {
@@ -108,8 +109,17 @@ public static class ReportWriter
         report.AppendLine($"**Arama isabeti** (beklenen kaynak, sunucunun varsayılan topK değeri kadar arama sonucu içinde — sürüm çözümünden önce; {withExpectedSource.Count} soru): " +
             $"yalnız BM25 {withExpectedSource.Count(result => result.LexicalHit == true)}/{withExpectedSource.Count} · " +
             $"hibrit {withExpectedSource.Count(result => result.HybridHit == true)}/{withExpectedSource.Count}  ");
-        report.AppendLine($"**Yanıt süresi:** medyan {Seconds(Median(results.Select(result => result.LatencyMs)))}, ortalama {Seconds((long)results.Average(result => result.LatencyMs))}, " +
-            $"en uzun {Seconds(results.Max(result => result.LatencyMs))} (Kapı 1'de reddedilen sorular modele gitmediği için ~0 sn)").AppendLine();
+        // Boş bir soru dosyasında ortalama ve en uzun süre tanımsızdır (Average/Max boş kümede istisna fırlatır).
+        if (results.Count > 0)
+        {
+            report.AppendLine($"**Yanıt süresi:** medyan {Seconds(Median(results.Select(result => result.LatencyMs)))}, ortalama {Seconds((long)results.Average(result => result.LatencyMs))}, " +
+                $"en uzun {Seconds(results.Max(result => result.LatencyMs))} (Kapı 1'de reddedilen sorular modele gitmediği için ~0 sn)  ");
+        }
+
+        // Düzeltme turu (doğrulanamayan alıntı ya da öncelik ihlali yüzünden ikinci model çağrısı) gecikmeyi artırır ve
+        // modelin ilk denemede kabul edilebilir bir yanıt veremediğini gösterir; sayısı ayrıca izlenir.
+        var corrected = results.Count(result => result.Answer?.Diagnostics.ModelCalls > 1);
+        report.AppendLine($"**Düzeltme turu:** {corrected} soruda model ikinci kez çağrıldı").AppendLine();
 
         report.AppendLine("| ID | Kategori | Soru | Beklenen | Sonuç | Süre |").AppendLine("|---|---|---|---|---|---:|");
 
@@ -133,7 +143,7 @@ public static class ReportWriter
     /// Tek bir soru için ayrıntılı karşılaştırma bloğu yazar: soru, beklenen ve gerçek yanıt (reddedildiyse
     /// <c>refusalReason</c>), modelin bildirdiği eksik bilgi, her kaynak için doküman/sürüm/tarih/bölüm ve alıntının
     /// doğrulanıp doğrulanmadığı, elenen sürümler ve nedenleri, kaynaklar arası çelişkiler ve öncelik kuralına uyum,
-    /// kontroller, arama isabeti ve süre.
+    /// kontroller, arama isabeti, süre ve model çağrısı sayısı.
     /// </summary>
     /// <remarks>
     /// Satır sonlarındaki iki boşluk Markdown'da satır kırılmasıdır; blok tek paragraf olarak okunur. Yalnızca kalan
@@ -181,7 +191,8 @@ public static class ReportWriter
         }
 
         report.AppendLine($"**Kontroller:** {string.Join(" · ", result.Checks.Select(check => $"{(check.Passed ? "✅" : "❌")} {check.Name}{(check.Passed ? string.Empty : $" ({check.Detail})")}"))}  ");
-        report.AppendLine($"**Arama isabeti:** BM25 {Hit(result.LexicalHit)} · hibrit {Hit(result.HybridHit)} · **Süre:** {Seconds(result.LatencyMs)}").AppendLine();
+        report.AppendLine($"**Arama isabeti:** BM25 {Hit(result.LexicalHit)} · hibrit {Hit(result.HybridHit)} · **Süre:** {Seconds(result.LatencyMs)}" +
+            $"{(answer is null ? string.Empty : $" · **Model çağrısı:** {answer.Diagnostics.ModelCalls}")}").AppendLine();
     }
 
     /// <summary>Kategori anahtarını Türkçe başlığa çevirir; tanımsız bir anahtar raporda olduğu gibi gösterilir.</summary>

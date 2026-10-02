@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Globalization;
 using System.Net.Http.Json;
 using System.Text.Json;
 using Knowledge.Application.Contracts;
@@ -9,7 +10,8 @@ using SupportAssistant.Eval;
 // gerçek embedding sunucusu ve gerçek bilgi tabanıyla, dışarıdan bir istemci gibi HTTP üzerinden ölçülür.
 // Puanlama deterministiktir (EvalChecks); LLM-as-judge kullanılmaz, çünkü aynı küçük modelle yargılamak zayıf ve
 // tekrarlanamaz olurdu. Kural tabanlı kontroller her koşuda aynı sonucu verir ve sorunun neden kaldığını açıkça gösterir.
-// Çıkış kodları: 0 = koşu tamamlandı (kalan soru olsa bile), 1 = geçersiz argüman, 2 = API'ye ulaşılamadı.
+// Çıkış kodları: 0 = bütün sorular geçti, 1 = en az bir soru kaldı, 2 = API'ye ulaşılamadı, 3 = geçersiz argüman.
+// Böylece araç bir CI adımı olarak da kullanılabilir: kalan bir soru komutu başarısız kılar.
 
 EvalOptions options;
 
@@ -21,7 +23,7 @@ try
 catch (ArgumentException exception)
 {
     Console.Error.WriteLine(exception.Message);
-    return 1;
+    return 3;
 }
 
 // 2) Web varsayılanları (camelCase, büyük/küçük harfe duyarsız eşleşme) API'nin JSON biçimiyle aynıdır; soru dosyası,
@@ -35,8 +37,9 @@ var suite = JsonSerializer.Deserialize<EvalSuite>(await File.ReadAllTextAsync(qu
 
 // 3) Koşu boyunca tek bir HttpClient kullanılır. BaseAddress tek bir "/" ile bitmelidir; aksi hâlde "v1/health" gibi
 //    göreli yollar birleştirilirken taban adresin son yol parçası (ör. bir ters vekil öneki) düşerdi.
-//    Zaman aşımı 5 dk: varsayılan 100 sn, API'nin kendi LLM zaman aşımından (varsayılan 120 sn) ve yeniden denemesinden
-//    kısadır; istemci erken koparsa API'nin döndüreceği 502/503 zarfı yerine anlamsız bir istemci hatası görülürdü.
+//    Zaman aşımı 5 dk: varsayılan 100 sn, API'nin kendi LLM zaman aşımından (varsayılan 120 sn), yeniden denemesinden ve
+//    düzeltme turundan kısadır; istemci erken koparsa API'nin döndüreceği 502/503 zarfı yerine anlamsız bir istemci
+//    hatası görülürdü.
 using var http = new HttpClient
 {
     BaseAddress = new Uri(options.BaseUrl.TrimEnd('/') + "/"),
@@ -47,10 +50,15 @@ using var http = new HttpClient
 //    durulur. Dönen durum (dil modeli, embedding modeli, arama modu) rapor başlığına yazılır; farklı yapılandırmalarla
 //    alınan koşular (ör. düşünme modu açık/kapalı) ancak böyle karşılaştırılabilir.
 SystemStatusDto? status;
+IReadOnlyDictionary<string, string> documentTexts;
 
 try
 {
     status = (await http.GetFromJsonAsync<ApiEnvelope<SystemStatusDto>>("v1/health", json))?.Data;
+    // Doküman metinleri bir kez alınır: "sayılar kaynakta" kontrolü yanıttaki her sayıyı atıf yapılan dokümanın
+    // metniyle karşılaştırır. Metinler değerlendirilen API'den alındığı için kontrol, API'nin gerçekten indekslediği
+    // içerikle yapılır.
+    documentTexts = await LoadDocumentTextsAsync();
 }
 catch (HttpRequestException exception)
 {
@@ -70,28 +78,31 @@ foreach (var question in suite.Questions)
     // Süre, istemcinin gördüğü uçtan uca gecikmedir (HTTP + arama + model + doğrulama). Kronometre yanıt okunur okunmaz
     // durur; aşağıdaki iki arama çağrısı bu süreye girmez.
     var stopwatch = Stopwatch.StartNew();
-    using var response = await http.PostAsJsonAsync("v1/questions", new { question = question.Question }, json);
-    var envelope = await response.Content.ReadFromJsonAsync<ApiEnvelope<AnswerDto>>(json);
+    var (statusCode, envelope, failure) = await AskAsync(question.Question);
     stopwatch.Stop();
 
-    // Veri yoksa (400/502/503 gibi bir hata zarfı) soru tek bir başarısız "yanıt" kontrolüyle kaydedilir ve HTTP kodu ile
-    // mesaj rapora geçer: altyapı hatası koşuyu durdurmaz ama asla "geçti" sayılmaz. "Bilgi yok" reddi ise 200 + veri
-    // olarak geldiği için normal kontrollerden geçer.
-    IReadOnlyList<CheckResult> checks = envelope?.Data is { } answer
-        ? EvalChecks.Evaluate(question.Expect, answer)
-        : [new CheckResult("yanıt", false, $"HTTP {(int)response.StatusCode}: {envelope?.Message}")];
+    // Yalnızca HTTP 200, success=true ve veri taşıyan bir zarf değerlendirilir. Hata zarfı (400/502/503), JSON olmayan
+    // bir gövde ya da başarısız istek, soruyu tek bir başarısız "yanıt" kontrolüyle kaydeder; HTTP kodu ve neden rapora
+    // geçer. Altyapı hatası koşuyu durdurmaz ama asla "geçti" sayılmaz; özellikle cevapsız bir soruda sağlayıcı hatası
+    // doğru bir "bilgi yok" reddi gibi görünemez. "Bilgi yok" reddi ise 200 + veri olarak geldiği için normal
+    // kontrollerden geçer.
+    IReadOnlyList<CheckResult> checks = statusCode == 200 && envelope is { Success: true, Data: { } answer }
+        ? EvalChecks.Evaluate(question.Expect, answer, question.Question, documentTexts)
+        : [new CheckResult("yanıt", false, failure ?? $"HTTP {statusCode}: {envelope?.Message}")];
 
     // Arama isabeti yanıttan ayrı ve iki modda ölçülür: beklenen doküman aramada hiç yoksa hata erişimdedir, varken yanıt
     // yanlışsa kapılarda ya da modeldedir. lexical ile hybrid arasındaki fark vektör aramasının katkısını gösterir.
+    var lexical = await SearchAsync(question.Question, "lexical");
+    var hybrid = await SearchAsync(question.Question, "hybrid");
     var result = new QuestionResult(
         question,
-        (int)response.StatusCode,
-        envelope?.Message ?? string.Empty,
+        statusCode,
+        envelope?.Message ?? failure ?? string.Empty,
         envelope?.Data,
         checks,
         stopwatch.ElapsedMilliseconds,
-        EvalChecks.RetrievalHit(question.Expect, await SearchAsync(question.Question, "lexical")),
-        EvalChecks.RetrievalHit(question.Expect, await SearchAsync(question.Question, "hybrid")));
+        lexical is null ? null : EvalChecks.RetrievalHit(question.Expect, lexical),
+        hybrid is null ? null : EvalChecks.RetrievalHit(question.Expect, hybrid));
 
     results.Add(result);
     // İlerleme satırı: dakikalar sürebilen bir koşuda her sorunun sonucu ve süresi anında görünür.
@@ -103,17 +114,77 @@ foreach (var question in suite.Questions)
 var outputDirectory = EvalOptions.ResolveFromRepository(options.Label is null ? options.OutputPath : Path.Combine(options.OutputPath, options.Label));
 await ReportWriter.WriteAsync(outputDirectory, options, status, results);
 
-// 7) Özet. Kalan soru olsa bile çıkış kodu 0'dır; başarı oranı bu satırda ve raporda okunur.
-Console.WriteLine($"\n{results.Count(result => result.Passed)}/{results.Count} soru geçti. Rapor: {Path.Combine(outputDirectory, "report.md")}");
-return 0;
+// 7) Özet ve çıkış kodu: bir soru bile kaldıysa 1 döner; başarı oranı bu satırda ve raporda okunur.
+var passed = results.Count(result => result.Passed);
+Console.WriteLine($"\n{passed}/{results.Count} soru geçti. Rapor: {Path.Combine(outputDirectory, "report.md")}");
+return passed == results.Count ? 0 : 1;
+
+// Yerel fonksiyon: bir soruyu POST /v1/questions ucuna sorar ve HTTP kodunu, zarfı ve (varsa) neden okunamadığını döndürür.
+// İki tür arıza istisna olarak yukarı taşınmaz, sonuç olarak döner: isteğin kendisinin başarısız olması (bağlantı kopması,
+// istemci zaman aşımı) ve gövdenin JSON olmaması (ör. işlenmemiş bir hatanın boş ya da HTML gövdesi). Böylece tek bir
+// sorudaki altyapı arızası bütün koşuyu çökertmez, o soru kalmış olarak raporlanır.
+async Task<(int StatusCode, ApiEnvelope<AnswerDto>? Envelope, string? Failure)> AskAsync(string text)
+{
+    try
+    {
+        using var response = await http.PostAsJsonAsync("v1/questions", new { question = text }, json);
+        var code = (int)response.StatusCode;
+
+        try
+        {
+            return (code, await response.Content.ReadFromJsonAsync<ApiEnvelope<AnswerDto>>(json), null);
+        }
+        catch (Exception exception) when (exception is JsonException or NotSupportedException)
+        {
+            return (code, null, $"HTTP {code}: yanıt gövdesi okunamadı ({exception.Message})");
+        }
+    }
+    catch (Exception exception) when (exception is HttpRequestException or TaskCanceledException)
+    {
+        return (0, null, $"istek başarısız: {exception.Message}");
+    }
+}
 
 // Yerel fonksiyon: arama sonuçlarının başındaki dokümanlar. Soruyu GET /v1/search ucuna verilen modla (lexical =
 // yalnızca BM25, hybrid = BM25 + vektör) sorar ve sonuçlardaki farklı doküman kimliklerini döndürür. topK bilerek
 // gönderilmez, sunucuya bırakılır: sunucunun varsayılanı modele verilen bölüm sayısıyla (Retrieval:TopK) aynıdır, böylece
 // isabet modelin görebileceği kadar sonuç içinde ölçülür. Arama ucu sürüm çözümü uygulamaz; ölçülen şey ham erişimdir.
-// Sorgu, Türkçe karakterler ve boşluklar için URL'de kaçışlanır.
-async Task<IReadOnlyCollection<string>> SearchAsync(string query, string mode)
+// Sorgu, Türkçe karakterler ve boşluklar için URL'de kaçışlanır. Arama başarısız olursa isabet ölçülemez: null döner,
+// bir uyarı basılır ve raporda o soru için isabet "—" görünür; ölçülemeyen isabet ıska sayılmaz.
+async Task<IReadOnlyCollection<string>?> SearchAsync(string query, string mode)
 {
-    var envelope = await http.GetFromJsonAsync<ApiEnvelope<SearchResultDto>>($"v1/search?q={Uri.EscapeDataString(query)}&mode={mode}", json);
-    return envelope?.Data?.Hits.Select(hit => hit.DocumentId).Distinct().ToList() ?? [];
+    try
+    {
+        var envelope = await http.GetFromJsonAsync<ApiEnvelope<SearchResultDto>>($"v1/search?q={Uri.EscapeDataString(query)}&mode={mode}", json);
+        return envelope?.Data?.Hits.Select(hit => hit.DocumentId).Distinct().ToList() ?? [];
+    }
+    catch (Exception exception) when (exception is HttpRequestException or TaskCanceledException or JsonException)
+    {
+        Console.Error.WriteLine($"Arama isabeti ölçülemedi ({mode}): {exception.Message}");
+        return null;
+    }
+}
+
+// Yerel fonksiyon: API'deki bütün dokümanların metnini kimliğe göre toplar (başlık, sürüm, yürürlük tarihi, bölüm yolları
+// ve içerikler). Sürüm ve tarih de eklenir, çünkü doğru bir yanıt "2.0 sürümüne göre" ya da "2025-06-01 itibarıyla"
+// diyebilir; bunlar kaynakta geçen sayılardır.
+async Task<IReadOnlyDictionary<string, string>> LoadDocumentTextsAsync()
+{
+    var texts = new Dictionary<string, string>(StringComparer.Ordinal);
+    var documents = (await http.GetFromJsonAsync<ApiEnvelope<List<DocumentSummaryDto>>>("v1/documents", json))?.Data ?? [];
+
+    foreach (var summary in documents)
+    {
+        var detail = (await http.GetFromJsonAsync<ApiEnvelope<DocumentDetailDto>>($"v1/documents/{Uri.EscapeDataString(summary.Id)}", json))?.Data;
+
+        if (detail is not null)
+        {
+            texts[detail.Id] = string.Join(
+                "\n",
+                [detail.Title, detail.Version, detail.EffectiveDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
+                    .. detail.Sections.SelectMany(section => new[] { section.Section, section.Content })]);
+        }
+    }
+
+    return texts;
 }

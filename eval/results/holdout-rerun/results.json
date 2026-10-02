@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-02T10:09:58.0254937+03:00",
+  "generatedAt": "2026-10-02T13:50:06.578418+03:00",
   "baseUrl": "http://localhost:5031",
   "label": "holdout-rerun",
   "status": {
@@ -9,7 +9,7 @@
       "documents": 10,
       "sections": 53,
       "retrievalMode": "hybrid",
-      "builtAtUtc": "2026-10-02T07:09:17.9587016Z"
+      "builtAtUtc": "2026-10-02T10:49:29.4447401Z"
     },
     "llm": {
       "configured": true,
@@ -22,6 +22,11 @@
   },
   "passed": 10,
   "total": 12,
+  "hallucination": {
+    "answered": 8,
+    "flagged": 0,
+    "signals": []
+  },
   "results": [
     {
       "question": {
@@ -90,7 +95,7 @@
           "detail": "'e-posta' | 'eposta' | 'mail'"
         }
       ],
-      "latencyMs": 19231,
+      "latencyMs": 8837,
       "lexicalHit": true,
       "hybridHit": true,
       "answer": {
@@ -184,8 +189,8 @@
             }
           ],
           "model": "gemma-4-26b-a4b-it",
-          "latencyMs": 19107,
-          "inputTokens": 1545,
+          "latencyMs": 8709,
+          "inputTokens": 1535,
           "outputTokens": 153,
           "modelCalls": 1
         }
@@ -254,7 +259,7 @@
           "detail": "'49,90' | '49.90'"
         }
       ],
-      "latencyMs": 1339,
+      "latencyMs": 1313,
       "lexicalHit": true,
       "hybridHit": true,
       "answer": {
@@ -344,8 +349,8 @@
             }
           ],
           "model": "gemma-4-26b-a4b-it",
-          "latencyMs": 1328,
-          "inputTokens": 1206,
+          "latencyMs": 1302,
+          "inputTokens": 1196,
           "outputTokens": 116,
           "modelCalls": 1
         }
@@ -401,7 +406,7 @@
           "detail": "beklenen: yanıt, gerçek: bilgi yok (ModelInsufficientContext)"
         }
       ],
-      "latencyMs": 1284,
+      "latencyMs": 1359,
       "lexicalHit": true,
       "hybridHit": true,
       "answer": {
@@ -416,7 +421,7 @@
           "discarded": []
         },
         "conflicts": [],
-        "missingInformation": "Ürünün satın alma tarihi (fatura tarihi) üzerinden 2 yıl geçtiği için garanti süresinin dolup dolmadığı ve arızanın neden kaynaklandığı (üretim hatası mı yoksa kullanım hatası mı olduğu) bilinmemektedir.",
+        "missingInformation": "Ürünün garanti süresinin dolup dolmadığını belirlemek için satın alma tarihine ihtiyaç vardır; ancak mevcut bilgilerde ürünün 2 yıl garantili olduğu belirtilmektedir. Ayrıca arızanın neden kaynaklandığı (üretim hatası mı yoksa kullanım hatası mı olduğu) bilinmemektedir.",
         "refusalReason": "ModelInsufficientContext",
         "diagnostics": {
           "retrievalMode": "hybrid",
@@ -482,9 +487,9 @@
             }
           ],
           "model": "gemma-4-26b-a4b-it",
-          "latencyMs": 1278,
-          "inputTokens": 1351,
-          "outputTokens": 92,
+          "latencyMs": 1346,
+          "inputTokens": 1341,
+          "outputTokens": 108,
           "modelCalls": 1
         }
       }
@@ -546,13 +551,13 @@
           "detail": "'2.4 GHz' | '2,4 GHz'"
         }
       ],
-      "latencyMs": 1582,
+      "latencyMs": 1525,
       "lexicalHit": true,
       "hybridHit": true,
       "answer": {
         "question": "Lumora Termo hangi Wi-Fi frekansında çalışır ve Amazon Alexa ile kullanılabilir mi?",
         "answerable": true,
-        "answer": "Lumora Termo yalnızca 2.4 GHz Wi-Fi ağlarını desteklemektedir; 5 GHz ağlara bağlanamaz.",
+        "answer": "Lumora Termo yalnızca 2.4 GHz Wi-Fi ağlarını destekler; 5 GHz ağlara bağlanamaz.",
         "sources": [
           {
             "documentId": "kurulum-kilavuzu-lumora-termo",
@@ -641,9 +646,9 @@
             }
           ],
           "model": "gemma-4-26b-a4b-it",
-          "latencyMs": 1577,
-          "inputTokens": 1517,
-          "outputTokens": 132,
+          "latencyMs": 1515,
+          "inputTokens": 1507,
+          "outputTokens": 131,
           "modelCalls": 1
         }
       }
@@ -718,7 +723,7 @@
           "detail": "'yapılamaz' | 'değiştirilemez' | 'değiştiremezsiniz' | 'mümkün değil' | 'hayır'"
         }
       ],
-      "latencyMs": 1677,
+      "latencyMs": 1618,
       "lexicalHit": true,
       "hybridHit": true,
       "answer": {
@@ -821,8 +826,8 @@
             }
           ],
           "model": "gemma-4-26b-a4b-it",
-          "latencyMs": 1672,
-          "inputTokens": 1239,
+          "latencyMs": 1612,
+          "inputTokens": 1229,
           "outputTokens": 163,
           "modelCalls": 1
         }
@@ -936,7 +941,7 @@
           "detail": "—"
         }
       ],
-      "latencyMs": 1020,
+      "latencyMs": 976,
       "lexicalHit": null,
       "hybridHit": null,
       "answer": {
@@ -951,7 +956,7 @@
           "discarded": []
         },
         "conflicts": [],
-        "missingInformation": "Lumora Termo'nun pil ömrü veya pil dayanıklılığı ile ilgili bilgi kaynaklarda bulunmamaktadır.",
+        "missingInformation": "Lumora Termo'nun pil ömrüne dair bilgi kaynaklarda bulunmamaktadır.",
         "refusalReason": "ModelInsufficientContext",
         "diagnostics": {
           "retrievalMode": "hybrid",
@@ -1019,9 +1024,9 @@
             }
           ],
           "model": "gemma-4-26b-a4b-it",
-          "latencyMs": 1012,
-          "inputTokens": 1372,
-          "outputTokens": 63,
+          "latencyMs": 972,
+          "inputTokens": 1362,
+          "outputTokens": 62,
           "modelCalls": 1
         }
       }
@@ -1060,7 +1065,7 @@
           "detail": "—"
         }
       ],
-      "latencyMs": 1077,
+      "latencyMs": 1182,
       "lexicalHit": null,
       "hybridHit": null,
       "answer": {
@@ -1141,9 +1146,9 @@
             }
           ],
           "model": "gemma-4-26b-a4b-it",
-          "latencyMs": 1073,
-          "inputTokens": 1308,
-          "outputTokens": 70,
+          "latencyMs": 1164,
+          "inputTokens": 1298,
+          "outputTokens": 75,
           "modelCalls": 1
         }
       }
@@ -1230,13 +1235,13 @@
           "detail": "beklenen: iade-politikasi-v1; raporlanan: iade-politikasi-v1"
         }
       ],
-      "latencyMs": 1375,
+      "latencyMs": 1483,
       "lexicalHit": true,
       "hybridHit": true,
       "answer": {
         "question": "İade talebimi e-posta ile gönderebilir miyim?",
         "answerable": true,
-        "answer": "Hayır, e-posta ile gönderilen iade talepleri işleme alınmamaktadır. İade talebinizi Lumora mobil uygulaması üzerinden oluşturmanız gerekmektedir.",
+        "answer": "Hayır, e-posta ile gönderilen iade talepleri işleme alınmamaktadır. İade talebinizi Lumora mobil uygulaması üzerinden Siparişlerim > ilgili sipariş > İade Talebi Oluştur adımlarını izleyerek oluşturmanız gerekmektedir.",
         "sources": [
           {
             "documentId": "iade-politikasi-v2",
@@ -1337,9 +1342,9 @@
             }
           ],
           "model": "gemma-4-26b-a4b-it",
-          "latencyMs": 1364,
-          "inputTokens": 1253,
-          "outputTokens": 115,
+          "latencyMs": 1470,
+          "inputTokens": 1243,
+          "outputTokens": 135,
           "modelCalls": 1
         }
       }
@@ -1421,7 +1426,7 @@
           "detail": "'müşteriye aittir'"
         }
       ],
-      "latencyMs": 2218,
+      "latencyMs": 2221,
       "lexicalHit": true,
       "hybridHit": true,
       "answer": {
@@ -1549,8 +1554,8 @@
             }
           ],
           "model": "gemma-4-26b-a4b-it",
-          "latencyMs": 2206,
-          "inputTokens": 1228,
+          "latencyMs": 2195,
+          "inputTokens": 1218,
           "outputTokens": 207,
           "modelCalls": 1
         }
@@ -1639,7 +1644,7 @@
           "detail": "beklenen: destek-kanallari-v1; raporlanan: destek-kanallari-v1"
         }
       ],
-      "latencyMs": 1405,
+      "latencyMs": 1379,
       "lexicalHit": true,
       "hybridHit": true,
       "answer": {
@@ -1747,8 +1752,8 @@
             }
           ],
           "model": "gemma-4-26b-a4b-it",
-          "latencyMs": 1401,
-          "inputTokens": 1297,
+          "latencyMs": 1376,
+          "inputTokens": 1287,
           "outputTokens": 115,
           "modelCalls": 1
         }
@@ -1836,7 +1841,7 @@
           "detail": "beklenen: iade-politikasi-v1; raporlanan: iade-politikasi-v1"
         }
       ],
-      "latencyMs": 2147,
+      "latencyMs": 2152,
       "lexicalHit": true,
       "hybridHit": true,
       "answer": {
@@ -1964,9 +1969,9 @@
             }
           ],
           "model": "gemma-4-26b-a4b-it",
-          "latencyMs": 2143,
-          "inputTokens": 1471,
-          "outputTokens": 277,
+          "latencyMs": 2147,
+          "inputTokens": 1461,
+          "outputTokens": 276,
           "modelCalls": 1
         }
       }

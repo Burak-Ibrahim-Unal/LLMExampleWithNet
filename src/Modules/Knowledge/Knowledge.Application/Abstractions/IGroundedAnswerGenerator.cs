@@ -1,19 +1,70 @@
 namespace Knowledge.Application.Abstractions;
 
-/// <summary>Language model step: answers a question from the given sources only and cites them by label.</summary>
+/// <summary>
+/// Dil modeli adımının portu: soruyu yalnızca verilen kaynaklardan yanıtlar ve her bilgiyi kaynağın kısa etiketiyle
+/// (C1, C2…) belirtir.
+/// </summary>
+/// <remarks>
+/// Application katmanı LLM SDK'larını (OpenAI, Microsoft.Extensions.AI) tanıyamaz; mimari testler bunu zorlar. Bu
+/// arayüz sayesinde gerçek adaptör (<c>OpenAiCompatibleAnswerGenerator</c>), model yapılandırılmamışken kullanılan
+/// <c>UnconfiguredAnswerGenerator</c> ve testlerdeki <c>FakeAnswerGenerator</c> birbirinin yerine geçebilir; sağlayıcı
+/// (llama.cpp, LM Studio, OpenAI…) kod değişmeden yapılandırmayla değişir. Port bilerek modelin "ham" kararını döndürür:
+/// atıf doğrulama, sürüm seçimi ve öncelik denetimi modele güvenilmeden Application katmanında yapılır.
+/// </remarks>
 public interface IGroundedAnswerGenerator
 {
+    /// <summary>
+    /// Bir dil modeli ucu yapılandırılmışsa true (<c>Llm:BaseUrl</c> boşsa false). Sağlık ucu "ok"/"degraded" kararında
+    /// bunu da kullanır; değer yalnızca yapılandırmayı gösterir, sunucunun o an erişilebilir olduğunu ölçmez.
+    /// </summary>
     bool IsConfigured { get; }
 
+    /// <summary>Yapılandırılmış sohbet modelinin adı (yapılandırılmamışsa boş); sağlık ucunda raporlanır.</summary>
     string ModelName { get; }
 
-    /// <exception cref="Exceptions.AnswerGenerationException">The model is unreachable or keeps returning invalid output.</exception>
+    /// <summary>
+    /// Soruyu etiketlenmiş bağlam bölümleriyle birlikte modele gönderir ve şemaya uygun, yapılandırılmış yanıtı döndürür.
+    /// </summary>
+    /// <remarks>
+    /// Modelin "kaynaklar yetmiyor" demesi (<c>Answerable=false</c>) bir istisna değil, geçerli bir sonuçtur. İstisna
+    /// yalnızca teknik hatalarda fırlatılır; böylece handler "bilgi yok" yanıtını 503/502 hatalarından ayırabilir ve
+    /// teknik bir arızayı kullanıcıya "bilgi yok" diye göstermez.
+    /// </remarks>
+    /// <param name="question">Kırpılmış ve iş kurallarından geçmiş soru.</param>
+    /// <param name="context">Sürüm çözümünden sonra modele verilecek, C1..Cn etiketli bölümler.</param>
+    /// <param name="cancellationToken">İsteğin iptal belirteci.</param>
+    /// <exception cref="Exceptions.AnswerGenerationException">Modele ulaşılamıyorsa ya da model geçersiz çıktı vermeyi sürdürüyorsa (adaptör bir kez yeniden dener).</exception>
     Task<GeneratedAnswer> GenerateAsync(string question, IReadOnlyList<ContextChunk> context, CancellationToken cancellationToken = default);
 }
 
-/// <param name="Label">Short identifier shown to the model ("C1", "C2", ...); the model cites sources by it.</param>
+/// <summary>
+/// Modele verilen tek bir bağlam bölümü: indeks bölümü ve ona bu istek için atanan kısa etiket.
+/// </summary>
+/// <remarks>
+/// Etiketleri handler sürüm çözümünden sonra sırayla verir (C1..Cn). Model uzun bir GUID ya da doküman kimliği yerine
+/// kısa bir etiketi kopyalar; bu hem token tasarrufu sağlar hem de uydurma kimlik riskini azaltır. Modelin döndürdüğü
+/// etiket ancak bu listedeki bir etiketle eşleşirse geçerli sayılır.
+/// </remarks>
+/// <param name="Label">Modele gösterilen kısa kimlik ("C1", "C2", ...); model kaynakları bu etiketle belirtir.</param>
+/// <param name="Chunk">Etiketin işaret ettiği indeks bölümü (doküman, sürüm, bölüm yolu ve metin).</param>
 public sealed record ContextChunk(string Label, IndexedChunk Chunk);
 
+/// <summary>
+/// Dil modelinin yapılandırılmış yanıtı, henüz doğrulanmamış hâliyle. Handler bu kaydı olduğu gibi kullanmaz: atıflar
+/// <c>CitationValidator</c> ile, çelişkiler <c>SourcePrecedence</c> ile denetlenir, yanıt metni <c>AnswerText.Clean</c>
+/// ile temizlenir.
+/// </summary>
+/// <param name="Answerable">Kapı 2: model kaynakları yeterli bulduysa true; false ise handler açık bir "bilgi yok" yanıtı döndürür.</param>
+/// <param name="Answer">Müşteriye iletilecek yanıt metni; yanıtlanamıyorsa boş.</param>
+/// <param name="Citations">Modelin verdiği atıflar (etiket + alıntı); geçerlilikleri ayrıca doğrulanır.</param>
+/// <param name="MissingInformation">Kaynakların karşılamadığı kısım; yoksa boş dize (llama.cpp grammar uyumu için şemada null kullanılmaz).</param>
+/// <param name="Conflicts">Modelin farklı dokümanlar arasında tespit ettiği çelişkiler; yoksa boş liste.</param>
+/// <param name="Model">
+/// Yanıtı üreten modelin yapılandırılmış adı. Sunucunun döndürdüğü model kimliği kullanılmaz: llama.cpp orada yerel model
+/// dosyasının yolunu döndürür ve bu makine ayrıntısı API yanıtına sızardı.
+/// </param>
+/// <param name="InputTokens">Girdi token sayısı; sağlayıcı kullanım bilgisi döndürmezse null.</param>
+/// <param name="OutputTokens">Çıktı token sayısı; sağlayıcı kullanım bilgisi döndürmezse null.</param>
 public sealed record GeneratedAnswer(
     bool Answerable,
     string Answer,
@@ -24,6 +75,24 @@ public sealed record GeneratedAnswer(
     long? InputTokens,
     long? OutputTokens);
 
+/// <summary>Modelin tek bir atfı: hangi kaynağa dayandığı ve o kaynaktan alıntıladığı metin.</summary>
+/// <param name="ChunkLabel">
+/// Etiket, modelin yazdığı hâliyle ("C1", "c1", "[C1]" ya da "1" gelebilir); karşılaştırmadan önce
+/// <c>SourceLabel.Normalize</c> ile tek biçime getirilir.
+/// </param>
+/// <param name="Quote">Kaynaktan birebir kopyalanması istenen kısa alıntı; gerçekten geçip geçmediğini <c>CitationValidator</c> denetler.</param>
 public sealed record GeneratedCitation(string ChunkLabel, string Quote);
 
+/// <summary>
+/// Modelin farklı dokümanlar arasında bildirdiği bir çelişki: hangi kaynağı seçtiği, hangilerini elediği ve neden.
+/// </summary>
+/// <remarks>
+/// Aynı doküman ailesinin sürümleri arasındaki çelişki buraya hiç gelmez: <c>VersionResolver</c> eski sürümleri model
+/// çağrılmadan eler, model her aileden yalnızca yürürlükteki sürümü görür. Burada kalan, farklı aileler arasındaki
+/// (ör. politika ile SSS) çelişkilerdir; handler modelin seçiminin öncelik kuralına uyup uymadığını sunucu tarafında hesaplar.
+/// </remarks>
+/// <param name="Topic">Çelişkinin konusu.</param>
+/// <param name="ChosenChunkLabel">Modelin geçerli kabul ettiği kaynağın etiketi.</param>
+/// <param name="RejectedChunkLabels">Modelin elediği kaynakların etiketleri.</param>
+/// <param name="Reason">Modelin seçim gerekçesi.</param>
 public sealed record GeneratedConflict(string Topic, string ChosenChunkLabel, IReadOnlyList<string> RejectedChunkLabels, string Reason);

@@ -161,6 +161,12 @@ public sealed class AskQuestionCommandHandler(
         // eşleştiyse güncel sürümün en iyi bölümleri onun yerine konur. Bağlam TopK ile kesilir ve C1..Cn diye
         // etiketlenir; model kaynaklara bu etiketlerle atıf yapar.
         var resolution = versionResolver.Resolve(retrieval.Hits, index.GetDocumentVersions);
+
+        // TODO(halüsinasyon-3): Yeniden sıralama. Adaylar TopK ile kesilmeden önce bir cross-encoder ile (ör.
+        // bge-reranker-v2-m3; llama.cpp --reranking ile /v1/rerank ucu sunar) yeniden sıralanabilir. Bunun için
+        // Application'da bir port (ör. IReranker) ve Infrastructure'da bir adaptör gerekir. İlgisiz bölümler bağlamdan çıkar
+        // ve model bilgileri daha az karıştırır; yeniden sıralama skoru Kapı 1 için de güçlü bir "yeterli kanıt" sinyali
+        // olur (eşikler yeniden ayarlanmalı). Bkz. README, Halüsinasyon.
         var context = Label(WithSubstitutes(retrieval.Hits, resolution, prepared).Take(settings.TopK).Select(hit => hit.Chunk));
 
         // İlgili her şey yürürlükten kalkmış ya da henüz yürürlüğe girmemiş: modelin kullanabileceği bir kaynak yok.
@@ -225,6 +231,13 @@ public sealed class AskQuestionCommandHandler(
             // atıflar yanıtın dayanağı olur. Doğrulanamayan alıntı, kaynaklı görünen ama kaynakta olmayan bir iddiadır.
             var citations = CitationValidator.Validate(generated.Citations, context);
             var accepted = citations.Where(citation => citation.QuoteVerified).ToList();
+
+            // TODO(halüsinasyon-1): Çalışma anında sayı kontrolü. Alıntının kaynakta geçtiği doğrulanıyor, ama yanıt
+            // metnindeki sayıların (süre, tutar, eşik) kabul edilen atıfların bölümlerinde geçtiği doğrulanmıyor.
+            // Değerlendirme aracındaki "sayılar kaynakta" kontrolü (EvalChecks.Numbers) bir politika sınıfına taşınıp burada
+            // uygulanabilir: desteksiz sayı varsa AnswerFeedback'e eklenip mevcut düzeltme turu kullanılır, sürerse yeni bir
+            // ret nedeniyle (ör. UnsupportedNumbers) reddedilir. Sorunun kendisindeki sayılar serbesttir. Bkz. README,
+            // Halüsinasyon.
 
             // Öncelik kuralı: model bir çelişkide kurala göre kaybeden kaynağı seçtiyse ya da yanıtını kaybeden bir kaynağa
             // dayandırdıysa eski ya da daha az yetkili bilgi müşteriye ulaşırdı. Kuralın kazananına hiç atıf yapılmaması da
@@ -311,6 +324,11 @@ public sealed class AskQuestionCommandHandler(
                 .Where(conflict => citedDocuments.Contains(conflict.Chosen.DocumentId))
                 .ToList();
 
+            // TODO(halüsinasyon-4): İkinci doğrulayıcı. Kabul edilen yanıtın her cümlesi, dayandığı alıntılarla birlikte bir
+            // doğal dil çıkarımı (NLI) modeline ya da ayrı bir LLM çağrısına "bu cümle bu alıntıdan çıkar mı?" diye
+            // sorulabilir. En isabetli yöntem budur ama ek gecikme ve ek çağrı demektir: MaxModelCalls (soru başına iki
+            // gerçek istek) ya genişletilmeli ya da doğrulayıcıya ayrı bir bütçe verilmelidir. Önce 1. ve 2. maddelerin
+            // etkisi ölçülmeli. Bkz. README, Halüsinasyon.
             var answer = new AnswerDto(
                 question,
                 Answerable: true,

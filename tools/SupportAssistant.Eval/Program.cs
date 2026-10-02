@@ -29,6 +29,12 @@ catch (ArgumentException exception)
 // 2) Web varsayılanları (camelCase, büyük/küçük harfe duyarsız eşleşme) API'nin JSON biçimiyle aynıdır; soru dosyası,
 //    istek gövdesi ve API yanıtları aynı ayarla okunup yazılır.
 var json = new JsonSerializerOptions(JsonSerializerDefaults.Web);
+
+// TODO(halüsinasyon-5): Halüsinasyon odaklı soru seti (ör. eval/questions-hallucination.json): modeli genel bilgiye
+// çeken sorular ("Yasal cayma hakkı kaç gündür?"), yanıtı neredeyse dokümanda olan sorular ve sayı tuzakları; sonuç
+// "desteksiz iddia oranı" olarak raporlanmalı. Aynı kontroller denetim kaydındaki (question_logs) gerçek yanıtlara da
+// düzenli uygulanarak üretimdeki halüsinasyon izlenebilir. Bkz. README, Halüsinasyon.
+
 // Göreli yol depo köküne göre çözülür (bkz. EvalOptions.ResolveFromRepository). Dosyanın içeriği JSON null ise sıfır
 // soruyla sessizce devam etmek yerine dosya yolunu gösteren bir hatayla durulur.
 var questionsPath = EvalOptions.ResolveFromRepository(options.QuestionsPath);

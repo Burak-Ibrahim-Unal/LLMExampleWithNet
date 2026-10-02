@@ -130,3 +130,24 @@ public sealed record QuestionResult(
     /// </summary>
     public bool Passed => Checks.Count > 0 && Checks.All(check => check.Passed);
 }
+
+/// <summary>
+/// Bir yanıtta görülen tek bir halüsinasyon sinyali. <see cref="HallucinationSignals"/> üretir; raporda soru, tür ve
+/// ayrıntıyla tek satır olarak görünür.
+/// </summary>
+/// <param name="QuestionId">Sinyalin görüldüğü sorunun kimliği.</param>
+/// <param name="Kind">
+/// Sinyalin türü: "cevapsız soruya yanıt" ya da sinyali üreten kontrolün adı ("alıntı doğrulandı", "sayılar kaynakta",
+/// "yasak ifade"); okuyan, raporun soru bölümündeki kontrolü aynı adla bulur.
+/// </param>
+/// <param name="Detail">Kontrolün beklenen/gerçek özeti (ör. kaynakta olmayan sayılar) ya da yanıtın atıf yaptığı dokümanlar.</param>
+public sealed record HallucinationSignal(string QuestionId, string Kind, string Detail);
+
+/// <summary>
+/// Bir koşunun halüsinasyon sinyali özeti: yanıt verilen soru sayısı (payda), en az bir sinyal taşıyan yanıt sayısı ve
+/// sinyallerin tamamı. <c>Flagged/Answered</c>, raporda "desteksiz iddia oranı" olarak okunur.
+/// </summary>
+/// <param name="Answered">API'nin yanıt verdiği (<c>answerable=true</c>) soru sayısı; ret ve hata zarfları dahil değildir.</param>
+/// <param name="Flagged">En az bir sinyal taşıyan yanıt sayısı; birden çok sinyal taşıyan yanıt bir kez sayılır.</param>
+/// <param name="Signals">Bütün sinyaller, sorular ve kontroller sırasıyla.</param>
+public sealed record HallucinationSummary(int Answered, int Flagged, IReadOnlyList<HallucinationSignal> Signals);

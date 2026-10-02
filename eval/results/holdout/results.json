@@ -1,0 +1,1974 @@
+{
+  "generatedAt": "2026-10-02T07:48:10.1891098+03:00",
+  "baseUrl": "http://localhost:5031",
+  "label": "holdout",
+  "status": {
+    "status": "ok",
+    "index": {
+      "ready": true,
+      "documents": 10,
+      "sections": 53,
+      "retrievalMode": "hybrid",
+      "builtAtUtc": "2026-10-02T04:46:38.961904Z"
+    },
+    "llm": {
+      "configured": true,
+      "model": "gemma-4-26b-a4b-it"
+    },
+    "embeddings": {
+      "configured": true,
+      "model": "bge-m3"
+    }
+  },
+  "passed": 10,
+  "total": 12,
+  "results": [
+    {
+      "question": {
+        "id": "H01",
+        "category": "normal",
+        "question": "sifremi unuttum uygulamaya giris yapamiyorum ne yapmaliyim",
+        "expectedAnswer": "Uygulamanın giriş ekranındaki \"Şifremi Unuttum\" bağlantısına dokunun; şifre sıfırlama bağlantısı e-posta adresinize gönderilir.",
+        "expect": {
+          "answerable": true,
+          "sourcesAnyOf": [
+            "sss-genel"
+          ],
+          "sourcesAllOf": null,
+          "forbiddenSources": null,
+          "mustContain": [
+            [
+              "Şifremi Unuttum"
+            ],
+            [
+              "e-posta",
+              "eposta",
+              "mail"
+            ]
+          ],
+          "mustNotContain": null,
+          "discardedVersions": null,
+          "sectionsAnyOf": [
+            "Şifremi unuttum"
+          ],
+          "expectConflict": null
+        }
+      },
+      "statusCode": 200,
+      "message": "OK",
+      "passed": true,
+      "checks": [
+        {
+          "name": "yanıtlanabilirlik",
+          "passed": true,
+          "detail": "beklenen: yanıt, gerçek: yanıt"
+        },
+        {
+          "name": "kaynak",
+          "passed": true,
+          "detail": "beklenen: sss-genel; atıf: sss-genel"
+        },
+        {
+          "name": "bölüm",
+          "passed": true,
+          "detail": "beklenen: Şifremi unuttum; atıf: Hesap > Şifremi unuttum, ne yapmalıyım?"
+        },
+        {
+          "name": "alıntı doğrulandı",
+          "passed": true,
+          "detail": "doğrulanmamış: —"
+        },
+        {
+          "name": "içerik",
+          "passed": true,
+          "detail": "'Şifremi Unuttum'"
+        },
+        {
+          "name": "içerik",
+          "passed": true,
+          "detail": "'e-posta' | 'eposta' | 'mail'"
+        }
+      ],
+      "latencyMs": 1755,
+      "lexicalHit": true,
+      "hybridHit": true,
+      "answer": {
+        "question": "sifremi unuttum uygulamaya giris yapamiyorum ne yapmaliyim",
+        "answerable": true,
+        "answer": "Lumora uygulamasının giriş ekranındaki \"Şifremi Unuttum\" bağlantısına dokunmanız yeterlidir; şifre sıfırlama bağlantısı e-posta adresinize gönderilecektir.",
+        "sources": [
+          {
+            "documentId": "sss-genel",
+            "title": "Sıkça Sorulan Sorular",
+            "version": "1.0",
+            "effectiveDate": "2024-02-01",
+            "status": "active",
+            "category": "sss",
+            "section": "Hesap > Şifremi unuttum, ne yapmalıyım?",
+            "quote": "Lumora uygulamasının giriş ekranındaki \"Şifremi Unuttum\" bağlantısına dokunun; şifre sıfırlama bağlantısı e-posta adresinize gönderilir.",
+            "quoteVerified": true
+          }
+        ],
+        "versionResolution": {
+          "applied": false,
+          "rule": "Aynı doküman ailesinde, yürürlük tarihi bugün veya daha önce olan en yeni sürüm seçilir; 'superseded' işaretli sürüm seçilmez.",
+          "selected": [],
+          "discarded": []
+        },
+        "conflicts": [],
+        "missingInformation": "",
+        "refusalReason": "",
+        "diagnostics": {
+          "retrievalMode": "hybrid",
+          "maxDenseScore": 0.6759974055442429,
+          "maxLexicalCoverage": 0.7499075874765799,
+          "candidateDocumentIds": [
+            "sss-genel",
+            "sorun-giderme-baglanti",
+            "kurulum-kilavuzu-lumora-termo",
+            "garanti-kosullari",
+            "iade-politikasi-v2",
+            "kargo-ve-teslimat",
+            "destek-kanallari-v2",
+            "iade-politikasi-v1"
+          ],
+          "context": [
+            {
+              "label": "C1",
+              "documentId": "sss-genel",
+              "version": "1.0",
+              "section": "Hesap > Şifremi unuttum, ne yapmalıyım?"
+            },
+            {
+              "label": "C2",
+              "documentId": "sorun-giderme-baglanti",
+              "version": "1.0",
+              "section": "3. Hata Kodları"
+            },
+            {
+              "label": "C3",
+              "documentId": "kurulum-kilavuzu-lumora-termo",
+              "version": "1.0",
+              "section": "2. Kurulumdan Önce"
+            },
+            {
+              "label": "C4",
+              "documentId": "garanti-kosullari",
+              "version": "1.0",
+              "section": "4. Garanti Başvurusu"
+            },
+            {
+              "label": "C5",
+              "documentId": "iade-politikasi-v2",
+              "version": "2.0",
+              "section": "4. İade Talebi Nasıl Oluşturulur?"
+            },
+            {
+              "label": "C6",
+              "documentId": "kurulum-kilavuzu-lumora-termo",
+              "version": "1.0",
+              "section": "3. Adım Adım Kurulum"
+            },
+            {
+              "label": "C7",
+              "documentId": "sorun-giderme-baglanti",
+              "version": "1.0",
+              "section": "2. Cihaz Wi-Fi Ağına Bağlanmıyor"
+            },
+            {
+              "label": "C8",
+              "documentId": "iade-politikasi-v2",
+              "version": "2.0",
+              "section": "3. İade Koşulları"
+            }
+          ],
+          "model": "gemma-4-26b-a4b-it",
+          "latencyMs": 1719,
+          "inputTokens": 1545,
+          "outputTokens": 149,
+          "modelCalls": 1
+        }
+      }
+    },
+    {
+      "question": {
+        "id": "H02",
+        "category": "normal",
+        "question": "749 TL'lik bir sipariş verdim, kargo için ücret ödeyecek miyim?",
+        "expectedAnswer": "Evet. 750 TL'nin altındaki siparişlerde 49,90 TL kargo ücreti alınır; kargo yalnızca 750 TL ve üzerindeki siparişlerde ücretsizdir.",
+        "expect": {
+          "answerable": true,
+          "sourcesAnyOf": [
+            "kargo-ve-teslimat"
+          ],
+          "sourcesAllOf": null,
+          "forbiddenSources": null,
+          "mustContain": [
+            [
+              "49,90",
+              "49.90"
+            ]
+          ],
+          "mustNotContain": null,
+          "discardedVersions": null,
+          "sectionsAnyOf": [
+            "Kargo Ücreti"
+          ],
+          "expectConflict": null
+        }
+      },
+      "statusCode": 200,
+      "message": "OK",
+      "passed": true,
+      "checks": [
+        {
+          "name": "yanıtlanabilirlik",
+          "passed": true,
+          "detail": "beklenen: yanıt, gerçek: yanıt"
+        },
+        {
+          "name": "kaynak",
+          "passed": true,
+          "detail": "beklenen: kargo-ve-teslimat; atıf: kargo-ve-teslimat"
+        },
+        {
+          "name": "bölüm",
+          "passed": true,
+          "detail": "beklenen: Kargo Ücreti; atıf: 2. Kargo Ücreti"
+        },
+        {
+          "name": "alıntı doğrulandı",
+          "passed": true,
+          "detail": "doğrulanmamış: —"
+        },
+        {
+          "name": "sayılar kaynakta",
+          "passed": true,
+          "detail": "atıf yapılan dokümanlarda olmayan: —"
+        },
+        {
+          "name": "içerik",
+          "passed": true,
+          "detail": "'49,90' | '49.90'"
+        }
+      ],
+      "latencyMs": 1352,
+      "lexicalHit": true,
+      "hybridHit": true,
+      "answer": {
+        "question": "749 TL'lik bir sipariş verdim, kargo için ücret ödeyecek miyim?",
+        "answerable": true,
+        "answer": "750 TL'nin altındaki siparişler için 49,90 TL kargo ücreti alınmaktadır.",
+        "sources": [
+          {
+            "documentId": "kargo-ve-teslimat",
+            "title": "Kargo ve Teslimat",
+            "version": "1.0",
+            "effectiveDate": "2025-03-01",
+            "status": "active",
+            "category": "politika",
+            "section": "2. Kargo Ücreti",
+            "quote": "750 TL'nin altındaki siparişler için 49,90 TL kargo ücreti alınır.",
+            "quoteVerified": true
+          }
+        ],
+        "versionResolution": {
+          "applied": false,
+          "rule": "Aynı doküman ailesinde, yürürlük tarihi bugün veya daha önce olan en yeni sürüm seçilir; 'superseded' işaretli sürüm seçilmez.",
+          "selected": [],
+          "discarded": []
+        },
+        "conflicts": [],
+        "missingInformation": "",
+        "refusalReason": "",
+        "diagnostics": {
+          "retrievalMode": "hybrid",
+          "maxDenseScore": 0.7249509106573745,
+          "maxLexicalCoverage": 0.31737853519296716,
+          "candidateDocumentIds": [
+            "kargo-ve-teslimat",
+            "iade-politikasi-v2",
+            "sss-genel",
+            "iade-politikasi-v1"
+          ],
+          "context": [
+            {
+              "label": "C1",
+              "documentId": "kargo-ve-teslimat",
+              "version": "1.0",
+              "section": "2. Kargo Ücreti"
+            },
+            {
+              "label": "C2",
+              "documentId": "iade-politikasi-v2",
+              "version": "2.0",
+              "section": "5. İade Kargo Ücreti"
+            },
+            {
+              "label": "C3",
+              "documentId": "sss-genel",
+              "version": "1.0",
+              "section": "İade > İade kargo ücretini kim öder?"
+            },
+            {
+              "label": "C4",
+              "documentId": "kargo-ve-teslimat",
+              "version": "1.0",
+              "section": "3. Sipariş Takibi"
+            },
+            {
+              "label": "C5",
+              "documentId": "kargo-ve-teslimat",
+              "version": "1.0",
+              "section": "1. Teslimat Süresi"
+            },
+            {
+              "label": "C6",
+              "documentId": "kargo-ve-teslimat",
+              "version": "1.0",
+              "section": "5. Adres Değişikliği"
+            },
+            {
+              "label": "C7",
+              "documentId": "kargo-ve-teslimat",
+              "version": "1.0",
+              "section": "4. Hasarlı veya Eksik Teslimat"
+            },
+            {
+              "label": "C8",
+              "documentId": "sss-genel",
+              "version": "1.0",
+              "section": "Sipariş ve Ödeme > Hangi ödeme yöntemlerini kabul ediyorsunuz?"
+            }
+          ],
+          "model": "gemma-4-26b-a4b-it",
+          "latencyMs": 1344,
+          "inputTokens": 1206,
+          "outputTokens": 116,
+          "modelCalls": 1
+        }
+      }
+    },
+    {
+      "question": {
+        "id": "H03",
+        "category": "normal",
+        "question": "Termostatımı 2 yıl 3 ay önce aldım ve bozuldu. Garanti kapsamında ücretsiz onarılır mı?",
+        "expectedAnswer": "Hayır. Garanti süresi fatura tarihinden itibaren 2 yıldır; 2 yıl 3 ay geçtiği için cihaz artık garanti kapsamında değildir.",
+        "expect": {
+          "answerable": true,
+          "sourcesAnyOf": [
+            "garanti-kosullari"
+          ],
+          "sourcesAllOf": null,
+          "forbiddenSources": null,
+          "mustContain": [
+            [
+              "2 yıl",
+              "iki yıl"
+            ],
+            [
+              "dolmuş",
+              "dolduğu",
+              "sona er",
+              "kapsamı dışında",
+              "kapsam dışı",
+              "kapsamında değil",
+              "hayır",
+              "geçmiş",
+              "geçtiği",
+              "bitmiş"
+            ]
+          ],
+          "mustNotContain": null,
+          "discardedVersions": null,
+          "sectionsAnyOf": [
+            "Garanti Süresi"
+          ],
+          "expectConflict": null
+        }
+      },
+      "statusCode": 200,
+      "message": "Bu soruyu yanıtlamak için dokümanlarda yeterli bilgi bulunamadı.",
+      "passed": false,
+      "checks": [
+        {
+          "name": "yanıtlanabilirlik",
+          "passed": false,
+          "detail": "beklenen: yanıt, gerçek: bilgi yok (ModelInsufficientContext)"
+        }
+      ],
+      "latencyMs": 1327,
+      "lexicalHit": true,
+      "hybridHit": true,
+      "answer": {
+        "question": "Termostatımı 2 yıl 3 ay önce aldım ve bozuldu. Garanti kapsamında ücretsiz onarılır mı?",
+        "answerable": false,
+        "answer": "Bu soruyu yanıtlamak için dokümanlarda yeterli bilgi bulunamadı.",
+        "sources": [],
+        "versionResolution": {
+          "applied": false,
+          "rule": "Aynı doküman ailesinde, yürürlük tarihi bugün veya daha önce olan en yeni sürüm seçilir; 'superseded' işaretli sürüm seçilmez.",
+          "selected": [],
+          "discarded": []
+        },
+        "conflicts": [],
+        "missingInformation": "Ürünün garanti kapsamına girip girmediğini belirlemek için arızanın nedeninin (üretim/malzeme hatası mı yoksa kullanım hatası mı olduğu) bilinmesi gerekmektedir. Ayrıca cihazın Lumora Termo olup olmadığı belirtilmemiştir; ancak Lumora Termo ise 2 yıllık garanti süresi dolmuştur.",
+        "refusalReason": "ModelInsufficientContext",
+        "diagnostics": {
+          "retrievalMode": "hybrid",
+          "maxDenseScore": 0.670243110389152,
+          "maxLexicalCoverage": 0.32078550760889707,
+          "candidateDocumentIds": [
+            "garanti-kosullari",
+            "kargo-ve-teslimat",
+            "iade-politikasi-v1",
+            "iade-politikasi-v2",
+            "destek-kanallari-v2",
+            "kurulum-kilavuzu-lumora-termo",
+            "sikayet-eskalasyon-proseduru"
+          ],
+          "context": [
+            {
+              "label": "C1",
+              "documentId": "garanti-kosullari",
+              "version": "1.0",
+              "section": "2. Garanti Kapsamı"
+            },
+            {
+              "label": "C2",
+              "documentId": "garanti-kosullari",
+              "version": "1.0",
+              "section": "1. Garanti Süresi"
+            },
+            {
+              "label": "C3",
+              "documentId": "garanti-kosullari",
+              "version": "1.0",
+              "section": "5. Onarım Süresi"
+            },
+            {
+              "label": "C4",
+              "documentId": "garanti-kosullari",
+              "version": "1.0",
+              "section": "3. Garanti Kapsamı Dışındaki Durumlar"
+            },
+            {
+              "label": "C5",
+              "documentId": "kargo-ve-teslimat",
+              "version": "1.0",
+              "section": "4. Hasarlı veya Eksik Teslimat"
+            },
+            {
+              "label": "C6",
+              "documentId": "iade-politikasi-v2",
+              "version": "2.0",
+              "section": "1. Kapsam"
+            },
+            {
+              "label": "C7",
+              "documentId": "destek-kanallari-v2",
+              "version": "2.0",
+              "section": "4. Öncelikli Destek"
+            },
+            {
+              "label": "C8",
+              "documentId": "garanti-kosullari",
+              "version": "1.0",
+              "section": "4. Garanti Başvurusu"
+            }
+          ],
+          "model": "gemma-4-26b-a4b-it",
+          "latencyMs": 1320,
+          "inputTokens": 1351,
+          "outputTokens": 111,
+          "modelCalls": 1
+        }
+      }
+    },
+    {
+      "question": {
+        "id": "H04",
+        "category": "normal",
+        "question": "Lumora Termo hangi Wi-Fi frekansında çalışır ve Amazon Alexa ile kullanılabilir mi?",
+        "expectedAnswer": "Yalnızca 2.4 GHz Wi-Fi ağlarını destekler (5 GHz desteklenmez). Alexa uyumluluğu hakkında dokümanlarda bilgi yok; bu kısım yanıtlanamaz (kısmi yanıt).",
+        "expect": {
+          "answerable": true,
+          "sourcesAnyOf": [
+            "kurulum-kilavuzu-lumora-termo",
+            "sorun-giderme-baglanti"
+          ],
+          "sourcesAllOf": null,
+          "forbiddenSources": null,
+          "mustContain": [
+            [
+              "2.4 GHz",
+              "2,4 GHz"
+            ]
+          ],
+          "mustNotContain": null,
+          "discardedVersions": null,
+          "sectionsAnyOf": null,
+          "expectConflict": null
+        }
+      },
+      "statusCode": 200,
+      "message": "OK",
+      "passed": true,
+      "checks": [
+        {
+          "name": "yanıtlanabilirlik",
+          "passed": true,
+          "detail": "beklenen: yanıt, gerçek: yanıt"
+        },
+        {
+          "name": "kaynak",
+          "passed": true,
+          "detail": "beklenen: kurulum-kilavuzu-lumora-termo | sorun-giderme-baglanti; atıf: kurulum-kilavuzu-lumora-termo"
+        },
+        {
+          "name": "alıntı doğrulandı",
+          "passed": true,
+          "detail": "doğrulanmamış: —"
+        },
+        {
+          "name": "sayılar kaynakta",
+          "passed": true,
+          "detail": "atıf yapılan dokümanlarda olmayan: —"
+        },
+        {
+          "name": "içerik",
+          "passed": true,
+          "detail": "'2.4 GHz' | '2,4 GHz'"
+        }
+      ],
+      "latencyMs": 1575,
+      "lexicalHit": true,
+      "hybridHit": true,
+      "answer": {
+        "question": "Lumora Termo hangi Wi-Fi frekansında çalışır ve Amazon Alexa ile kullanılabilir mi?",
+        "answerable": true,
+        "answer": "Lumora Termo yalnızca 2.4 GHz Wi-Fi ağlarını desteklemektedir; 5 GHz ağlara bağlanamaz.",
+        "sources": [
+          {
+            "documentId": "kurulum-kilavuzu-lumora-termo",
+            "title": "Lumora Termo Kurulum Kılavuzu",
+            "version": "1.0",
+            "effectiveDate": "2025-02-01",
+            "status": "active",
+            "category": "kilavuz",
+            "section": "2. Kurulumdan Önce",
+            "quote": "Lumora Termo yalnızca 2.4 GHz Wi-Fi ağlarını destekler; 5 GHz ağlara bağlanamaz.",
+            "quoteVerified": true
+          }
+        ],
+        "versionResolution": {
+          "applied": false,
+          "rule": "Aynı doküman ailesinde, yürürlük tarihi bugün veya daha önce olan en yeni sürüm seçilir; 'superseded' işaretli sürüm seçilmez.",
+          "selected": [],
+          "discarded": []
+        },
+        "conflicts": [],
+        "missingInformation": "Amazon Alexa ile uyumluluğu hakkında bilgi verilmemiştir.",
+        "refusalReason": "",
+        "diagnostics": {
+          "retrievalMode": "hybrid",
+          "maxDenseScore": 0.6739870013935361,
+          "maxLexicalCoverage": 0.27651023436491845,
+          "candidateDocumentIds": [
+            "kurulum-kilavuzu-lumora-termo",
+            "sorun-giderme-baglanti",
+            "iade-politikasi-v1",
+            "iade-politikasi-v2",
+            "garanti-kosullari",
+            "sss-genel",
+            "sikayet-eskalasyon-proseduru",
+            "destek-kanallari-v1",
+            "destek-kanallari-v2"
+          ],
+          "context": [
+            {
+              "label": "C1",
+              "documentId": "kurulum-kilavuzu-lumora-termo",
+              "version": "1.0",
+              "section": "2. Kurulumdan Önce"
+            },
+            {
+              "label": "C2",
+              "documentId": "kurulum-kilavuzu-lumora-termo",
+              "version": "1.0",
+              "section": "3. Adım Adım Kurulum"
+            },
+            {
+              "label": "C3",
+              "documentId": "sorun-giderme-baglanti",
+              "version": "1.0",
+              "section": "3. Hata Kodları"
+            },
+            {
+              "label": "C4",
+              "documentId": "sorun-giderme-baglanti",
+              "version": "1.0",
+              "section": "1. LED Gösterge Renkleri"
+            },
+            {
+              "label": "C5",
+              "documentId": "kurulum-kilavuzu-lumora-termo",
+              "version": "1.0",
+              "section": "1. Kutu İçeriği"
+            },
+            {
+              "label": "C6",
+              "documentId": "iade-politikasi-v2",
+              "version": "2.0",
+              "section": "1. Kapsam"
+            },
+            {
+              "label": "C7",
+              "documentId": "garanti-kosullari",
+              "version": "1.0",
+              "section": "1. Garanti Süresi"
+            },
+            {
+              "label": "C8",
+              "documentId": "kurulum-kilavuzu-lumora-termo",
+              "version": "1.0",
+              "section": "4. Fabrika Ayarlarına Döndürme"
+            }
+          ],
+          "model": "gemma-4-26b-a4b-it",
+          "latencyMs": 1567,
+          "inputTokens": 1517,
+          "outputTokens": 132,
+          "modelCalls": 1
+        }
+      }
+    },
+    {
+      "question": {
+        "id": "H05",
+        "category": "normal",
+        "question": "Kargo takip numarası bana nasıl iletilir? Sipariş kargoya verildikten sonra teslimat adresini değiştirebilir miyim?",
+        "expectedAnswer": "Takip numarası sipariş kargoya verildiğinde SMS ve e-posta ile gönderilir (Siparişlerim ekranından da takip edilebilir). Kargoya verilmiş siparişlerde adres değişikliği yapılamaz.",
+        "expect": {
+          "answerable": true,
+          "sourcesAnyOf": [
+            "kargo-ve-teslimat"
+          ],
+          "sourcesAllOf": null,
+          "forbiddenSources": null,
+          "mustContain": [
+            [
+              "SMS"
+            ],
+            [
+              "yapılamaz",
+              "değiştirilemez",
+              "değiştiremezsiniz",
+              "mümkün değil",
+              "hayır"
+            ]
+          ],
+          "mustNotContain": null,
+          "discardedVersions": null,
+          "sectionsAnyOf": [
+            "Sipariş Takibi",
+            "Adres Değişikliği"
+          ],
+          "expectConflict": null
+        }
+      },
+      "statusCode": 200,
+      "message": "OK",
+      "passed": false,
+      "checks": [
+        {
+          "name": "yanıtlanabilirlik",
+          "passed": true,
+          "detail": "beklenen: yanıt, gerçek: yanıt"
+        },
+        {
+          "name": "kaynak",
+          "passed": true,
+          "detail": "beklenen: kargo-ve-teslimat; atıf: kargo-ve-teslimat"
+        },
+        {
+          "name": "bölüm",
+          "passed": true,
+          "detail": "beklenen: Sipariş Takibi | Adres Değişikliği; atıf: 3. Sipariş Takibi, 5. Adres Değişikliği"
+        },
+        {
+          "name": "alıntı doğrulandı",
+          "passed": true,
+          "detail": "doğrulanmamış: —"
+        },
+        {
+          "name": "içerik",
+          "passed": true,
+          "detail": "'SMS'"
+        },
+        {
+          "name": "içerik",
+          "passed": false,
+          "detail": "'yapılamaz' | 'değiştirilemez' | 'değiştiremezsiniz' | 'mümkün değil' | 'hayır'"
+        }
+      ],
+      "latencyMs": 1746,
+      "lexicalHit": true,
+      "hybridHit": true,
+      "answer": {
+        "question": "Kargo takip numarası bana nasıl iletilir? Sipariş kargoya verildikten sonra teslimat adresini değiştirebilir miyim?",
+        "answerable": true,
+        "answer": "Siparişiniz kargoya verildiğinde takip numaranız SMS ve e-posta yoluyla iletilir. Kargoya verilmiş siparişlerde adres değişikliği yapılamamaktadır.",
+        "sources": [
+          {
+            "documentId": "kargo-ve-teslimat",
+            "title": "Kargo ve Teslimat",
+            "version": "1.0",
+            "effectiveDate": "2025-03-01",
+            "status": "active",
+            "category": "politika",
+            "section": "3. Sipariş Takibi",
+            "quote": "Siparişiniz kargoya verildiğinde takip numarası SMS ve e-posta ile gönderilir.",
+            "quoteVerified": true
+          },
+          {
+            "documentId": "kargo-ve-teslimat",
+            "title": "Kargo ve Teslimat",
+            "version": "1.0",
+            "effectiveDate": "2025-03-01",
+            "status": "active",
+            "category": "politika",
+            "section": "5. Adres Değişikliği",
+            "quote": "Kargoya verilmiş siparişlerde adres değişikliği yapılamaz.",
+            "quoteVerified": true
+          }
+        ],
+        "versionResolution": {
+          "applied": false,
+          "rule": "Aynı doküman ailesinde, yürürlük tarihi bugün veya daha önce olan en yeni sürüm seçilir; 'superseded' işaretli sürüm seçilmez.",
+          "selected": [],
+          "discarded": []
+        },
+        "conflicts": [],
+        "missingInformation": "",
+        "refusalReason": "",
+        "diagnostics": {
+          "retrievalMode": "hybrid",
+          "maxDenseScore": 0.7480211492338527,
+          "maxLexicalCoverage": 0.6048704179849561,
+          "candidateDocumentIds": [
+            "kargo-ve-teslimat",
+            "iade-politikasi-v1",
+            "sss-genel",
+            "iade-politikasi-v2",
+            "destek-kanallari-v1",
+            "destek-kanallari-v2"
+          ],
+          "context": [
+            {
+              "label": "C1",
+              "documentId": "kargo-ve-teslimat",
+              "version": "1.0",
+              "section": "5. Adres Değişikliği"
+            },
+            {
+              "label": "C2",
+              "documentId": "kargo-ve-teslimat",
+              "version": "1.0",
+              "section": "3. Sipariş Takibi"
+            },
+            {
+              "label": "C3",
+              "documentId": "kargo-ve-teslimat",
+              "version": "1.0",
+              "section": "1. Teslimat Süresi"
+            },
+            {
+              "label": "C4",
+              "documentId": "kargo-ve-teslimat",
+              "version": "1.0",
+              "section": "4. Hasarlı veya Eksik Teslimat"
+            },
+            {
+              "label": "C5",
+              "documentId": "sss-genel",
+              "version": "1.0",
+              "section": "Sipariş ve Ödeme > Faturamı nereden görebilirim?"
+            },
+            {
+              "label": "C6",
+              "documentId": "kargo-ve-teslimat",
+              "version": "1.0",
+              "section": "2. Kargo Ücreti"
+            },
+            {
+              "label": "C7",
+              "documentId": "iade-politikasi-v2",
+              "version": "2.0",
+              "section": "2. İade Süresi"
+            },
+            {
+              "label": "C8",
+              "documentId": "sss-genel",
+              "version": "1.0",
+              "section": "İade > İade kargo ücretini kim öder?"
+            }
+          ],
+          "model": "gemma-4-26b-a4b-it",
+          "latencyMs": 1737,
+          "inputTokens": 1239,
+          "outputTokens": 163,
+          "modelCalls": 1
+        }
+      }
+    },
+    {
+      "question": {
+        "id": "H06",
+        "category": "cevapsiz",
+        "question": "Termostatın kurulumunu sizin teknisyeniniz evime gelip yapabilir mi, ücreti ne kadar?",
+        "expectedAnswer": "Dokümanlarda yerinde kurulum hizmeti veya ücreti hakkında bilgi yok; bilgi olmadığı belirtilmeli.",
+        "expect": {
+          "answerable": false,
+          "sourcesAnyOf": null,
+          "sourcesAllOf": null,
+          "forbiddenSources": null,
+          "mustContain": null,
+          "mustNotContain": null,
+          "discardedVersions": null,
+          "sectionsAnyOf": null,
+          "expectConflict": null
+        }
+      },
+      "statusCode": 200,
+      "message": "Bu soruyu yanıtlamak için dokümanlarda yeterli bilgi bulunamadı.",
+      "passed": true,
+      "checks": [
+        {
+          "name": "yanıtlanabilirlik",
+          "passed": true,
+          "detail": "beklenen: bilgi yok, gerçek: bilgi yok (LowRelevance)"
+        },
+        {
+          "name": "ret sözleşmesi",
+          "passed": true,
+          "detail": "—"
+        }
+      ],
+      "latencyMs": 13,
+      "lexicalHit": null,
+      "hybridHit": null,
+      "answer": {
+        "question": "Termostatın kurulumunu sizin teknisyeniniz evime gelip yapabilir mi, ücreti ne kadar?",
+        "answerable": false,
+        "answer": "Bu soruyu yanıtlamak için dokümanlarda yeterli bilgi bulunamadı.",
+        "sources": [],
+        "versionResolution": {
+          "applied": false,
+          "rule": "Aynı doküman ailesinde, yürürlük tarihi bugün veya daha önce olan en yeni sürüm seçilir; 'superseded' işaretli sürüm seçilmez.",
+          "selected": [],
+          "discarded": []
+        },
+        "conflicts": [],
+        "missingInformation": "",
+        "refusalReason": "LowRelevance",
+        "diagnostics": {
+          "retrievalMode": "hybrid",
+          "maxDenseScore": 0.49548456561632637,
+          "maxLexicalCoverage": 0.3156508950672165,
+          "candidateDocumentIds": [
+            "destek-kanallari-v2",
+            "kurulum-kilavuzu-lumora-termo",
+            "kargo-ve-teslimat",
+            "iade-politikasi-v1",
+            "iade-politikasi-v2",
+            "sikayet-eskalasyon-proseduru",
+            "garanti-kosullari",
+            "sss-genel"
+          ],
+          "context": [],
+          "model": "",
+          "latencyMs": 9,
+          "inputTokens": null,
+          "outputTokens": null,
+          "modelCalls": 0
+        }
+      }
+    },
+    {
+      "question": {
+        "id": "H07",
+        "category": "cevapsiz",
+        "question": "Lumora Termo'nun pili kaç ay dayanır?",
+        "expectedAnswer": "Dokümanlarda pil veya pil ömrüyle ilgili bilgi yok; bilgi olmadığı belirtilmeli.",
+        "expect": {
+          "answerable": false,
+          "sourcesAnyOf": null,
+          "sourcesAllOf": null,
+          "forbiddenSources": null,
+          "mustContain": null,
+          "mustNotContain": null,
+          "discardedVersions": null,
+          "sectionsAnyOf": null,
+          "expectConflict": null
+        }
+      },
+      "statusCode": 200,
+      "message": "Bu soruyu yanıtlamak için dokümanlarda yeterli bilgi bulunamadı.",
+      "passed": true,
+      "checks": [
+        {
+          "name": "yanıtlanabilirlik",
+          "passed": true,
+          "detail": "beklenen: bilgi yok, gerçek: bilgi yok (ModelInsufficientContext)"
+        },
+        {
+          "name": "ret sözleşmesi",
+          "passed": true,
+          "detail": "—"
+        }
+      ],
+      "latencyMs": 980,
+      "lexicalHit": null,
+      "hybridHit": null,
+      "answer": {
+        "question": "Lumora Termo'nun pili kaç ay dayanır?",
+        "answerable": false,
+        "answer": "Bu soruyu yanıtlamak için dokümanlarda yeterli bilgi bulunamadı.",
+        "sources": [],
+        "versionResolution": {
+          "applied": false,
+          "rule": "Aynı doküman ailesinde, yürürlük tarihi bugün veya daha önce olan en yeni sürüm seçilir; 'superseded' işaretli sürüm seçilmez.",
+          "selected": [],
+          "discarded": []
+        },
+        "conflicts": [],
+        "missingInformation": "Lumora Termo'nun pil ömrü veya pil kullanım süresiyle ilgili bilgi kaynaklarda bulunmamaktadır.",
+        "refusalReason": "ModelInsufficientContext",
+        "diagnostics": {
+          "retrievalMode": "hybrid",
+          "maxDenseScore": 0.6573816043549638,
+          "maxLexicalCoverage": 0.12522061340027485,
+          "candidateDocumentIds": [
+            "garanti-kosullari",
+            "kurulum-kilavuzu-lumora-termo",
+            "iade-politikasi-v1",
+            "iade-politikasi-v2",
+            "destek-kanallari-v1",
+            "destek-kanallari-v2",
+            "sss-genel",
+            "sorun-giderme-baglanti",
+            "sikayet-eskalasyon-proseduru"
+          ],
+          "context": [
+            {
+              "label": "C1",
+              "documentId": "garanti-kosullari",
+              "version": "1.0",
+              "section": "1. Garanti Süresi"
+            },
+            {
+              "label": "C2",
+              "documentId": "kurulum-kilavuzu-lumora-termo",
+              "version": "1.0",
+              "section": "2. Kurulumdan Önce"
+            },
+            {
+              "label": "C3",
+              "documentId": "kurulum-kilavuzu-lumora-termo",
+              "version": "1.0",
+              "section": "1. Kutu İçeriği"
+            },
+            {
+              "label": "C4",
+              "documentId": "kurulum-kilavuzu-lumora-termo",
+              "version": "1.0",
+              "section": "3. Adım Adım Kurulum"
+            },
+            {
+              "label": "C5",
+              "documentId": "kurulum-kilavuzu-lumora-termo",
+              "version": "1.0",
+              "section": "4. Fabrika Ayarlarına Döndürme"
+            },
+            {
+              "label": "C6",
+              "documentId": "iade-politikasi-v2",
+              "version": "2.0",
+              "section": "1. Kapsam"
+            },
+            {
+              "label": "C7",
+              "documentId": "destek-kanallari-v2",
+              "version": "2.0",
+              "section": "1. Canlı Sohbet"
+            },
+            {
+              "label": "C8",
+              "documentId": "destek-kanallari-v2",
+              "version": "2.0",
+              "section": "3. E-posta Desteği"
+            }
+          ],
+          "model": "gemma-4-26b-a4b-it",
+          "latencyMs": 971,
+          "inputTokens": 1372,
+          "outputTokens": 63,
+          "modelCalls": 1
+        }
+      }
+    },
+    {
+      "question": {
+        "id": "H08",
+        "category": "cevapsiz",
+        "question": "Garantisi biten cihazımı ücretli olarak onarıyor musunuz, onarım ücreti ne kadar?",
+        "expectedAnswer": "Dokümanlarda garanti dışı ücretli onarım hizmeti veya ücreti hakkında bilgi yok; bilgi olmadığı belirtilmeli.",
+        "expect": {
+          "answerable": false,
+          "sourcesAnyOf": null,
+          "sourcesAllOf": null,
+          "forbiddenSources": null,
+          "mustContain": null,
+          "mustNotContain": null,
+          "discardedVersions": null,
+          "sectionsAnyOf": null,
+          "expectConflict": null
+        }
+      },
+      "statusCode": 200,
+      "message": "Bu soruyu yanıtlamak için dokümanlarda yeterli bilgi bulunamadı.",
+      "passed": true,
+      "checks": [
+        {
+          "name": "yanıtlanabilirlik",
+          "passed": true,
+          "detail": "beklenen: bilgi yok, gerçek: bilgi yok (ModelInsufficientContext)"
+        },
+        {
+          "name": "ret sözleşmesi",
+          "passed": true,
+          "detail": "—"
+        }
+      ],
+      "latencyMs": 892,
+      "lexicalHit": null,
+      "hybridHit": null,
+      "answer": {
+        "question": "Garantisi biten cihazımı ücretli olarak onarıyor musunuz, onarım ücreti ne kadar?",
+        "answerable": false,
+        "answer": "Bu soruyu yanıtlamak için dokümanlarda yeterli bilgi bulunamadı.",
+        "sources": [],
+        "versionResolution": {
+          "applied": false,
+          "rule": "Aynı doküman ailesinde, yürürlük tarihi bugün veya daha önce olan en yeni sürüm seçilir; 'superseded' işaretli sürüm seçilmez.",
+          "selected": [],
+          "discarded": []
+        },
+        "conflicts": [],
+        "missingInformation": "Garantisi biten cihazların ücretli onarımı ve onarım ücretinin miktarı hakkında bilgi verilmemiştir.",
+        "refusalReason": "ModelInsufficientContext",
+        "diagnostics": {
+          "retrievalMode": "hybrid",
+          "maxDenseScore": 0.6577241506258502,
+          "maxLexicalCoverage": 0.6275176593932121,
+          "candidateDocumentIds": [
+            "garanti-kosullari",
+            "iade-politikasi-v2",
+            "iade-politikasi-v1",
+            "kargo-ve-teslimat",
+            "sorun-giderme-baglanti",
+            "sss-genel",
+            "destek-kanallari-v1"
+          ],
+          "context": [
+            {
+              "label": "C1",
+              "documentId": "garanti-kosullari",
+              "version": "1.0",
+              "section": "2. Garanti Kapsamı"
+            },
+            {
+              "label": "C2",
+              "documentId": "garanti-kosullari",
+              "version": "1.0",
+              "section": "5. Onarım Süresi"
+            },
+            {
+              "label": "C3",
+              "documentId": "garanti-kosullari",
+              "version": "1.0",
+              "section": "3. Garanti Kapsamı Dışındaki Durumlar"
+            },
+            {
+              "label": "C4",
+              "documentId": "garanti-kosullari",
+              "version": "1.0",
+              "section": "1. Garanti Süresi"
+            },
+            {
+              "label": "C5",
+              "documentId": "garanti-kosullari",
+              "version": "1.0",
+              "section": "4. Garanti Başvurusu"
+            },
+            {
+              "label": "C6",
+              "documentId": "iade-politikasi-v2",
+              "version": "2.0",
+              "section": "5. İade Kargo Ücreti"
+            },
+            {
+              "label": "C7",
+              "documentId": "kargo-ve-teslimat",
+              "version": "1.0",
+              "section": "4. Hasarlı veya Eksik Teslimat"
+            },
+            {
+              "label": "C8",
+              "documentId": "kargo-ve-teslimat",
+              "version": "1.0",
+              "section": "2. Kargo Ücreti"
+            }
+          ],
+          "model": "gemma-4-26b-a4b-it",
+          "latencyMs": 888,
+          "inputTokens": 1308,
+          "outputTokens": 64,
+          "modelCalls": 1
+        }
+      }
+    },
+    {
+      "question": {
+        "id": "H09",
+        "category": "celiskili",
+        "question": "İade talebimi e-posta ile gönderebilir miyim?",
+        "expectedAnswer": "Hayır. Güncel politikaya (v2.0) göre iade talebi Lumora uygulamasında Siparişlerim > İade Talebi Oluştur adımlarıyla oluşturulur; e-posta ile gönderilen talepler işleme alınmaz. v1.0'daki e-posta yöntemi geçersiz.",
+        "expect": {
+          "answerable": true,
+          "sourcesAnyOf": [
+            "iade-politikasi-v2"
+          ],
+          "sourcesAllOf": null,
+          "forbiddenSources": [
+            "iade-politikasi-v1"
+          ],
+          "mustContain": [
+            [
+              "işleme alınmaz",
+              "kabul edilmez",
+              "hayır",
+              "gönderemezsiniz"
+            ],
+            [
+              "uygulama"
+            ]
+          ],
+          "mustNotContain": null,
+          "discardedVersions": [
+            "iade-politikasi-v1"
+          ],
+          "sectionsAnyOf": [
+            "İade Talebi Nasıl Oluşturulur"
+          ],
+          "expectConflict": null
+        }
+      },
+      "statusCode": 200,
+      "message": "OK",
+      "passed": true,
+      "checks": [
+        {
+          "name": "yanıtlanabilirlik",
+          "passed": true,
+          "detail": "beklenen: yanıt, gerçek: yanıt"
+        },
+        {
+          "name": "kaynak",
+          "passed": true,
+          "detail": "beklenen: iade-politikasi-v2; atıf: iade-politikasi-v2"
+        },
+        {
+          "name": "yasak kaynak yok",
+          "passed": true,
+          "detail": "yok"
+        },
+        {
+          "name": "bölüm",
+          "passed": true,
+          "detail": "beklenen: İade Talebi Nasıl Oluşturulur; atıf: 4. İade Talebi Nasıl Oluşturulur?"
+        },
+        {
+          "name": "alıntı doğrulandı",
+          "passed": true,
+          "detail": "doğrulanmamış: —"
+        },
+        {
+          "name": "içerik",
+          "passed": true,
+          "detail": "'işleme alınmaz' | 'kabul edilmez' | 'hayır' | 'gönderemezsiniz'"
+        },
+        {
+          "name": "içerik",
+          "passed": true,
+          "detail": "'uygulama'"
+        },
+        {
+          "name": "eski sürüm elendi",
+          "passed": true,
+          "detail": "beklenen: iade-politikasi-v1; raporlanan: iade-politikasi-v1"
+        }
+      ],
+      "latencyMs": 1851,
+      "lexicalHit": true,
+      "hybridHit": true,
+      "answer": {
+        "question": "İade talebimi e-posta ile gönderebilir miyim?",
+        "answerable": true,
+        "answer": "Hayır, e-posta ile gönderilen iade talepleri işleme alınmamaktadır. İade talebinizi Lumora mobil uygulaması üzerinden Siparişlerim > ilgili sipariş > İade Talebi Oluştur adımlarını izleyerek oluşturmanız gerekmektedir.",
+        "sources": [
+          {
+            "documentId": "iade-politikasi-v2",
+            "title": "İade ve Para İadesi Politikası",
+            "version": "2.0",
+            "effectiveDate": "2025-06-01",
+            "status": "active",
+            "category": "politika",
+            "section": "4. İade Talebi Nasıl Oluşturulur?",
+            "quote": "E-posta ile gönderilen iade talepleri işleme alınmaz.",
+            "quoteVerified": true
+          },
+          {
+            "documentId": "iade-politikasi-v2",
+            "title": "İade ve Para İadesi Politikası",
+            "version": "2.0",
+            "effectiveDate": "2025-06-01",
+            "status": "active",
+            "category": "politika",
+            "section": "4. İade Talebi Nasıl Oluşturulur?",
+            "quote": "Lumora mobil uygulamasında Siparişlerim > ilgili sipariş > İade Talebi Oluştur adımlarını izleyin.",
+            "quoteVerified": true
+          }
+        ],
+        "versionResolution": {
+          "applied": true,
+          "rule": "Aynı doküman ailesinde, yürürlük tarihi bugün veya daha önce olan en yeni sürüm seçilir; 'superseded' işaretli sürüm seçilmez.",
+          "selected": [
+            {
+              "documentId": "iade-politikasi-v2",
+              "title": "İade ve Para İadesi Politikası",
+              "version": "2.0",
+              "effectiveDate": "2025-06-01"
+            }
+          ],
+          "discarded": [
+            {
+              "documentId": "iade-politikasi-v1",
+              "title": "İade ve Para İadesi Politikası",
+              "version": "1.0",
+              "effectiveDate": "2024-01-15",
+              "reason": "2.0 sürümü (2025-06-01) tarafından geçersiz kılındı."
+            }
+          ]
+        },
+        "conflicts": [],
+        "missingInformation": "",
+        "refusalReason": "",
+        "diagnostics": {
+          "retrievalMode": "hybrid",
+          "maxDenseScore": 0.7086569839477819,
+          "maxLexicalCoverage": 1,
+          "candidateDocumentIds": [
+            "iade-politikasi-v1",
+            "iade-politikasi-v2",
+            "destek-kanallari-v1",
+            "destek-kanallari-v2",
+            "sss-genel",
+            "kargo-ve-teslimat"
+          ],
+          "context": [
+            {
+              "label": "C1",
+              "documentId": "iade-politikasi-v2",
+              "version": "2.0",
+              "section": "4. İade Talebi Nasıl Oluşturulur?"
+            },
+            {
+              "label": "C2",
+              "documentId": "iade-politikasi-v2",
+              "version": "2.0",
+              "section": "2. İade Süresi"
+            },
+            {
+              "label": "C3",
+              "documentId": "iade-politikasi-v2",
+              "version": "2.0",
+              "section": "3. İade Koşulları"
+            },
+            {
+              "label": "C4",
+              "documentId": "iade-politikasi-v2",
+              "version": "2.0",
+              "section": "5. İade Kargo Ücreti"
+            },
+            {
+              "label": "C5",
+              "documentId": "destek-kanallari-v2",
+              "version": "2.0",
+              "section": "3. E-posta Desteği"
+            },
+            {
+              "label": "C6",
+              "documentId": "sss-genel",
+              "version": "1.0",
+              "section": "İade > İade kargo ücretini kim öder?"
+            },
+            {
+              "label": "C7",
+              "documentId": "iade-politikasi-v2",
+              "version": "2.0",
+              "section": "6. Para İadesi"
+            },
+            {
+              "label": "C8",
+              "documentId": "kargo-ve-teslimat",
+              "version": "1.0",
+              "section": "3. Sipariş Takibi"
+            }
+          ],
+          "model": "gemma-4-26b-a4b-it",
+          "latencyMs": 1842,
+          "inputTokens": 1253,
+          "outputTokens": 185,
+          "modelCalls": 1
+        }
+      }
+    },
+    {
+      "question": {
+        "id": "H10",
+        "category": "celiskili",
+        "question": "Ürünü geri gönderirken kargo parasını ben mi ödüyorum?",
+        "expectedAnswer": "Hayır. Güncel iade politikasına (v2.0) göre iade koduyla anlaşmalı kargoyla gönderilen iadelerde kargo ücretsizdir; ücreti Lumora karşılar. SSS'deki \"müşteri öder\" bilgisi eskidir.",
+        "expect": {
+          "answerable": true,
+          "sourcesAnyOf": [
+            "iade-politikasi-v2"
+          ],
+          "sourcesAllOf": null,
+          "forbiddenSources": [
+            "iade-politikasi-v1",
+            "sss-genel"
+          ],
+          "mustContain": [
+            [
+              "ücretsiz",
+              "Lumora karşıla",
+              "Lumora tarafından karşılan",
+              "ödemezsiniz",
+              "ödemeniz gerekmez",
+              "ücret alınmaz"
+            ]
+          ],
+          "mustNotContain": [
+            "müşteriye aittir"
+          ],
+          "discardedVersions": null,
+          "sectionsAnyOf": [
+            "İade Kargo Ücreti"
+          ],
+          "expectConflict": null
+        }
+      },
+      "statusCode": 200,
+      "message": "OK",
+      "passed": true,
+      "checks": [
+        {
+          "name": "yanıtlanabilirlik",
+          "passed": true,
+          "detail": "beklenen: yanıt, gerçek: yanıt"
+        },
+        {
+          "name": "kaynak",
+          "passed": true,
+          "detail": "beklenen: iade-politikasi-v2; atıf: iade-politikasi-v2"
+        },
+        {
+          "name": "yasak kaynak yok",
+          "passed": true,
+          "detail": "yok"
+        },
+        {
+          "name": "bölüm",
+          "passed": true,
+          "detail": "beklenen: İade Kargo Ücreti; atıf: 5. İade Kargo Ücreti"
+        },
+        {
+          "name": "alıntı doğrulandı",
+          "passed": true,
+          "detail": "doğrulanmamış: —"
+        },
+        {
+          "name": "içerik",
+          "passed": true,
+          "detail": "'ücretsiz' | 'Lumora karşıla' | 'Lumora tarafından karşılan' | 'ödemezsiniz' | 'ödemeniz gerekmez' | 'ücret alınmaz'"
+        },
+        {
+          "name": "yasak ifade",
+          "passed": true,
+          "detail": "'müşteriye aittir'"
+        }
+      ],
+      "latencyMs": 2207,
+      "lexicalHit": true,
+      "hybridHit": true,
+      "answer": {
+        "question": "Ürünü geri gönderirken kargo parasını ben mi ödüyorum?",
+        "answerable": true,
+        "answer": "İade kodunu kullanarak anlaşmalı kargo firmamızla gönderdiğiniz iadelerin kargo ücretini Lumora karşılamaktadır.",
+        "sources": [
+          {
+            "documentId": "iade-politikasi-v2",
+            "title": "İade ve Para İadesi Politikası",
+            "version": "2.0",
+            "effectiveDate": "2025-06-01",
+            "status": "active",
+            "category": "politika",
+            "section": "5. İade Kargo Ücreti",
+            "quote": "iade kodunu kullanarak anlaşmalı kargo firmamızla gönderdiğiniz iadelerin kargo ücretini Lumora karşılar.",
+            "quoteVerified": true
+          }
+        ],
+        "versionResolution": {
+          "applied": true,
+          "rule": "Aynı doküman ailesinde, yürürlük tarihi bugün veya daha önce olan en yeni sürüm seçilir; 'superseded' işaretli sürüm seçilmez.",
+          "selected": [
+            {
+              "documentId": "iade-politikasi-v2",
+              "title": "İade ve Para İadesi Politikası",
+              "version": "2.0",
+              "effectiveDate": "2025-06-01"
+            }
+          ],
+          "discarded": [
+            {
+              "documentId": "iade-politikasi-v1",
+              "title": "İade ve Para İadesi Politikası",
+              "version": "1.0",
+              "effectiveDate": "2024-01-15",
+              "reason": "2.0 sürümü (2025-06-01) tarafından geçersiz kılındı."
+            }
+          ]
+        },
+        "conflicts": [
+          {
+            "topic": "İade kargo ücreti",
+            "chosen": {
+              "documentId": "iade-politikasi-v2",
+              "version": "2.0",
+              "effectiveDate": "2025-06-01",
+              "category": "politika",
+              "section": "5. İade Kargo Ücreti"
+            },
+            "rejected": [
+              {
+                "documentId": "sss-genel",
+                "version": "1.0",
+                "effectiveDate": "2024-02-01",
+                "category": "sss",
+                "section": "İade > İade kargo ücretini kim öder?"
+              }
+            ],
+            "reason": "Politika dokümanı (C1), SSS dokümanından (C5) daha önceliklidir.",
+            "ruleSatisfied": true
+          }
+        ],
+        "missingInformation": "",
+        "refusalReason": "",
+        "diagnostics": {
+          "retrievalMode": "hybrid",
+          "maxDenseScore": 0.7156792719262822,
+          "maxLexicalCoverage": 0.23283795121193815,
+          "candidateDocumentIds": [
+            "iade-politikasi-v1",
+            "iade-politikasi-v2",
+            "kargo-ve-teslimat",
+            "sss-genel",
+            "destek-kanallari-v2"
+          ],
+          "context": [
+            {
+              "label": "C1",
+              "documentId": "iade-politikasi-v2",
+              "version": "2.0",
+              "section": "5. İade Kargo Ücreti"
+            },
+            {
+              "label": "C2",
+              "documentId": "iade-politikasi-v2",
+              "version": "2.0",
+              "section": "2. İade Süresi"
+            },
+            {
+              "label": "C3",
+              "documentId": "kargo-ve-teslimat",
+              "version": "1.0",
+              "section": "4. Hasarlı veya Eksik Teslimat"
+            },
+            {
+              "label": "C4",
+              "documentId": "kargo-ve-teslimat",
+              "version": "1.0",
+              "section": "2. Kargo Ücreti"
+            },
+            {
+              "label": "C5",
+              "documentId": "sss-genel",
+              "version": "1.0",
+              "section": "İade > İade kargo ücretini kim öder?"
+            },
+            {
+              "label": "C6",
+              "documentId": "kargo-ve-teslimat",
+              "version": "1.0",
+              "section": "3. Sipariş Takibi"
+            },
+            {
+              "label": "C7",
+              "documentId": "kargo-ve-teslimat",
+              "version": "1.0",
+              "section": "1. Teslimat Süresi"
+            },
+            {
+              "label": "C8",
+              "documentId": "sss-genel",
+              "version": "1.0",
+              "section": "Sipariş ve Ödeme > Faturamı nereden görebilirim?"
+            }
+          ],
+          "model": "gemma-4-26b-a4b-it",
+          "latencyMs": 2197,
+          "inputTokens": 1228,
+          "outputTokens": 207,
+          "modelCalls": 1
+        }
+      }
+    },
+    {
+      "question": {
+        "id": "H11",
+        "category": "celiskili",
+        "question": "Destek ekibine e-posta atarsam ne kadar sürede cevap gelir?",
+        "expectedAnswer": "Güncel sürüme (v2.0) göre e-postalara 24 saat içinde ilk yanıt verilir; v1.0'daki 48 saat geçersiz.",
+        "expect": {
+          "answerable": true,
+          "sourcesAnyOf": [
+            "destek-kanallari-v2"
+          ],
+          "sourcesAllOf": null,
+          "forbiddenSources": [
+            "destek-kanallari-v1"
+          ],
+          "mustContain": [
+            [
+              "24 saat"
+            ]
+          ],
+          "mustNotContain": [
+            "48 saat"
+          ],
+          "discardedVersions": [
+            "destek-kanallari-v1"
+          ],
+          "sectionsAnyOf": [
+            "E-posta Desteği"
+          ],
+          "expectConflict": null
+        }
+      },
+      "statusCode": 200,
+      "message": "OK",
+      "passed": true,
+      "checks": [
+        {
+          "name": "yanıtlanabilirlik",
+          "passed": true,
+          "detail": "beklenen: yanıt, gerçek: yanıt"
+        },
+        {
+          "name": "kaynak",
+          "passed": true,
+          "detail": "beklenen: destek-kanallari-v2; atıf: destek-kanallari-v2"
+        },
+        {
+          "name": "yasak kaynak yok",
+          "passed": true,
+          "detail": "yok"
+        },
+        {
+          "name": "bölüm",
+          "passed": true,
+          "detail": "beklenen: E-posta Desteği; atıf: 3. E-posta Desteği"
+        },
+        {
+          "name": "alıntı doğrulandı",
+          "passed": true,
+          "detail": "doğrulanmamış: —"
+        },
+        {
+          "name": "sayılar kaynakta",
+          "passed": true,
+          "detail": "atıf yapılan dokümanlarda olmayan: —"
+        },
+        {
+          "name": "içerik",
+          "passed": true,
+          "detail": "'24 saat'"
+        },
+        {
+          "name": "yasak ifade",
+          "passed": true,
+          "detail": "'48 saat'"
+        },
+        {
+          "name": "eski sürüm elendi",
+          "passed": true,
+          "detail": "beklenen: destek-kanallari-v1; raporlanan: destek-kanallari-v1"
+        }
+      ],
+      "latencyMs": 1399,
+      "lexicalHit": true,
+      "hybridHit": true,
+      "answer": {
+        "question": "Destek ekibine e-posta atarsam ne kadar sürede cevap gelir?",
+        "answerable": true,
+        "answer": "Destek@lumora.example adresine gönderilen e-postalara 24 saat içinde ilk yanıt verilir.",
+        "sources": [
+          {
+            "documentId": "destek-kanallari-v2",
+            "title": "Destek Kanalları ve Hizmet Saatleri",
+            "version": "2.0",
+            "effectiveDate": "2025-09-01",
+            "status": "active",
+            "category": "politika",
+            "section": "3. E-posta Desteği",
+            "quote": "destek@lumora.example adresine gönderilen e-postalara 24 saat içinde ilk yanıt verilir.",
+            "quoteVerified": true
+          }
+        ],
+        "versionResolution": {
+          "applied": true,
+          "rule": "Aynı doküman ailesinde, yürürlük tarihi bugün veya daha önce olan en yeni sürüm seçilir; 'superseded' işaretli sürüm seçilmez.",
+          "selected": [
+            {
+              "documentId": "destek-kanallari-v2",
+              "title": "Destek Kanalları ve Hizmet Saatleri",
+              "version": "2.0",
+              "effectiveDate": "2025-09-01"
+            }
+          ],
+          "discarded": [
+            {
+              "documentId": "destek-kanallari-v1",
+              "title": "Destek Kanalları ve Hizmet Saatleri",
+              "version": "1.0",
+              "effectiveDate": "2024-03-01",
+              "reason": "2.0 sürümü (2025-09-01) tarafından geçersiz kılındı."
+            }
+          ]
+        },
+        "conflicts": [],
+        "missingInformation": "",
+        "refusalReason": "",
+        "diagnostics": {
+          "retrievalMode": "hybrid",
+          "maxDenseScore": 0.6842160181982537,
+          "maxLexicalCoverage": 0.2009805448839607,
+          "candidateDocumentIds": [
+            "destek-kanallari-v1",
+            "destek-kanallari-v2",
+            "iade-politikasi-v1",
+            "sikayet-eskalasyon-proseduru",
+            "kargo-ve-teslimat",
+            "sorun-giderme-baglanti",
+            "sss-genel"
+          ],
+          "context": [
+            {
+              "label": "C1",
+              "documentId": "destek-kanallari-v2",
+              "version": "2.0",
+              "section": "3. E-posta Desteği"
+            },
+            {
+              "label": "C2",
+              "documentId": "iade-politikasi-v2",
+              "version": "2.0",
+              "section": "4. İade Talebi Nasıl Oluşturulur?"
+            },
+            {
+              "label": "C3",
+              "documentId": "iade-politikasi-v2",
+              "version": "2.0",
+              "section": "2. İade Süresi"
+            },
+            {
+              "label": "C4",
+              "documentId": "destek-kanallari-v2",
+              "version": "2.0",
+              "section": "2. Telefon Desteği"
+            },
+            {
+              "label": "C5",
+              "documentId": "destek-kanallari-v2",
+              "version": "2.0",
+              "section": "4. Öncelikli Destek"
+            },
+            {
+              "label": "C6",
+              "documentId": "sikayet-eskalasyon-proseduru",
+              "version": "1.0",
+              "section": "1. Amaç ve Kapsam"
+            },
+            {
+              "label": "C7",
+              "documentId": "sikayet-eskalasyon-proseduru",
+              "version": "1.0",
+              "section": "2. Destek Seviyeleri > 2.2 Seviye 2 (L2)"
+            },
+            {
+              "label": "C8",
+              "documentId": "kargo-ve-teslimat",
+              "version": "1.0",
+              "section": "3. Sipariş Takibi"
+            }
+          ],
+          "model": "gemma-4-26b-a4b-it",
+          "latencyMs": 1395,
+          "inputTokens": 1297,
+          "outputTokens": 115,
+          "modelCalls": 1
+        }
+      }
+    },
+    {
+      "question": {
+        "id": "H12",
+        "category": "celiskili",
+        "question": "Kutusunu açıp kurulumunu yaptığım termostatı iade edebilir miyim?",
+        "expectedAnswer": "Evet. Güncel politikaya (v2.0) göre ambalajı açılmış ve kurulumu yapılmış ürünler eksiksiz ve hasarsız olmaları kaydıyla iade edilebilir; göndermeden önce cihaz uygulamadaki hesaptan kaldırılıp fabrika ayarlarına döndürülmelidir. v1.0'daki \"yalnızca üretim hatası varsa\" kuralı geçersiz.",
+        "expect": {
+          "answerable": true,
+          "sourcesAnyOf": [
+            "iade-politikasi-v2"
+          ],
+          "sourcesAllOf": null,
+          "forbiddenSources": [
+            "iade-politikasi-v1"
+          ],
+          "mustContain": [
+            [
+              "eksiksiz",
+              "hasarsız",
+              "evet",
+              "iade edilebilir",
+              "iade edebilirsiniz"
+            ]
+          ],
+          "mustNotContain": [
+            "yalnızca üretim hatası"
+          ],
+          "discardedVersions": [
+            "iade-politikasi-v1"
+          ],
+          "sectionsAnyOf": [
+            "İade Koşulları"
+          ],
+          "expectConflict": null
+        }
+      },
+      "statusCode": 200,
+      "message": "OK",
+      "passed": true,
+      "checks": [
+        {
+          "name": "yanıtlanabilirlik",
+          "passed": true,
+          "detail": "beklenen: yanıt, gerçek: yanıt"
+        },
+        {
+          "name": "kaynak",
+          "passed": true,
+          "detail": "beklenen: iade-politikasi-v2; atıf: iade-politikasi-v2"
+        },
+        {
+          "name": "yasak kaynak yok",
+          "passed": true,
+          "detail": "yok"
+        },
+        {
+          "name": "bölüm",
+          "passed": true,
+          "detail": "beklenen: İade Koşulları; atıf: 3. İade Koşulları"
+        },
+        {
+          "name": "alıntı doğrulandı",
+          "passed": true,
+          "detail": "doğrulanmamış: —"
+        },
+        {
+          "name": "içerik",
+          "passed": true,
+          "detail": "'eksiksiz' | 'hasarsız' | 'evet' | 'iade edilebilir' | 'iade edebilirsiniz'"
+        },
+        {
+          "name": "yasak ifade",
+          "passed": true,
+          "detail": "'yalnızca üretim hatası'"
+        },
+        {
+          "name": "eski sürüm elendi",
+          "passed": true,
+          "detail": "beklenen: iade-politikasi-v1; raporlanan: iade-politikasi-v1"
+        }
+      ],
+      "latencyMs": 2157,
+      "lexicalHit": true,
+      "hybridHit": true,
+      "answer": {
+        "question": "Kutusunu açıp kurulumunu yaptığım termostatı iade edebilir miyim?",
+        "answerable": true,
+        "answer": "Evet, ambalajı açılmış ve kurulumu yapılmış ürünler, eksiksiz ve hasarsız olmaları kaydıyla iade edilebilir. İade edilecek ürünün orijinal kutusunda ve tüm aksesuarlarıyla birlikte gönderilmesi gerekmektedir. Ayrıca cihazı göndermeden önce Lumora uygulamasında hesabınızdan kaldırmanız ve fabrika ayarlarına döndürmeniz gerekmektedir.",
+        "sources": [
+          {
+            "documentId": "iade-politikasi-v2",
+            "title": "İade ve Para İadesi Politikası",
+            "version": "2.0",
+            "effectiveDate": "2025-06-01",
+            "status": "active",
+            "category": "politika",
+            "section": "3. İade Koşulları",
+            "quote": "Ambalajı açılmış ve kurulumu yapılmış ürünler de eksiksiz ve hasarsız olmaları kaydıyla iade edilebilir.",
+            "quoteVerified": true
+          },
+          {
+            "documentId": "iade-politikasi-v2",
+            "title": "İade ve Para İadesi Politikası",
+            "version": "2.0",
+            "effectiveDate": "2025-06-01",
+            "status": "active",
+            "category": "politika",
+            "section": "3. İade Koşulları",
+            "quote": "İade edilecek ürün orijinal kutusunda ve tüm aksesuarlarıyla birlikte gönderilmelidir.",
+            "quoteVerified": true
+          },
+          {
+            "documentId": "iade-politikasi-v2",
+            "title": "İade ve Para İadesi Politikası",
+            "version": "2.0",
+            "effectiveDate": "2025-06-01",
+            "status": "active",
+            "category": "politika",
+            "section": "3. İade Koşulları",
+            "quote": "Cihazı göndermeden önce Lumora uygulamasında hesabınızdan kaldırın ve fabrika ayarlarına döndürün.",
+            "quoteVerified": true
+          }
+        ],
+        "versionResolution": {
+          "applied": true,
+          "rule": "Aynı doküman ailesinde, yürürlük tarihi bugün veya daha önce olan en yeni sürüm seçilir; 'superseded' işaretli sürüm seçilmez.",
+          "selected": [
+            {
+              "documentId": "iade-politikasi-v2",
+              "title": "İade ve Para İadesi Politikası",
+              "version": "2.0",
+              "effectiveDate": "2025-06-01"
+            }
+          ],
+          "discarded": [
+            {
+              "documentId": "iade-politikasi-v1",
+              "title": "İade ve Para İadesi Politikası",
+              "version": "1.0",
+              "effectiveDate": "2024-01-15",
+              "reason": "2.0 sürümü (2025-06-01) tarafından geçersiz kılındı."
+            }
+          ]
+        },
+        "conflicts": [],
+        "missingInformation": "",
+        "refusalReason": "",
+        "diagnostics": {
+          "retrievalMode": "hybrid",
+          "maxDenseScore": 0.5928991949636231,
+          "maxLexicalCoverage": 0.32107394779131454,
+          "candidateDocumentIds": [
+            "iade-politikasi-v1",
+            "iade-politikasi-v2",
+            "kurulum-kilavuzu-lumora-termo",
+            "garanti-kosullari",
+            "destek-kanallari-v2"
+          ],
+          "context": [
+            {
+              "label": "C1",
+              "documentId": "iade-politikasi-v2",
+              "version": "2.0",
+              "section": "3. İade Koşulları"
+            },
+            {
+              "label": "C2",
+              "documentId": "iade-politikasi-v2",
+              "version": "2.0",
+              "section": "1. Kapsam"
+            },
+            {
+              "label": "C3",
+              "documentId": "kurulum-kilavuzu-lumora-termo",
+              "version": "1.0",
+              "section": "1. Kutu İçeriği"
+            },
+            {
+              "label": "C4",
+              "documentId": "kurulum-kilavuzu-lumora-termo",
+              "version": "1.0",
+              "section": "4. Fabrika Ayarlarına Döndürme"
+            },
+            {
+              "label": "C5",
+              "documentId": "kurulum-kilavuzu-lumora-termo",
+              "version": "1.0",
+              "section": "2. Kurulumdan Önce"
+            },
+            {
+              "label": "C6",
+              "documentId": "kurulum-kilavuzu-lumora-termo",
+              "version": "1.0",
+              "section": "3. Adım Adım Kurulum"
+            },
+            {
+              "label": "C7",
+              "documentId": "garanti-kosullari",
+              "version": "1.0",
+              "section": "5. Onarım Süresi"
+            },
+            {
+              "label": "C8",
+              "documentId": "iade-politikasi-v2",
+              "version": "2.0",
+              "section": "4. İade Talebi Nasıl Oluşturulur?"
+            }
+          ],
+          "model": "gemma-4-26b-a4b-it",
+          "latencyMs": 2149,
+          "inputTokens": 1471,
+          "outputTokens": 277,
+          "modelCalls": 1
+        }
+      }
+    }
+  ]
+}

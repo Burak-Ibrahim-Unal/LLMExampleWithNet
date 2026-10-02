@@ -236,6 +236,9 @@ public sealed class EvalChecksTests
     public void An_expected_conflict_must_be_reported_with_the_rule_satisfied()
     {
         var expect = new EvalExpectation(true, ExpectConflict: new ExpectedConflict("iade-v2", ["sss"]));
+
+        // Yerel yardımcı: seçilen ve elenen dokümanı ile kurala uygunluğu verilen tek bir çelişki kaydı kurar; üç senaryo
+        // yalnızca bu üç değerde ayrıştığı için tekrar eden DTO kurulumunu tek satıra indirir.
         ConflictDto Conflict(string chosen, string rejected, bool satisfied) =>
             new("İade kargo ücreti", ConflictSource(chosen), [ConflictSource(rejected)], "gerekçe", satisfied);
 

@@ -33,4 +33,10 @@ public static class RefusalReasons
     /// ihlal sürdü. Çelişkili bir yanıtı göstermek yerine açıkça reddedilir.
     /// </summary>
     public const string UnresolvedConflict = "UnresolvedConflict";
+
+    /// <summary>
+    /// Soru, dil modelinin talimatlarını değiştirmeye yönelik ifadeler içeriyor (prompt injection); model çağrılmadı.
+    /// Yanıt, "bilgi yok" mesajı yerine buna özel bir mesaj taşır ve olay denetim kaydına yazılır.
+    /// </summary>
+    public const string PromptInjectionSuspected = "PromptInjectionSuspected";
 }

@@ -7,6 +7,7 @@ using Knowledge.Application.BusinessRules;
 using Knowledge.Application.Contracts;
 using Knowledge.Application.Exceptions;
 using Knowledge.Application.Options;
+using Knowledge.Application.Security;
 using Knowledge.Domain.Entities;
 using Knowledge.Domain.Repositories;
 using MediatR;
@@ -124,6 +125,21 @@ public sealed class AskQuestionCommandHandler(
 
         var stopwatch = Stopwatch.StartNew();
         var settings = options.Value;
+
+        // Prompt injection: talimatları değiştirmeye yönelik bir soru aramaya ve modele hiç ulaşmaz. Hangi kalıbın
+        // yakalandığı yalnızca loga yazılır; istemci genel bir ret mesajı alır, olay denetim kaydında görünür.
+        if (PromptInjectionDetector.Detect(question) is { } injectionRule)
+        {
+            logger.LogWarning("Question refused as a suspected prompt injection ({Rule}); the model was not called.", injectionRule);
+            var noRetrieval = new AnswerDiagnosticsDto(index.Status.Mode.ToApi(), 0, 0, [], [], string.Empty, stopwatch.ElapsedMilliseconds, null, null, 0);
+            return await RefuseAsync(
+                question,
+                RefusalReasons.PromptInjectionSuspected,
+                string.Empty,
+                noRetrieval,
+                cancellationToken,
+                Messages.Knowledge.PromptInjectionRefused);
+        }
 
         // Hibrit arama. Modelin göreceğinden fazlası (TopK * 2) getirilir: eski sürümlerin bölümleri bir sonraki adımda
         // elenecek, bağlam yine de dolu kalmalı. Sorgu bir kez hazırlanır (gerekirse embed edilir) ve yedek bölüm
@@ -279,28 +295,38 @@ public sealed class AskQuestionCommandHandler(
     }
 
     /// <summary>
-    /// Açık bir "dokümanlarda yeterli bilgi yok" yanıtı oluşturur, denetim kaydına yazar ve HTTP 200 ile döndürür.
-    /// <paramref name="reason"/> hangi kapıda durulduğunu söyleyen <see cref="RefusalReasons"/> değeridir;
-    /// <paramref name="missingInformation"/> modelin neyin eksik olduğuna dair açıklamasıdır (model çağrılmadıysa boş).
+    /// Açık bir ret yanıtı oluşturur, denetim kaydına yazar ve HTTP 200 ile döndürür. <paramref name="reason"/> hangi
+    /// kapıda durulduğunu söyleyen <see cref="RefusalReasons"/> değeridir; <paramref name="missingInformation"/> modelin
+    /// neyin eksik olduğuna dair açıklamasıdır (model çağrılmadıysa boş).
     /// </summary>
     /// <remarks>
     /// Ret bir hata değil geçerli bir iş sonucudur: istemci <c>answerable=false</c>, boş <c>sources</c> ve yanıt alanında
-    /// her zaman aynı sabit Türkçe mesajı alır; modelin ürettiği metin retlerde hiçbir zaman yanıt gibi gösterilmez.
-    /// Retler sürüm kararı taşımaz (yalnızca kural metni, boş listeler): sürüm kararları bir yanıtın kaynaklarını
-    /// açıklamak içindir, yanıt yoksa açıklanacak kaynak da yoktur. Tanılama ise bilerek doldurulur; neyin bulunduğu ve
-    /// modele neyin gösterildiği görülebilsin, "neden reddedildi?" sorusu yanıttan ve denetim kaydından cevaplanabilsin.
+    /// sabit bir Türkçe mesaj alır; modelin ürettiği metin retlerde hiçbir zaman yanıt gibi gösterilmez. Mesaj varsayılan
+    /// olarak "dokümanlarda yeterli bilgi yok" cümlesidir; sorun dokümanlarda değil sorunun kendisinde olduğunda (prompt
+    /// injection) buna özel mesaj verilir. Retler sürüm kararı taşımaz (yalnızca kural metni, boş listeler): sürüm kararları
+    /// bir yanıtın kaynaklarını açıklamak içindir, yanıt yoksa açıklanacak kaynak da yoktur. Tanılama ise bilerek
+    /// doldurulur; neyin bulunduğu ve modele neyin gösterildiği görülebilsin, "neden reddedildi?" sorusu yanıttan ve
+    /// denetim kaydından cevaplanabilsin.
     /// </remarks>
+    /// <param name="question">Reddedilen soru.</param>
+    /// <param name="reason">Ret nedeni (<see cref="RefusalReasons"/>).</param>
+    /// <param name="missingInformation">Modelin eksik bilgi açıklaması; yoksa boş.</param>
+    /// <param name="diagnostics">Yanıtta ve denetim kaydında gösterilecek tanılama.</param>
+    /// <param name="cancellationToken">İsteğin iptal belirteci.</param>
+    /// <param name="message">Yanıt metni ve zarf mesajı; null ise <c>Messages.Knowledge.NotEnoughInformation</c>.</param>
     private async Task<ApiResult<AnswerDto>> RefuseAsync(
         string question,
         string reason,
         string missingInformation,
         AnswerDiagnosticsDto diagnostics,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        string? message = null)
     {
+        var text = message ?? Messages.Knowledge.NotEnoughInformation;
         var refusal = new AnswerDto(
             question,
             Answerable: false,
-            Answer: Messages.Knowledge.NotEnoughInformation,
+            Answer: text,
             Sources: [],
             VersionResolution: new VersionResolutionDto(false, VersionResolver.Rule, [], []),
             Conflicts: [],
@@ -309,7 +335,7 @@ public sealed class AskQuestionCommandHandler(
             Diagnostics: diagnostics);
 
         await LogAsync(refusal, cancellationToken);
-        return ApiResult<AnswerDto>.Ok(refusal, Messages.Knowledge.NotEnoughInformation);
+        return ApiResult<AnswerDto>.Ok(refusal, text);
     }
 
     /// <summary>

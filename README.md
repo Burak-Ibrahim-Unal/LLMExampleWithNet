@@ -1,3 +1,5 @@
+**Türkçe** | [English](README.en.md)
+
 # SupportAssistant — AI destekli bilgi asistanı
 
 Kurgu bir akıllı ev şirketinin (**Lumora Akıllı Ev**) müşteri destek ekibi için, Türkçe soruları **yalnızca bilgi
@@ -34,12 +36,13 @@ Kalan iki soru [aşağıda](#bağımsız-set) açıklanıyor.
 5. [API](#api)
 6. [Nasıl çalışır](#nasıl-çalışır)
 7. [Güvenlik](#güvenlik)
-8. [Değerlendirme](#değerlendirme)
-9. [Teknik tercihler](#teknik-tercihler)
-10. [Bilinen sınırlar](#bilinen-sınırlar)
-11. [Sorun giderme](#sorun-giderme)
-12. [Yapılan işler](#yapılan-işler)
-13. [Proje yapısı](#proje-yapısı)
+8. [Halüsinasyona karşı önlemler](#halüsinasyona-karşı-önlemler)
+9. [Değerlendirme](#değerlendirme)
+10. [Teknik tercihler](#teknik-tercihler)
+11. [Bilinen sınırlar](#bilinen-sınırlar)
+12. [Sorun giderme](#sorun-giderme)
+13. [Yapılan işler](#yapılan-işler)
+14. [Proje yapısı](#proje-yapısı)
 
 ---
 
@@ -674,6 +677,8 @@ Ayrıca:
   ayrıca düzeltme turu yapılmaz; kabul edilmeyen yanıt reddedilir.
 - Alıntı ve öncelik düzeltmeleri gerekirse aynı ikinci istekte birlikte uygulanır.
 - `diagnostics.modelCalls` gerçek istek sayısını, `inputTokens`/`outputTokens` bütün isteklerin toplamını gösterir.
+  Bu alanlar yanıtlarda ve retlerde vardır; `502`/`503` hata yanıtlarında tanılama dönmez, denemeler yalnızca sunucu
+  loguna yazılır.
 - OpenAI SDK'sının kendi yeniden deneme politikası kapalıdır (`maxRetries: 0`). Açık olsaydı zaman aşımında ya da 5xx
   yanıtında isteği görünmeden yeniden gönderir ve bütçeyi aşardı. Geçici bir ağ hatası bu yüzden hemen `503` olur.
 - Bunu iki test kanıtlar. Gerçek üreticiyi ve handler'ı programlanmış bir sohbet istemcisiyle çalıştıran akış testinde
@@ -824,6 +829,39 @@ doğrudan çağıran birim testlerinde ve yukarıdaki canlı denemede doğruland
 
 ---
 
+## Halüsinasyona karşı önlemler
+
+Halüsinasyon, modelin kaynakta olmayan bir bilgiyi yanıtmış gibi üretmesidir. Bir destek asistanında en zararlı biçimi
+yanlış bir süre, tutar ya da koşuldur.
+
+**Yapılanlar:**
+
+| Aşama | Önlem |
+|---|---|
+| Modelden önce | Model yalnızca aramanın bulduğu bölümleri görür; sistem prompt'u "yalnızca KAYNAKLAR'daki bilgiyi kullan, tahmin ekleme" der. Arama yeterli kanıt bulamazsa model hiç çağrılmaz (Kapı 1). Eski sürümler kodla elenir; model eski kuralı görmez. |
+| Model çalışırken | Çıktı JSON şemasıyla sınırlı, sıcaklık 0, sabit seed. Model "bilmiyorum" diyebilir: `answerable=false` (Kapı 2). |
+| Modelden sonra | Yanıt, atıf yaptığı bölümde birebir geçen en az bir alıntıya dayanmak zorunda (Kapı 3). Doğrulanamayan alıntı atılır; hiç doğrulanmış alıntı yoksa bir düzeltme turu yapılır, sonra soru reddedilir. Kaynaklar çelişirse öncelik kuralını sunucu uygular. |
+| Ölçüm | Değerlendirme, sayıların kaynakta geçip geçmediğini, koşulları ve yasak ifadeleri denetler; yanıtlar ayrıca elle okundu. Kayıtlı koşularda uydurma bilgi görülmedi. Tek hata (H03) fazla temkinli bir ret: sistem emin değilse yanıt vermemeyi seçiyor. |
+
+**Açık kalan nokta:** Alıntının kaynakta geçtiği doğrulanıyor, ama yanıt cümlesindeki her iddianın o alıntıdan çıktığı
+doğrulanmıyor. Model doğru alıntıyı (30 gün) gösterip metne kaynakta olmayan bir bilgi ekleyebilir; örneğin genel
+bilgiden gelen "yasal cayma hakkı 14 gündür". Sayı kontrolü bugün yalnızca değerlendirmede çalışıyor.
+
+**Yapılacaklar.** Aşağıdakiler henüz uygulanmadı. Her biri kodda, uygulanacağı yerde `TODO(halüsinasyon-N)` yorumuyla
+işaretli:
+
+| # | Ne | Kodda | Fayda / bedel |
+|---|---|---|---|
+| 1 | **Canlı yanıtlarda sayı kontrolü:** yanıttaki her sayı atıf yapılan bölümlerde ya da soruda geçmeli; geçmezse düzeltme turu, sürerse ret | `AskQuestionCommandHandler` (Kapı 3'ün hemen ardı) | En ucuz adım. Destekteki en zararlı uydurmaları (süre, tutar, eşik) yakalar ve mevcut 2 çağrı bütçesine sığar. |
+| 2 | **İddia başına atıf:** yanıt, her biri kendi alıntısıyla gelen iddialardan kurulur; desteksiz iddia atılır | `AnswerPayload` (şema) | Açık noktayı doğrudan kapatır. Prompt, şema, handler ve değerlendirme birlikte değişir. |
+| 3 | **Yeniden sıralayıcı (reranker):** ör. bge-reranker-v2-m3 ile bağlamdaki ilgisiz bölümleri azaltmak | `AskQuestionCommandHandler` (bağlam seçimi) | Model bilgileri daha az karıştırır; "yeterli kanıt" kararı güçlenir. Eşikler yeniden ayarlanmalı. |
+| 4 | **İkinci doğrulayıcı:** bir NLI modeli ya da ayrı bir LLM çağrısı "bu cümle bu alıntıdan çıkar mı?" diye denetler | `AskQuestionCommandHandler` (yanıt kabulü) | En isabetlisi, ama ek gecikme ve ek çağrı demek; 2 çağrı kuralının değişmesi gerekir. |
+| 5 | **Halüsinasyon odaklı test seti ve izleme:** modeli genel bilgiye çeken sorular, yanıtı neredeyse dokümanda olan sorular, sayı tuzakları; aynı kontrollerin denetim kaydına düzenli uygulanması | `tools/SupportAssistant.Eval` | Diğer maddelerin etkisini ölçmeyi sağlar. |
+
+Önerilen sıra: önce 1 ve 5, ölçtükten sonra 2. Bir madde uygulanınca kod yorumu ve bu tablo birlikte güncellenir.
+
+---
+
 ## Değerlendirme
 
 İki soru seti var:
@@ -880,8 +918,9 @@ Değerlendiricinin kendisi de test edilir. Öz-testler gerçek `eval/questions.j
 | Bağımsız set, ilk koşu ([rapor](eval/results/holdout/report.md)) | **10/12** (elle okumada 11/12 doğru) | 1,5 sn | 9/9 / 9/9 | Her soruda 1 |
 | Bağımsız set, yeniden koşu, aynı beklentiler ([rapor](eval/results/holdout-rerun/report.md)) | 10/12 (aynı iki soru) | 1,4 sn | 9/9 / 9/9 | Her soruda 1 |
 
-Kalibrasyon ve yeniden koşu raporları, bütün güvenlik ve değerlendirme değişikliklerinden sonraki son kodla
-üretildi. Yanıtlar önceki koşularla kelimesi kelimesine aynı çıktı (sıcaklık 0, sabit seed).
+Kalibrasyon ve yeniden koşu raporları, bütün güvenlik ve değerlendirme değişikliklerinden sonraki kodla ve soru
+dosyalarıyla (`5f58f80` commit'i) üretildi; sonraki commit'ler davranışı değiştirmeyen belge ve yorum değişiklikleridir.
+Yanıtlar önceki koşularla kelimesi kelimesine aynı çıktı (sıcaklık 0, sabit seed).
 
 *Arama isabeti:* beklenen kaynağın ilk 8 arama sonucunda olup olmadığı (sürüm çözümünden önce). Modelin bağlamı da
 sürüm çözümünden sonra 8 bölümdür, dolayısıyla metrik iyimser değil, eşit ya da daha katıdır. *Model çağrısı:*
@@ -991,7 +1030,8 @@ Not: MediatR 13'ten itibaren ticari lisans modeline geçti. Anahtar olmadan çal
   sayıları yakalar, ama hepsini değil. Koşul kontrolleri kısmidir. Kontroller doğru bir yanıtı da kaçırabilir (H05).
   Yanıtlar bu yüzden ayrıca elle okundu.
 - **Doğrulanmış alıntı, yanıtın her iddiasını kanıtlamaz:** sunucu, alıntılanan metnin atıf yapılan bölümde geçtiğini
-  doğrular. Yanıt cümlesindeki her iddianın bu alıntılardan çıktığını ayrıca denetlemez.
+  doğrular. Yanıt cümlesindeki her iddianın bu alıntılardan çıktığını ayrıca denetlemez. Bu açığı kapatacak adımlar
+  [Halüsinasyona karşı önlemler](#halüsinasyona-karşı-önlemler) bölümünde, kodda `TODO` olarak işaretli.
 - **Kaynaklar arası çelişki tespiti modele bağlı:** model bir çelişkiyi bildirdiğinde sunucu öncelik kuralını zorlar.
   Modelin fark etmediği bir çelişkiyi ise göremez. Çelişki gerekçesi (`reason`) modelin metnidir; sunucu seçimi
   denetler, gerekçenin doğruluğunu denetlemez. Aynı doküman ailesindeki sürüm çelişkisi tamamen deterministiktir.
@@ -1100,7 +1140,10 @@ reddinde modelin metni ne yanıta ne denetim kaydına giriyor; çıktı korumas�
 
 - Bütün sınıf, metot ve testlerde Türkçe XML özetleri (`<summary>`, gerektiğinde `<remarks>`): neyin, neden yapıldığı
   kodun yanında yazılı.
-- Bu README, [`agent.md`](agent.md) (kodlama ajanları için kurallar) ve [`.env.example`](.env.example).
+- Bu README ve İngilizce karşılığı [`README.en.md`](README.en.md) (ikisi her değişiklikte birlikte güncellenir),
+  [`agent.md`](agent.md) (kodlama ajanları için kurallar) ve [`.env.example`](.env.example).
+- Halüsinasyona karşı sonraki adımlar kodda `TODO(halüsinasyon-1…5)` yorumlarıyla işaretli
+  ([ayrıntı](#halüsinasyona-karşı-önlemler)).
 - **288 test** (263 birim + mimari, 25 entegrasyon); hepsi model sunucusu olmadan çalışır. Davranış değişiklikleri TDD
   ile yapıldı: önce başarısız test, sonra kod. Güvenlik denetimleri ayrıca mutasyonla sınandı (denetim geçici olarak
   kaldırıldığında ilgili testlerin kırıldığı görüldü).
@@ -1112,6 +1155,7 @@ reddinde modelin metni ne yanıta ne denetim kaydına giriyor; çıktı korumas�
 
 ```
 SupportAssistant.slnx                       .NET 10 solution (slnx)
+README.md · README.en.md                     Türkçe ve İngilizce README (birlikte güncellenir)
 Directory.Build.props · Directory.Packages.props · global.json
 .env.example                                 örnek ortam değişkenleri (anahtarlar boş)
 knowledge-base/                              10 kurgu doküman (markdown + YAML front matter)

@@ -101,3 +101,16 @@ Kurala aykırı bir tasarım gerekiyorsa önce mimari kararı yaz, sonra testi b
 3. Katman kuralı bozuluyor mu (mimari testler)?
 4. Yanıt `ApiResult<T>` ve `Messages.*` standardında mı?
 5. Testler ve (gerekiyorsa) değerlendirme güncel mi?
+6. README'ler (`README.md` ve `README.en.md`) birlikte güncellendi mi?
+
+## 8) Belgeler
+
+- README iki dillidir: `README.md` Türkçedir ve depo sayfasında açılır, `README.en.md` İngilizce karşılığıdır. Her
+  değişiklikte ikisi birlikte güncellenir: aynı bölüm yapısı, aynı sayılar (test sayısı, değerlendirme sonuçları,
+  sürümler), aynı örnekler. En üstteki dil bağlantıları (`**Türkçe** | [English](README.en.md)` /
+  `[Türkçe](README.md) | **English**`) korunur.
+- Örnek JSON'lar, API mesajları ve soru metinleri API'nin gerçek (Türkçe) çıktısıdır; İngilizce README'de çevrilmez,
+  gerektiğinde yanına İngilizce açıklama yazılır.
+- Halüsinasyona karşı sonraki adımlar kodda `TODO(halüsinasyon-1…5)` yorumlarıyla, uygulanacakları yerde işaretlidir.
+  Bir madde uygulanınca yorumu kaldırılır ve iki README'deki "Halüsinasyona karşı önlemler" / "Hallucination
+  safeguards" tablosu birlikte güncellenir.

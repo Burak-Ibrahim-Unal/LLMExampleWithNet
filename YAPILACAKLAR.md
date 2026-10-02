@@ -2,7 +2,7 @@
 
 Kaynak: teknik inceleme raporu ve ikinci incelemedeki geri bildirimler. Durumlar 2 Ekim 2026 tarihindeki son kontrole göre güncellendi. `[x]` yapılan ve kod, test veya teslim belgeleriyle desteklenen işleri; `[ ]` henüz tamamlandığı doğrulanmayan veya sonraya bırakılan işleri gösterir. Satır numaraları değişebileceği için dosya ve sınıf adları esas alınmıştır.
 
-**Son doğrulama:** Derleme 0 hata ve 0 uyarı; 288/288 test başarılı. Önceki üç hata örneği artık engelleniyor. Ayrıntılar: [üç düzeltmenin kontrol raporu](UC_DUZELTME_KONTROL_RAPORU.md). Canlı model koşuları kayıtlı raporlardan doğrulandı; inceleme sırasında yeniden çalıştırılmadı. Ana set 16/16, bağımsız set 10/12; H03 yanlış ret ve H05 değerlendirme kaynaklı başarısızlık olarak belgelenmiş durumda.
+**Son doğrulama:** Derleme 0 hata ve 0 uyarı; **331/331 test** başarılı (300 birim + mimari, 31 entegrasyon) — temiz checkout dahil. Final kodla canlı koşular: **ana set 30/30**, bağımsız set rerun **10/12**, bağımsız set 2 **12/12**, halüsinasyon seti **10/12** (64 yanıtlanan soruda desteksiz iddia yok; kalanlar fazla temkinli retler: H03, HL07, HL11), düşünme modu açıkken 29/30. Raporlar: `eval/results/`. Canlı API denemesi: [GORUSME_DEMO.md](GORUSME_DEMO.md).
 
 Öncelikler: **P1** yanıt güvenilirliğinde teslim öncesi düzeltme; **P2** sözleşme ve değerlendirme güvenilirliği; **P3** küçük düzeltmeler ve açıklık. Üretim kapsamındaki geliştirmeler ayrıca ayrılmıştır.
 
@@ -115,10 +115,14 @@ Dosyalar: `tools/SupportAssistant.Eval/Program.cs`, değerlendirme modelleri ve 
 - [ ] Donanımı uygun olmayan değerlendirici için denenmiş bir alternatif sağlayıcının tam örnek yapılandırmasını ekle; anahtarları örnek değerlerle göster.
 - [x] README'ye küçük model ve bulut sağlayıcısı için tam örnek yapılandırmalar ekle. Üstteki madde alternatiflerin canlı olarak denenmesini de içerdiği için açık bırakıldı.
 - [x] `.env.example`, kurulum ve değerlendirme komutlarının güncel olduğunu kontrol et.
-- [ ] Teslim edilecek dosyalar ve Git değişikliklerinde gerçek API anahtarı bulunmadığını kontrol et; `.env` ve yerel veritabanı dışlamalarını koru.
-- [ ] Temiz bir klasörden kurulumu dene; değerlendiricinin mevcut yerel ayarlarına veya veritabanına bağımlı olmadığını doğrula.
+- [x] Teslim edilecek dosyalar ve Git değişikliklerinde gerçek API anahtarı bulunmadığını kontrol et; `.env` ve yerel veritabanı dışlamalarını koru.
+- [x] Temiz bir klasörden kurulumu dene; değerlendiricinin mevcut yerel ayarlarına veya veritabanına bağımlı olmadığını doğrula.
 
 **Kabul:** README izlenerek temiz kurulumda dokümanlar indekslenir, örnek soru cevaplanır ve eval çalışır. FastAPI veya arayüz eklemek bu iş listesinin gereği değildir.
+
+> Anahtar kontrolü: izli dosyalarda sır kalıbı taraması temiz; `.env` ve `supportassistant.db` git-dışı.
+> Temiz kurulum: detached worktree'da (taze restore) derleme 0 hata/0 uyarı, 331/331 test.
+> Açık kalan tek kutu, bulut sağlayıcının (OpenAI/Gemini) **canlı** denenmesi — anahtar gerektirir.
 
 ### 11. Görüşme için teknik açıklamaları hazırla
 
@@ -126,11 +130,13 @@ Dosyalar: `tools/SupportAssistant.Eval/Program.cs`, değerlendirme modelleri ve 
 - [x] SQLite/bellek içi indeks seçimini veri boyutuyla ilişkilendir.
 - [x] CQRS ve katmanların bu projeye kattığı somut yararı açıkla; gereksiz yeni katman ekleme.
 - [x] Sürüm seçimini, üç ret kapısını ve kalan model bağımlılığını birer örnekle göster.
-- [ ] Normal, cevapsız ve çelişkili soru için kısa bir canlı demo akışı hazırla.
+- [x] Normal, cevapsız ve çelişkili soru için kısa bir canlı demo akışı hazırla.
 
 **Kabul:** Yaklaşık 20 dakikalık görüşmede kod akışını, teknik tercihleri, ölçüm sınırlarını ve bilinen eksikleri açıklayabilirsin.
 
-**Durum:** Teknik açıklamalar README'de hazır; canlı demo hazırlığı ve sözlü anlatımın prova edilmesi henüz doğrulanmadı.
+**Durum:** Teknik açıklamalar README'de hazır; canlı demo akışı canlı koşumla doğrulanmış şekilde
+[GORUSME_DEMO.md](GORUSME_DEMO.md) içinde (hazırlık, 5 istek, "neye bakılır" notları ve zorlayıcı
+soru-cevaplar). Sözlü anlatımın provası sende.
 
 ## C. İsteğe bağlı iyileştirmeler ve izlenecek noktalar
 
@@ -169,4 +175,4 @@ Dosyalar: `tools/SupportAssistant.Eval/Program.cs`, değerlendirme modelleri ve 
 - BM25/hibrit arama isabetini ayrı ölçme ve gerçek çıktıları beklenen sonuçlarla birlikte saklama.
 - README'deki kalibrasyon geçmişi ve bilinen sınırların açıklığı.
 
-**Kalan işler:** 10. maddede alternatif sağlayıcının canlı denenmesi, teslim paketinde son anahtar kontrolü ve temiz kurulum; 11. maddede canlı demo hazırlığı. Madde 12'nin açıklama seçeneği tamamlandı. Madde 13 sürekli izleme, madde 14 ise üretim kapsamındaki işlerdir; teslim öncesi zorunlu düzeltmelerle karıştırılmamalıdır.
+**Kalan işler:** 10. maddede yalnızca bulut sağlayıcının (OpenAI/Gemini) canlı denenmesi — anahtar gerektirir. Madde 11'in sözlü prova kısmı sende. Madde 12'nin açıklama seçeneği tamamlandı. Madde 13 sürekli izleme, madde 14 ise üretim kapsamındaki işlerdir; teslim öncesi zorunlu düzeltmelerle karıştırılmamalıdır.

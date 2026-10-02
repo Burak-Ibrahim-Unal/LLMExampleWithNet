@@ -33,3 +33,7 @@ logs/
 .env.*
 !.env.example
 !.env.*.example
+
+# Kişisel çalışma notları (depoya girmesin, diskte kalsın)
+/GORUSME_DEMO.md
+/YENIDEN_INCELEME.md

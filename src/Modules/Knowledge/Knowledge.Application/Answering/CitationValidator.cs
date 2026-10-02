@@ -9,10 +9,12 @@ namespace Knowledge.Application.Answering;
 /// denetler. Model, verilen bağlamın dışına atıf yaparak kaçamaz.
 /// </summary>
 /// <remarks>
-/// Kabul kararı etikete dayanır: etiketi bağlamdaki C1..Cn'den biri olmayan atıf düşürülür. Alıntı denetimi atfı
-/// düşürmez; sonucu <c>QuoteVerified</c> olarak yanıtta her kaynağın yanında raporlanır. Model <c>answerable=true</c>
-/// dediği hâlde kabul edilen hiçbir atıf kalmazsa handler yanıtı <c>NoValidCitations</c> (Kapı 3) ile reddeder. Bu
-/// denetimler kodda yapılır, çünkü modelin "kaynağa dayandım" beyanı tek başına kanıt değildir.
+/// Doğrulayıcı iki şeyi ayırır: etiketi bağlamdaki C1..Cn'den biri olmayan atıf burada düşürülür; alıntı denetimi ise
+/// atfı düşürmez, sonucu <c>QuoteVerified</c> olarak işaretler. Kararı handler verir: yalnızca alıntısı doğrulanmış
+/// atıflar yanıtın kaynağı olur. Hiç doğrulanmış atıf yoksa model bir kez düzeltme talimatıyla yeniden çağrılır (talimat
+/// doğrulanamayan alıntıları gösterir, bu yüzden onların burada kaybolmaması gerekir); yine olmazsa yanıt
+/// <c>NoValidCitations</c> (Kapı 3) ile reddedilir. Bu denetimler kodda yapılır, çünkü modelin "kaynağa dayandım"
+/// beyanı tek başına kanıt değildir.
 /// </remarks>
 public static class CitationValidator
 {

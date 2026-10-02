@@ -21,8 +21,16 @@ public static class RefusalReasons
     public const string ModelInsufficientContext = "ModelInsufficientContext";
 
     /// <summary>
-    /// Kapı 3: model yanıt verdi ama verilen kaynaklardan hiçbirine geçerli atıf yapmadı (ya da temizlikten sonra ne
-    /// yanıt metni ne de alıntı kaldı).
+    /// Kapı 3: model yanıt verdi ama hiçbir atfı kabul edilemedi; ya verilen kaynaklardan birine işaret etmiyordu ya da
+    /// alıntısı atıf yapılan bölümde birebir bulunamadı. Model bir kez düzeltme talimatıyla yeniden çağrıldıktan sonra da
+    /// durum değişmediyse verilir.
     /// </summary>
     public const string NoValidCitations = "NoValidCitations";
+
+    /// <summary>
+    /// Model, farklı dokümanlar arasındaki bir çelişkide öncelik kuralına aykırı bir kaynağı seçti ya da yanıtını kurala
+    /// göre kaybeden bir kaynağa dayandırdı; kaybeden bölümler bağlamdan çıkarılıp model yeniden çağrıldıktan sonra da
+    /// ihlal sürdü. Çelişkili bir yanıtı göstermek yerine açıkça reddedilir.
+    /// </summary>
+    public const string UnresolvedConflict = "UnresolvedConflict";
 }

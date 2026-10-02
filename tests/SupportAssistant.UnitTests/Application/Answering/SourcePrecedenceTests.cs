@@ -9,7 +9,7 @@ namespace SupportAssistant.UnitTests.Application.Answering;
 /// <see cref="SourcePrecedence"/> için birim testleri. Farklı dokümanlar çeliştiğinde hangisinin geçerli sayılacağını
 /// belirleyen kural şudur: politika ve prosedür kılavuzdan, kılavuz SSS'den önceliklidir; aynı öncelik düzeyinde
 /// yürürlük tarihi daha yeni olan kazanır. Handler, modelin raporladığı çelişki seçimini bu kuralla sunucu tarafında
-/// denetler (<c>RuleSatisfied</c>).
+/// denetler (<c>RuleSatisfied</c>) ve ihlalde kurala göre kaybeden kaynakları (<c>Losers</c>) bağlamdan çıkarır.
 /// </summary>
 public sealed class SourcePrecedenceTests
 {
@@ -42,4 +42,42 @@ public sealed class SourcePrecedenceTests
     {
         SourcePrecedence.Outranks(Chunk(candidateCategory, candidateYear), Chunk(otherCategory, otherYear)).ShouldBe(expected);
     }
+
+    /// <summary>
+    /// Bir çelişkinin üyeleri arasında kurala göre kaybedenlerin, başka bir üyeye kesin olarak yenilen kaynaklar olduğunu
+    /// doğrular: 2025 tarihli politika kazanır; aynı yıldan SSS (daha düşük yetki) ve 2024 tarihli politika (aynı yetki,
+    /// daha eski) kaybeder. Sonuç üyelerin verildiği sırayı korur.
+    /// </summary>
+    /// <remarks>
+    /// Handler kaybedenleri bağlamdan çıkarıp modeli yeniden çağırır; bu yüzden kaybeden kümesi kesin olmalıdır. Kazananın
+    /// yanlışlıkla kaybeden sayılması güncel kuralı bağlamdan siler, bir kaybedenin gözden kaçması ise eski bilginin
+    /// yanıta karışmasına izin verirdi.
+    /// </remarks>
+    [Fact]
+    public void Sources_beaten_by_another_member_of_the_conflict_lose()
+    {
+        var policy = Source("C1", Chunk(DocumentCategory.Policy, 2025));
+        var olderPolicy = Source("C2", Chunk(DocumentCategory.Policy, 2024));
+        var faq = Source("C3", Chunk(DocumentCategory.Faq, 2025));
+
+        SourcePrecedence.Losers([faq, policy, olderPolicy]).ShouldBe([faq, olderPolicy]);
+    }
+
+    /// <summary>
+    /// Aynı yetki düzeyinde ve aynı yürürlük tarihindeki iki kaynağın (politika ve prosedür, ikisi de 2025) birbirine
+    /// kaybetmediğini doğrular.
+    /// </summary>
+    /// <remarks>
+    /// Kural bu iki kaynağı ayırt edemez; ikisinden birini bağlamdan silmek keyfî bir karar olurdu. Böyle bir çelişkide
+    /// modelin seçimi kabul edilir ve çelişki yanıtta görünür kalır.
+    /// </remarks>
+    [Fact]
+    public void Equally_ranked_sources_of_the_same_date_do_not_lose_to_each_other()
+    {
+        SourcePrecedence.Losers([Source("C1", Chunk(DocumentCategory.Policy, 2025)), Source("C2", Chunk(DocumentCategory.Procedure, 2025))])
+            .ShouldBeEmpty();
+    }
+
+    /// <summary>Verilen bölümü bir bağlam etiketiyle sarar; <c>Losers</c> bağlamdaki kaynaklar üzerinde çalışır.</summary>
+    private static ContextChunk Source(string label, IndexedChunk chunk) => new(label, chunk);
 }

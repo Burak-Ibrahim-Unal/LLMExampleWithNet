@@ -40,7 +40,7 @@ public sealed class QuestionLog : EntityBase
 
     /// <summary>
     /// Geri çevirme gerekçesi (<c>LowRelevance</c>, <c>NoSourceInEffect</c>, <c>ModelInsufficientContext</c>,
-    /// <c>NoValidCitations</c>); yanıtlanan sorularda boş metin. Ayrı bir sütun olması, kapıların ne sıklıkla devreye
+    /// <c>NoValidCitations</c>, <c>UnresolvedConflict</c>); yanıtlanan sorularda boş metin. Ayrı bir sütun olması, kapıların ne sıklıkla devreye
     /// girdiğini JSON'u açmadan sorgulamayı mümkün kılar.
     /// </summary>
     public string RefusalReason { get; private set; } = string.Empty;

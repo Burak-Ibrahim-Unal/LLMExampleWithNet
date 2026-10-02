@@ -42,8 +42,9 @@ public sealed class AnswerPayload
     public string Answer { get; set; } = string.Empty;
 
     /// <summary>
-    /// Yanıtı destekleyen atıflar. Kapı 3'te yalnızca etiketi modele verilen kaynaklardan birine (C1..Cn) karşılık
-    /// gelen atıflar tutulur; hiçbiri kalmazsa yanıt <c>NoValidCitations</c> ile reddedilir. Her bilginin kaynağını
+    /// Yanıtı destekleyen atıflar. Kapı 3'te yalnızca etiketi modele verilen kaynaklardan birine (C1..Cn) karşılık gelen
+    /// ve alıntısı o bölümde birebir geçen atıflar yanıtın kaynağı olur; hiçbiri kalmazsa model bir kez düzeltme
+    /// talimatıyla yeniden çağrılır, yine olmazsa yanıt <c>NoValidCitations</c> ile reddedilir. Her bilginin kaynağını
     /// (doküman ve bölüm) gösterme gereksinimi bu alana dayanır.
     /// </summary>
     [Description("Yanıttaki her bilgiyi destekleyen kaynaklar.")]
@@ -58,9 +59,9 @@ public sealed class AnswerPayload
     public string MissingInformation { get; set; } = string.Empty;
 
     /// <summary>
-    /// Modelin farklı dokümanlar arasında tespit ettiği çelişkiler. Sunucu her kaydı verilen kaynaklarla eşler ve
-    /// seçimin öncelik kuralına uyup uymadığını kendisi hesaplar (<c>ruleSatisfied</c>); modelin beyanına körü körüne
-    /// güvenilmez.
+    /// Modelin farklı dokümanlar arasında tespit ettiği çelişkiler. Sunucu her kaydı verilen kaynaklarla eşler,
+    /// seçimin öncelik kuralına uyup uymadığını kendisi hesaplar (<c>ruleSatisfied</c>) ve ihlalde kuralı zorlar: kurala
+    /// göre kaybeden bölümler bağlamdan çıkarılıp model yeniden çağrılır. Modelin beyanına körü körüne güvenilmez.
     /// </summary>
     [Description("Kaynaklar arasında tespit edilen çelişkiler; yoksa boş liste.")]
     public List<ConflictPayload> Conflicts { get; set; } = [];
@@ -81,8 +82,8 @@ public sealed class CitationPayload
 
     /// <summary>
     /// Kaynaktan birebir kopyalanması istenen kısa alıntı. Sunucu alıntının bölüm metninde gerçekten geçip geçmediğini
-    /// büyük/küçük harf ve Türkçe karakterden bağımsız olarak denetler ("…" ile kısaltılmış alıntıları parça parça) ve
-    /// sonucu kaynak başına <c>quoteVerified</c> olarak raporlar.
+    /// büyük/küçük harf ve Türkçe karakterden bağımsız olarak denetler ("…" ile kısaltılmış alıntılarda parçaları
+    /// kaynaktaki sırasıyla). Doğrulanamayan alıntının atfı yanıtın kaynağı olamaz.
     /// </summary>
     [Description("Kaynaktan birebir kopyalanmış kısa alıntı.")]
     public string Quote { get; set; } = string.Empty;
@@ -108,8 +109,8 @@ public sealed class ConflictPayload
 
     /// <summary>
     /// Elenen kaynakların etiketleri. Sunucu yalnızca verilen kaynaklara ait olanları tutar ve seçilen kaynağın
-    /// bunların her birine öncelik kuralına göre üstün olup olmadığını <c>ruleSatisfied</c> olarak hesaplar; geçerli
-    /// elenen etiket kalmazsa kayıt yok sayılır.
+    /// bunlardan birine öncelik kuralına göre yenilip yenilmediğini hesaplar (<c>ruleSatisfied</c>); geçerli elenen etiket
+    /// kalmazsa kayıt yok sayılır.
     /// </summary>
     [Description("Elenen kaynakların kimlikleri.")]
     public List<string> RejectedChunkIds { get; set; } = [];

@@ -8,7 +8,8 @@ namespace SupportAssistant.UnitTests.Application.Answering;
 /// <summary>
 /// <see cref="CitationValidator"/> (Kapı 3) için birim testleri. Doğrulayıcı, modelin atıflarından yalnızca kendisine
 /// gerçekten verilen bir kaynağa (C1..Cn) işaret edenleri tutar ve her alıntının o bölümde gerçekten geçip geçmediğini
-/// Türkçe normalizasyonla (büyük/küçük harf, Türkçe karakterler, noktalama) kontrol eder.
+/// Türkçe normalizasyonla (büyük/küçük harf, Türkçe karakterler, noktalama) kontrol eder; kısaltılmış alıntılarda parça
+/// sırasını, sözcük başını ve sayı sınırını da denetler.
 /// </summary>
 /// <remarks>
 /// Model çıktısı yerine doğrudan <c>GeneratedCitation</c> listeleri verilir; iki bölümlük sabit bir bağlam (<c>C1</c>:
@@ -40,7 +41,8 @@ public sealed class CitationValidatorTests
     /// </summary>
     /// <remarks>
     /// Model kendisine verilmemiş bir kaynağı gösteremez; aksi hâlde uydurulmuş bir etiket yanıtı kaynaklıymış gibi
-    /// gösterirdi. Bütün atıflar bu şekilde düşerse handler yanıtı <c>NoValidCitations</c> ile reddeder.
+    /// gösterirdi. Bütün atıflar bu şekilde düşerse handler modeli bir kez düzeltme talimatıyla yeniden çağırır, yine
+    /// olmazsa yanıtı <c>NoValidCitations</c> ile reddeder.
     /// </remarks>
     [Fact]
     public void Citations_to_sources_that_were_not_provided_are_dropped()

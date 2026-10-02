@@ -31,7 +31,8 @@ public static partial class AnswerText
     /// <remarks>
     /// Önce kaynak işaretleri, sonra en az <c>MinRemovableQuoteLength</c> karakterlik alıntıların tırnaklı kopyaları silinir;
     /// ardından silmelerin bıraktığı çoklu boşluklar teke indirilir ve metin kırpılır. Temizlik sonunda metin boş kalırsa
-    /// handler atıfların alıntılarını yanıt olarak kullanır; o da boşsa yanıt <c>NoValidCitations</c> ile reddedilir.
+    /// handler yalnızca doğrulanmış alıntıları yanıt olarak kullanır; doğrulanmış alıntı boş olamayacağından yanıt metni
+    /// boş kalmaz.
     /// </remarks>
     /// <param name="answer">Modelin ürettiği yanıt metni.</param>
     /// <param name="citedQuotes">

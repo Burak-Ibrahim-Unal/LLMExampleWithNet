@@ -30,7 +30,7 @@ public sealed class EvalChecksTests
         [],
         string.Empty,
         answerable ? string.Empty : "LowRelevance",
-        new AnswerDiagnosticsDto("hybrid", 0.7, 1.0, [], [], "model", 100, null, null));
+        new AnswerDiagnosticsDto("hybrid", 0.7, 1.0, [], [], "model", 100, null, null, 1));
 
     /// <summary>
     /// İfade eşleştirmesinin büyük/küçük harf, noktalama ve Türkçe karakter farklarını yok saydığını ve Türkçe ekleri

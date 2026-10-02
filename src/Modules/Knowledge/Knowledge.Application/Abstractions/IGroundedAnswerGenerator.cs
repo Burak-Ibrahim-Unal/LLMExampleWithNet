@@ -113,7 +113,8 @@ public sealed record GeneratedCitation(string ChunkLabel, string Quote);
 /// <remarks>
 /// Aynı doküman ailesinin sürümleri arasındaki çelişki buraya hiç gelmez: <c>VersionResolver</c> eski sürümleri model
 /// çağrılmadan eler, model her aileden yalnızca yürürlükteki sürümü görür. Burada kalan, farklı aileler arasındaki
-/// (ör. politika ile SSS) çelişkilerdir; handler modelin seçiminin öncelik kuralına uyup uymadığını sunucu tarafında hesaplar.
+/// (ör. politika ile SSS) çelişkilerdir; handler modelin seçiminin öncelik kuralına uyup uymadığını sunucu tarafında
+/// hesaplar ve ihlalde kurala göre kaybeden bölümleri bağlamdan çıkarıp modeli yeniden çağırır.
 /// </remarks>
 /// <param name="Topic">Çelişkinin konusu.</param>
 /// <param name="ChosenChunkLabel">Modelin geçerli kabul ettiği kaynağın etiketi.</param>

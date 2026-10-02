@@ -7,13 +7,17 @@ namespace Knowledge.Application.Answering;
 /// <remarks>
 /// Aynı doküman ailesinin sürümlerini <c>VersionResolver</c> model çağrılmadan çözer; bu sınıf farklı aileler arasındaki
 /// çelişkiler içindir (ör. güncel iade politikası ile eski bilgiyi tekrarlayan SSS). Kural prompt'ta modele de verilir;
-/// sunucu, modelin bildirdiği her çelişkide seçimin bu kurala uyup uymadığını hesaplar ve <c>ruleSatisfied</c> olarak
-/// raporlar. Kuralın ihlali yanıtı reddettirmez, yalnızca görünür kılar; çelişkiyi fark edip bildirmek ise hâlâ modele bağlıdır.
+/// sunucu, modelin bildirdiği her çelişkide seçimin bu kurala uyup uymadığını hesaplar (<c>ruleSatisfied</c>) ve kuralı
+/// zorlar: model kaybeden kaynağı seçtiyse ya da yanıtını ona dayandırdıysa handler kaybedenleri (<see cref="Losers"/>)
+/// bağlamdan çıkarıp modeli bir kez daha çağırır, ihlal sürerse yanıtı reddeder. Çelişkiyi fark edip bildirmek ise hâlâ
+/// modele bağlıdır; bildirilmeyen bir çelişkiyi sunucu göremez.
 /// </remarks>
 public static class SourcePrecedence
 {
     /// <summary>
     /// Öncelik kuralının Türkçe, insan tarafından okunabilir ifadesi; system prompt'taki 5. kuralla aynı önceliği anlatır.
+    /// Sunucu kuralı zorladığında (modelin seçimi düzeltildiğinde) çelişki kaydının gerekçesine de bu metin yazılır;
+    /// kararın hangi kurala dayandığı yanıtın içinden okunur.
     /// </summary>
     public const string Rule = "Politika ve prosedür dokümanları kılavuzlardan, kılavuzlar SSS'den önceliklidir; aynı türde yürürlük tarihi daha yeni olan geçerlidir.";
 
@@ -37,6 +41,31 @@ public static class SourcePrecedence
             ? candidateRank < otherRank
             : candidate.EffectiveDate >= other.EffectiveDate;
     }
+
+    /// <summary>
+    /// Bir çelişkinin üyeleri arasından kurala göre kaybedenleri döndürür: başka bir üye tarafından kesin olarak geçilen
+    /// her kaynak. Sonuç üyelerin verildiği sırayı korur.
+    /// </summary>
+    /// <remarks>
+    /// "Kesin olarak geçmek", kuralın iki kaynağı ayırt edebilmesi demektir: biri diğerine üstün gelir ama tersi doğru
+    /// değildir. Aynı yetki düzeyinde ve aynı tarihteki kaynaklar birbirini geçemez; kural onları ayırt edemediği için
+    /// hiçbiri kaybeden sayılmaz ve modelin seçimi kabul edilir. Handler kaybedenleri bağlamdan çıkarıp modeli yeniden
+    /// çağırdığı için bu küme kesin olmalıdır: kazananı kaybeden saymak güncel kuralı bağlamdan silerdi.
+    /// </remarks>
+    /// <param name="members">Çelişkinin seçilen ve elenen kaynakları.</param>
+    public static IReadOnlyList<ContextChunk> Losers(IReadOnlyList<ContextChunk> members) =>
+        members.Where(member => members.Any(other => Beats(other.Chunk, member.Chunk))).ToList();
+
+    /// <summary>
+    /// <paramref name="candidate"/> kaynağı <paramref name="other"/> kaynağını kesin olarak geçiyorsa true döndürür:
+    /// <see cref="Outranks"/> bir yönde doğru, diğer yönde yanlıştır.
+    /// </summary>
+    /// <remarks>
+    /// <see cref="Outranks"/> eşitlikte iki yönde de true döndürür (modelin seçimi eşitlikte ihlal sayılmasın diye); bir
+    /// kaynağı bağlamdan çıkarmak gibi geri dönüşü olan bir karar için eşitlik yetmez, kesin üstünlük gerekir.
+    /// </remarks>
+    private static bool Beats(IndexedChunk candidate, IndexedChunk other) =>
+        Outranks(candidate, other) && !Outranks(other, candidate);
 
     /// <summary>
     /// Doküman türünün yetki sırası; küçük değer daha yetkilidir. Politikayı politika sahibi onaylar, SSS ise politikanın

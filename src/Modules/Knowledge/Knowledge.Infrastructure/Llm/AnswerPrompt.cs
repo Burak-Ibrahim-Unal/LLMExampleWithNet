@@ -25,7 +25,8 @@ internal static class AnswerPrompt
     /// varsayımla uydurma (hallucination) yapılmasını engeller.</description></item>
     /// <item><description>Her bilgi için kaynak etiketi ve BİREBİR alıntı: her yanıtta kullanılan doküman ve bölümün
     /// gösterilmesini sağlar. Etiket, sunucunun atfı verilen kaynaklardan birine eşlemesine (Kapı 3) yarar; alıntı
-    /// birebir istendiği için sunucu onu bölüm metninde arayıp <c>quoteVerified</c> ile doğrulayabilir.</description></item>
+    /// birebir istendiği için sunucu onu bölüm metninde arayıp doğrulayabilir. Doğrulanamayan alıntı yanıtın dayanağı
+    /// olamaz; hiç doğrulanmış alıntı yoksa model düzeltme talimatıyla bir kez daha çağrılır.</description></item>
     /// <item><description>Kaynak yetmiyorsa <c>answerable=false</c> ve eksik bilginin <c>missingInformation</c>'a
     /// yazılması: "bilgi yoksa yanıt üretmek yerine açıkça söyle" gereksinimini karşılar (Kapı 2). Kısmen
     /// yanıtlanabilen soruda yalnızca desteklenen kısım yanıtlanır; böylece ya hep ya hiç türünden gereksiz retler
@@ -36,7 +37,8 @@ internal static class AnswerPrompt
     /// <item><description>Kaynaklar arası çelişkide öncelik (politika ve prosedür kılavuzdan, kılavuz SSS'den önce gelir;
     /// aynı türde yürürlük tarihi daha yeni olan geçerlidir) ve çelişkinin <c>conflicts</c> alanına yazılması: aynı
     /// doküman ailesinin sürümlerini kod çözer, bu kural farklı dokümanlar içindir (ör. eski bilgi taşıyan SSS ile
-    /// güncel politika). Sunucu modelin seçimini <c>SourcePrecedence</c> ile ayrıca denetler.</description></item>
+    /// güncel politika). Sunucu modelin seçimini <c>SourcePrecedence</c> ile ayrıca denetler ve ihlalde kuralı zorlar:
+    /// kaybeden bölümleri bağlamdan çıkarıp modeli yeniden çağırır.</description></item>
     /// <item><description>Yanıt metnine kaynak kimliği, köşeli parantez veya alıntı koyma: kaynaklar yanıtta ayrı bir
     /// alanda taşınır; metin, temsilcinin müşteriye doğrudan iletebileceği kadar temiz olmalıdır
     /// (<c>AnswerText.Clean</c> yine de güvenlik ağı olarak temizler).</description></item>

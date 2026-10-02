@@ -13,11 +13,20 @@ namespace Knowledge.Application.Contracts;
 /// <param name="Question">Sorulan soru (baştaki/sondaki boşluklar kırpılmış).</param>
 /// <param name="Answerable">Dokümanlar yeterli bilgi içermiyorsa false; <paramref name="Answer"/> bu durumda bunu açıkça söyler.</param>
 /// <param name="Answer">Yanıt metni; retlerde sabit Türkçe "yeterli bilgi bulunamadı" mesajı.</param>
-/// <param name="Sources">Yanıtın dayandığı doküman ve bölümler, alıntılanan metinle birlikte; retlerde boş.</param>
+/// <param name="Sources">
+/// Yanıtın dayandığı doküman ve bölümler, alıntılanan metinle birlikte; yalnızca alıntısı bölüm metninde doğrulanmış
+/// atıflar listelenir. Retlerde boş.
+/// </param>
 /// <param name="VersionResolution">Aynı dokümanın çakışan sürümlerinin nasıl çözüldüğü.</param>
-/// <param name="Conflicts">Farklı dokümanlar arasında modelin bildirdiği ve öncelik kuralına göre denetlenen anlaşmazlıklar.</param>
+/// <param name="Conflicts">
+/// Farklı dokümanlar arasında modelin bildirdiği ve sunucunun öncelik kuralına göre denetleyip gerekirse düzelttiği
+/// anlaşmazlıklar.
+/// </param>
 /// <param name="MissingInformation">Kaynakların karşılamadığı kısım (kısmi yanıtlarda ve retlerde).</param>
-/// <param name="RefusalReason">Yanıtlandıysa boş; aksi hâlde LowRelevance, NoSourceInEffect, ModelInsufficientContext veya NoValidCitations.</param>
+/// <param name="RefusalReason">
+/// Yanıtlandıysa boş; aksi hâlde LowRelevance, NoSourceInEffect, ModelInsufficientContext, NoValidCitations veya
+/// UnresolvedConflict.
+/// </param>
 /// <param name="Diagnostics">Arama modu, skorlar, modele verilen bağlam, model adı ve gecikme gibi teşhis bilgileri.</param>
 public sealed record AnswerDto(
     string Question,
@@ -43,8 +52,9 @@ public sealed record AnswerDto(
 /// <param name="Section">Bölüm yolu (ör. "2. İade Süresi").</param>
 /// <param name="Quote">Modelin bu bölümden yaptığı alıntı.</param>
 /// <param name="QuoteVerified">
-/// Alıntı bölüm metninde geçiyorsa, yani başka sözcüklerle ifade edilmemiş ya da uydurulmamışsa true. False olan bir
-/// alıntının kaynağı yine listelenir; bu bayrak okuyucunun alıntıya ne kadar güveneceğini gösterir.
+/// Alıntı bölüm metninde geçiyorsa, yani başka sözcüklerle ifade edilmemiş ya da uydurulmamışsa true. Yanıtta yalnızca
+/// doğrulanmış alıntılı kaynaklar listelendiği için listelenen her kaynakta true'dur; alan, sözleşmenin açık kalması ve
+/// istemcinin bunu kendisi de denetleyebilmesi için taşınır.
 /// </param>
 public sealed record AnswerSourceDto(
     string DocumentId,
@@ -94,15 +104,17 @@ public sealed record DiscardedVersionDto(string DocumentId, string Title, string
 /// </summary>
 /// <remarks>
 /// Yalnızca seçilen kaynağı ve en az bir elenen kaynağı modele verilen bağlamda bulunan çelişkiler listelenir; bağlam
-/// dışı etiketlere dayanan bildirimler atılır.
+/// dışı etiketlere dayanan bildirimler atılır. Model kurala aykırı bir kaynağı seçtiyse sunucu kaybeden bölümleri
+/// bağlamdan çıkarıp modeli yeniden çağırır; kayıt bu durumda sunucunun kararını gösterir (seçilen kuralın kazananı,
+/// gerekçe sunucunun kuralı uyguladığını söyleyen metin).
 /// </remarks>
 /// <param name="Topic">Çelişkinin konusu.</param>
-/// <param name="Chosen">Modelin geçerli kabul ettiği kaynak.</param>
-/// <param name="Rejected">Modelin elediği kaynaklar.</param>
-/// <param name="Reason">Modelin seçim gerekçesi.</param>
+/// <param name="Chosen">Geçerli kabul edilen kaynak: modelin seçimi ya da sunucu düzelttiyse kuralın kazananı.</param>
+/// <param name="Rejected">Elenen kaynaklar.</param>
+/// <param name="Reason">Modelin seçim gerekçesi ya da sunucu düzelttiyse uygulanan kuralın metni.</param>
 /// <param name="RuleSatisfied">
-/// Modelin seçimi öncelik kuralına (önce yetki, sonra tazelik) uyuyorsa true. Değeri sunucu hesaplar; false olması yanıtı
-/// engellemez, ihlali görünür kılar.
+/// Seçim öncelik kuralına (önce yetki, sonra tazelik) uyuyorsa true; değeri sunucu hesaplar. Başarılı bir yanıtta her
+/// zaman true'dur: ihlal ya düzeltme turunda giderilir ya da yanıt <c>UnresolvedConflict</c> ile reddedilir.
 /// </param>
 public sealed record ConflictDto(
     string Topic,
@@ -127,14 +139,21 @@ public sealed record ConflictSourceDto(string DocumentId, string Version, DateOn
 /// <param name="MaxDenseScore">Kapı 1'in gördüğü en iyi kosinüs benzerliği (lexical modda 0).</param>
 /// <param name="MaxLexicalCoverage">Kapı 1'in gördüğü en iyi kelime kapsamı (0..1).</param>
 /// <param name="CandidateDocumentIds">Sürüm çözümünden önce aramanın bulduğu dokümanlar.</param>
-/// <param name="Context">Sürüm çözümünden sonra modele verilen bölümler, etiketleriyle.</param>
+/// <param name="Context">
+/// Modele son çağrıda verilen bölümler, etiketleriyle (sürüm çözümünden sonra; çelişki düzeltmesi yapıldıysa kaybeden
+/// bölümler çıkarılmış hâliyle).
+/// </param>
 /// <param name="Model">
 /// Yapılandırılmış sohbet modelinin adı; model çağrılmadıysa boş. Sunucunun döndürdüğü kimlik kullanılmaz, çünkü llama.cpp
 /// orada yerel model dosyasının yolunu döndürür ve bu makine ayrıntısı yanıta sızardı.
 /// </param>
-/// <param name="LatencyMs">Aramanın başlangıcından model yanıtının alınmasına (model çağrılmadıysa ret anına) kadar geçen süre, milisaniye.</param>
-/// <param name="InputTokens">Girdi token sayısı; model çağrılmadıysa ya da sağlayıcı bildirmediyse null.</param>
-/// <param name="OutputTokens">Çıktı token sayısı; model çağrılmadıysa ya da sağlayıcı bildirmediyse null.</param>
+/// <param name="LatencyMs">Aramanın başlangıcından son model yanıtının alınmasına (model çağrılmadıysa ret anına) kadar geçen süre, milisaniye.</param>
+/// <param name="InputTokens">Tüm model çağrılarının toplam girdi token sayısı; model çağrılmadıysa ya da sağlayıcı bildirmediyse null.</param>
+/// <param name="OutputTokens">Tüm model çağrılarının toplam çıktı token sayısı; model çağrılmadıysa ya da sağlayıcı bildirmediyse null.</param>
+/// <param name="ModelCalls">
+/// Bu soru için dil modelinin kaç kez çağrıldığı: 0 (model çağrılmadan verilen ret), 1 ya da düzeltme turu yapıldıysa 2.
+/// Gecikmenin neden yüksek olduğunu ve düzeltme turunun ne sıklıkla gerektiğini görünür kılar.
+/// </param>
 public sealed record AnswerDiagnosticsDto(
     string RetrievalMode,
     double MaxDenseScore,
@@ -144,7 +163,8 @@ public sealed record AnswerDiagnosticsDto(
     string Model,
     long LatencyMs,
     long? InputTokens,
-    long? OutputTokens);
+    long? OutputTokens,
+    int ModelCalls);
 
 /// <summary>Modele verilen bir bağlam bölümü: etiketi (C1..Cn), dokümanı, sürümü ve bölüm yolu.</summary>
 /// <remarks>Etiket, modelin atıflarda kullandığı kimliktir; atıfları ve çelişkileri bağlamla eşleştirerek incelemeye yarar.</remarks>

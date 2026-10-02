@@ -576,6 +576,74 @@ public sealed class AskQuestionCommandHandlerTests : IAsyncLifetime
     }
 
     /// <summary>
+    /// Model bir çelişkide doğru kaynağı (politika) seçtiğini bildirdiği hâlde yanıtını yalnızca başka bir dokümana
+    /// (kargo politikası) dayandırırsa bunun da ihlal sayıldığını doğrular: SSS bağlamdan çıkarılır, model bir kez daha
+    /// çağrılır ve ikinci yanıt politikaya dayanır; çelişki kaydı politikanın SSS'ye üstün geldiğini gösterir.
+    /// </summary>
+    /// <remarks>
+    /// Arkadaş incelemesinin ikinci geçişte doğruladığı açık: çelişki kaydı "politikayı seçtim" derken yanıt başka bir
+    /// kaynağa dayanabiliyor ve yine kabul ediliyordu. Seçilen kaynağa atıf yapılmaması, beyan ile yanıtın birbirini
+    /// tutmadığını gösterir; kullanıcı da yanıtın neye dayandığı konusunda yanıltılırdı.
+    /// </remarks>
+    [Fact]
+    public async Task A_conflict_whose_winner_is_not_cited_triggers_a_correction_round()
+    {
+        _generator.Respond = (_, context) =>
+        {
+            if (_generator.Calls > 1)
+            {
+                return AnswerFrom(context, "iade-v2", ReturnShippingSection);
+            }
+
+            var answer = AnswerWithConflict(context, "iade-v2", ReturnShippingSection, "sss", FaqSection);
+            var shipping = context.Single(source => source.Chunk.DocumentId == "kargo");
+            return answer with { Citations = [new GeneratedCitation(shipping.Label, shipping.Chunk.Content)] };
+        };
+
+        var result = await AskAsync("İade kargo ücretini kim öder?");
+
+        _generator.Calls.ShouldBe(2);
+        _generator.LastContext.ShouldAllBe(source => source.Chunk.DocumentId != "sss");
+        result.Data!.Sources.ShouldHaveSingleItem().DocumentId.ShouldBe("iade-v2");
+        var conflict = result.Data.Conflicts.ShouldHaveSingleItem();
+        conflict.Chosen.DocumentId.ShouldBe("iade-v2");
+        conflict.RuleSatisfied.ShouldBeTrue();
+    }
+
+    /// <summary>
+    /// Çelişki kayıtlarının yalnızca yanıtın dayandığı dokümanlar için gösterildiğini doğrular: ilk yanıt politika ile SSS
+    /// arasındaki çelişkiyi bildirip kargo dokümanına dayanır; düzeltme turundaki yanıt da yalnızca kargo dokümanına dayanır
+    /// ve kabul edilir. Politikaya hiç atıf olmadığı için çelişki kaydı yanıtta yer almaz.
+    /// </summary>
+    /// <remarks>
+    /// Sürüm kararlarında olduğu gibi, yanıtın kullanmadığı bir kaynağın çelişki kaydı yanıtı açıklamaz; kullanıcıya
+    /// yanıtın politikaya dayandığı izlenimini verirdi.
+    /// </remarks>
+    [Fact]
+    public async Task Conflict_records_are_reported_only_for_documents_the_answer_relies_on()
+    {
+        _generator.Respond = (_, context) =>
+        {
+            var shipping = context.Single(source => source.Chunk.DocumentId == "kargo");
+            var citation = new GeneratedCitation(shipping.Label, shipping.Chunk.Content);
+
+            if (_generator.Calls > 1)
+            {
+                return FakeAnswerGenerator.Answer(shipping.Chunk.Content, citation);
+            }
+
+            return AnswerWithConflict(context, "iade-v2", ReturnShippingSection, "sss", FaqSection) with { Citations = [citation] };
+        };
+
+        var result = await AskAsync("İade kargo ücretini kim öder?");
+
+        _generator.Calls.ShouldBe(2);
+        result.Data!.Answerable.ShouldBeTrue();
+        result.Data.Sources.ShouldHaveSingleItem().DocumentId.ShouldBe("kargo");
+        result.Data.Conflicts.ShouldBeEmpty();
+    }
+
+    /// <summary>
     /// Düzeltme turundan sonra da öncelik kuralı ihlal edilirse (ikinci yanıt bu kez daha eski tarihli kargo politikasını
     /// güncel iade politikasına tercih eder) yanıtın <c>UnresolvedConflict</c> gerekçesiyle reddedildiğini ve modelin en
     /// fazla iki kez çağrıldığını doğrular.

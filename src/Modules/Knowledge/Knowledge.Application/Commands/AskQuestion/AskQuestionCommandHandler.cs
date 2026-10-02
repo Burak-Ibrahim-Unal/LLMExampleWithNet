@@ -40,10 +40,11 @@ namespace Knowledge.Application.Commands.AskQuestion;
 /// </para>
 /// <para>
 /// Model yanıtı iki nedenle kabul edilmeyebilir: hiçbir alıntı atıf yapılan bölümde doğrulanamaz ya da model bir
-/// çelişkide öncelik kuralını çiğner (kaybeden kaynağı seçer veya yanıtını ona dayandırır). İkisi de düzeltilebilir
-/// hatalardır; bu yüzden hemen reddetmek yerine model bir kez daha çağrılır: doğrulanamayan alıntılar geri bildirim olarak
-/// iletilir, kurala göre kaybeden bölümler bağlamdan çıkarılır. Düzeltme turundan sonra da kabul edilmeyen yanıt
-/// <c>NoValidCitations</c> ya da <c>UnresolvedConflict</c> ile reddedilir. Soru başına en fazla iki model çağrısı yapılır.
+/// çelişkide öncelik kuralını çiğner (kaybeden kaynağı seçer, yanıtını ona dayandırır ya da kuralın kazananına hiç atıf
+/// yapmaz). İkisi de düzeltilebilir hatalardır; bu yüzden hemen reddetmek yerine model bir kez daha çağrılır:
+/// doğrulanamayan alıntılar geri bildirim olarak iletilir, kurala göre kaybeden bölümler bağlamdan çıkarılır. Düzeltme
+/// turundan sonra da kabul edilmeyen yanıt <c>NoValidCitations</c> ya da <c>UnresolvedConflict</c> ile reddedilir. Soru
+/// başına en fazla iki gerçek model isteği yapılır; üreticinin şema yeniden denemesi de bu bütçeden düşer.
 /// </para>
 /// </remarks>
 public sealed class AskQuestionCommandHandler(
@@ -192,10 +193,13 @@ public sealed class AskQuestionCommandHandler(
             var accepted = citations.Where(citation => citation.QuoteVerified).ToList();
 
             // Öncelik kuralı: model bir çelişkide kurala göre kaybeden kaynağı seçtiyse ya da yanıtını kaybeden bir kaynağa
-            // dayandırdıysa eski ya da daha az yetkili bilgi müşteriye ulaşırdı.
+            // dayandırdıysa eski ya da daha az yetkili bilgi müşteriye ulaşırdı. Kuralın kazananına hiç atıf yapılmaması da
+            // ihlaldir: çelişki kaydı "politikayı seçtim" derken yanıt başka bir kaynağa dayanıyorsa beyan ile yanıt
+            // birbirini tutmaz.
             var conflicts = CheckConflicts(generated.Conflicts, context);
             var losers = conflicts.SelectMany(conflict => conflict.Losers).ToHashSet();
-            var violatesPrecedence = conflicts.Any(conflict => !conflict.RuleSatisfied)
+            var citedDocuments = accepted.Select(citation => citation.Source.Chunk.DocumentId).ToHashSet(StringComparer.Ordinal);
+            var violatesPrecedence = conflicts.Any(conflict => !conflict.RuleSatisfied || !citedDocuments.Contains(conflict.Winner.Chunk.DocumentId))
                 || accepted.Any(citation => losers.Contains(citation.Source));
 
             if (accepted.Count == 0 || violatesPrecedence)
@@ -208,7 +212,7 @@ public sealed class AskQuestionCommandHandler(
                 }
 
                 logger.LogWarning(
-                    "The answer was not accepted (verified citations: {VerifiedCitations}, precedence violated: {PrecedenceViolated}); asking the model once more.",
+                    "The answer was not accepted (verified citations: {VerifiedCitations}, precedence violated or conflict winner not cited: {PrecedenceViolated}); asking the model once more.",
                     accepted.Count,
                     violatesPrecedence);
 
@@ -251,13 +255,20 @@ public sealed class AskQuestionCommandHandler(
             // raporlanır; bağlama girip yanıtta kullanılmayan bir ailenin kararı kullanıcıyı yanlış dokümana yönlendirirdi.
             var citedFamilies = accepted.Select(citation => citation.Source.Chunk.DocumentKey).ToHashSet(StringComparer.Ordinal);
 
+            // Çelişki kayıtları için de aynı ilke geçerlidir: düzeltme turundan önce saklanan sunucu kararları dahil, yalnızca
+            // seçilen kaynağı yanıtın atıf yaptığı dokümanlar arasında olan kayıtlar gösterilir.
+            var reportedConflicts = enforcedConflicts
+                .Concat(conflicts.Select(conflict => conflict.ToDto()))
+                .Where(conflict => citedDocuments.Contains(conflict.Chosen.DocumentId))
+                .ToList();
+
             var answer = new AnswerDto(
                 question,
                 Answerable: true,
                 Answer: answerText,
                 Sources: accepted.Select(ToSourceDto).ToList(),
                 VersionResolution: ToDto(resolution, citedFamilies),
-                Conflicts: [.. enforcedConflicts, .. conflicts.Select(conflict => conflict.ToDto())],
+                Conflicts: reportedConflicts,
                 MissingInformation: generated.MissingInformation.Trim(),
                 RefusalReason: string.Empty,
                 Diagnostics: diagnostics);
@@ -541,6 +552,13 @@ public sealed class AskQuestionCommandHandler(
         /// </summary>
         public bool RuleSatisfied => !Losers.Contains(Chosen);
 
+        /// <summary>
+        /// Kurala göre geçerli kaynak: model kurala uyduysa seçtiği bölüm, uymadıysa kaybedenler dışındaki ilk üye (eşitlikte
+        /// modelin sıralaması korunur). Yanıtın bu kaynağın dokümanına atıf yapması beklenir; yapmıyorsa çelişki beyanı ile
+        /// yanıt birbirini tutmaz.
+        /// </summary>
+        public ContextChunk Winner => Members.First(member => !Losers.Contains(member));
+
         /// <summary>Çelişkiyi modelin bildirdiği hâliyle, sunucunun <c>RuleSatisfied</c> kararıyla birlikte API biçimine çevirir.</summary>
         public ConflictDto ToDto() =>
             new(Topic, ToConflictSource(Chosen), Rejected.Select(ToConflictSource).ToList(), Reason, RuleSatisfied);
@@ -561,10 +579,9 @@ public sealed class AskQuestionCommandHandler(
                 return ToDto();
             }
 
-            var winner = Members.First(member => !Losers.Contains(member));
             return new ConflictDto(
                 Topic,
-                ToConflictSource(winner),
+                ToConflictSource(Winner),
                 Losers.Select(ToConflictSource).ToList(),
                 EnforcedReasonPrefix + SourcePrecedence.Rule,
                 RuleSatisfied: true);

@@ -98,6 +98,9 @@ public sealed class OpenAiCompatibleAnswerGenerator(
         var settings = options.Value;
         // En az bir istek her zaman yapılır; sıfır ya da negatif bir bütçe çağıranın hatasıdır, sessizce yanıtsız kalınmaz.
         var attemptBudget = Math.Max(1, maxAttempts);
+        // Token kullanımı bütün denemeler boyunca toplanır: ayrıştırılamayan bir yanıtın token'ları da harcanmış maliyettir.
+        long? inputTokens = null;
+        long? outputTokens = null;
         var messages = new List<ChatMessage>
         {
             new(ChatRole.System, AnswerPrompt.System),
@@ -134,9 +137,12 @@ public sealed class OpenAiCompatibleAnswerGenerator(
 
             // Şemaya uymak yetmez: listelerde null öğe olmamalı ve yanıt metni olmadan "answerable" ne bir yanıttır ne de
             // bir ret. Eksik zorunlu alanlar ise ayrıştırmada hata verir ve TryGetResult false döner.
+            inputTokens = Sum(inputTokens, response.Usage?.InputTokenCount);
+            outputTokens = Sum(outputTokens, response.Usage?.OutputTokenCount);
+
             if (response.TryGetResult(out var payload) && IsComplete(payload) && !(payload.Answerable && string.IsNullOrWhiteSpace(payload.Answer)))
             {
-                return ToGeneratedAnswer(payload, response, settings, attempt);
+                return ToGeneratedAnswer(payload, settings, attempt, inputTokens, outputTokens);
             }
 
             if (attempt >= attemptBudget)
@@ -178,14 +184,15 @@ public sealed class OpenAiCompatibleAnswerGenerator(
     /// <c>??</c> korumaları savunma amaçlıdır: özellikler null olamaz tanımlanmıştır ama dışarıdan gelen veriye tam
     /// güvenilmez. Kimliği boş atıflar burada atılır; etiketin verilen kaynaklardan birine eşlenmesi ve alıntının
     /// doğrulanması Application tarafındaki <c>CitationValidator</c>'ın işidir. Model adı olarak sunucunun döndürdüğü
-    /// kimlik değil, yapılandırılan ad raporlanır. Yeniden deneme olduysa token sayıları yalnızca başarılı son çağrıya
-    /// aittir; çağrı sayısı ise <paramref name="attempts"/> ile eksiksiz bildirilir.
+    /// kimlik değil, yapılandırılan ad raporlanır. Çağrı sayısı ve token kullanımı, şema yeniden denemesi dahil bütün
+    /// denemelerin toplamıdır.
     /// </remarks>
     /// <param name="payload">Ayrıştırılmış ve eksiksiz olduğu denetlenmiş model yanıtı.</param>
-    /// <param name="response">Token kullanım bilgisinin okunduğu ham sohbet yanıtı.</param>
     /// <param name="settings">Raporlanacak model adının alındığı yapılandırma.</param>
     /// <param name="attempts">Bu yanıt için sunucuya giden istek sayısı (şema yeniden denemesi dahil).</param>
-    private static GeneratedAnswer ToGeneratedAnswer(AnswerPayload payload, ChatResponse response, LlmOptions settings, int attempts)
+    /// <param name="inputTokens">Bütün denemelerin toplam girdi token sayısı; sağlayıcı bildirmediyse null.</param>
+    /// <param name="outputTokens">Bütün denemelerin toplam çıktı token sayısı; sağlayıcı bildirmediyse null.</param>
+    private static GeneratedAnswer ToGeneratedAnswer(AnswerPayload payload, LlmOptions settings, int attempts, long? inputTokens, long? outputTokens)
     {
         return new GeneratedAnswer(
             payload.Answerable,
@@ -205,8 +212,12 @@ public sealed class OpenAiCompatibleAnswerGenerator(
             // response.ModelId değil, yapılandırılan ad: llama.cpp orada yerel model dosyasının yolunu döndürür ve bu
             // yol yanıtın diagnostics bölümüne ve denetim kaydına makine ayrıntısı sızdırırdı.
             settings.ChatModel,
-            response.Usage?.InputTokenCount,
-            response.Usage?.OutputTokenCount,
+            inputTokens,
+            outputTokens,
             attempts);
     }
+
+    /// <summary>Bilinen token sayılarını toplar; yeni değer bilinmiyorsa (null) mevcut toplamı korur.</summary>
+    /// <remarks>Sağlayıcı kullanım bilgisi döndürmezse toplam null kalır; bilinmeyen bir değer 0 diye gösterilmez.</remarks>
+    private static long? Sum(long? total, long? value) => value is null ? total : (total ?? 0) + value;
 }

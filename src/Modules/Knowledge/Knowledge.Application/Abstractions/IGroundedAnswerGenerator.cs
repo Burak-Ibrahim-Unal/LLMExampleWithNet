@@ -93,8 +93,8 @@ public sealed record ContextChunk(string Label, IndexedChunk Chunk);
 /// Yanıtı üreten modelin yapılandırılmış adı. Sunucunun döndürdüğü model kimliği kullanılmaz: llama.cpp orada yerel model
 /// dosyasının yolunu döndürür ve bu makine ayrıntısı API yanıtına sızardı.
 /// </param>
-/// <param name="InputTokens">Girdi token sayısı; sağlayıcı kullanım bilgisi döndürmezse null.</param>
-/// <param name="OutputTokens">Çıktı token sayısı; sağlayıcı kullanım bilgisi döndürmezse null.</param>
+/// <param name="InputTokens">Bu yanıt için yapılan bütün isteklerin toplam girdi token sayısı; sağlayıcı kullanım bilgisi döndürmezse null.</param>
+/// <param name="OutputTokens">Bu yanıt için yapılan bütün isteklerin toplam çıktı token sayısı; sağlayıcı kullanım bilgisi döndürmezse null.</param>
 /// <param name="Attempts">
 /// Bu yanıt için sunucuya gerçekte giden model isteği sayısı (geçersiz çıktı yüzünden yapılan yeniden deneme dahil).
 /// Handler soru başına çağrı bütçesini ve tanılamadaki <c>modelCalls</c> değerini bu sayıyla tutar.

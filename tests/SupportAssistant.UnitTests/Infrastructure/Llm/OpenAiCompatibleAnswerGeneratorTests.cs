@@ -6,79 +6,20 @@ using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Shouldly;
+using SupportAssistant.UnitTests.TestDoubles;
 
 namespace SupportAssistant.UnitTests.Infrastructure.Llm;
 
 /// <summary>
 /// <see cref="OpenAiCompatibleAnswerGenerator"/> birim testleri. Gerçek llama.cpp sunucusu yerine hazır yanıtları sırayla
-/// döndüren ve gelen istekleri kaydeden sahte bir <c>IChatClient</c> kullanılır. Böylece prompt içeriği, örnekleme
-/// ayarlarının iletilmesi, yapılandırılmış (JSON) yanıtın eşlenmesi, tek seferlik yeniden deneme ve hata sınıflandırması
-/// (503 / 502) ağ ve model olmadan, tekrarlanabilir biçimde doğrulanır. MEAI'nin yapılandırılmış çıktı katmanı
+/// döndüren ve gelen istekleri kaydeden sahte bir <c>IChatClient</c> (<see cref="ScriptedChatClient"/>) kullanılır.
+/// Böylece prompt içeriği, örnekleme ayarlarının iletilmesi, yapılandırılmış (JSON) yanıtın eşlenmesi, deneme bütçesine
+/// uyan yeniden deneme, çağrı ve token sayımı ve hata sınıflandırması (503 / 502) ağ ve model olmadan, tekrarlanabilir
+/// biçimde doğrulanır. MEAI'nin yapılandırılmış çıktı katmanı
 /// (<c>GetResponseAsync&lt;T&gt;</c>) gerçek hâliyle çalışır; yalnızca model uç noktası sahtedir.
 /// </summary>
 public sealed class OpenAiCompatibleAnswerGeneratorTests
 {
-    /// <summary>
-    /// Model endpoint'i sistemin dış sınırıdır: bu sahte istemci hazır yanıtları sırayla tekrar oynatır ve istekleri
-    /// kaydeder. n'inci istek n'inci yanıtı alır, yanıtlar tükenirse sonuncusu tekrarlanır. Gerçek llama.cpp sunucusu
-    /// gibi yanıtta model kimliği olarak bir dosya yolu ve token kullanım bilgisi döndürür.
-    /// </summary>
-    private sealed class ScriptedChatClient(params string[] replies) : IChatClient
-    {
-        /// <summary>
-        /// Her çağrıda gönderilen mesaj listesi (sistem + kullanıcı; yeniden denemede ek olarak önceki yanıt ve düzeltici
-        /// talimat). Listenin uzunluğu modele kaç kez gidildiğini gösterir.
-        /// </summary>
-        public List<IReadOnlyList<ChatMessage>> Requests { get; } = [];
-
-        /// <summary>Her çağrıda iletilen <c>ChatOptions</c>; örnekleme ayarlarının isteğe ulaştığını doğrulamak için tutulur.</summary>
-        public List<ChatOptions?> Options { get; } = [];
-
-        /// <summary>
-        /// Ayarlanırsa her çağrı bu istisnayla başarısız olur; bağlantı reddi gibi taşıma katmanı hatalarını taklit eder.
-        /// Bu durumda istek kaydedilmez.
-        /// </summary>
-        public Exception? Failure { get; set; }
-
-        /// <summary>
-        /// <c>Failure</c> ayarlıysa onunla başarısız olan bir görev döndürür; değilse isteği ve seçenekleri kaydedip
-        /// sıradaki hazır yanıtı asistan mesajı olarak verir.
-        /// </summary>
-        public Task<ChatResponse> GetResponseAsync(IEnumerable<ChatMessage> messages, ChatOptions? options = null, CancellationToken cancellationToken = default)
-        {
-            if (Failure is not null)
-            {
-                return Task.FromException<ChatResponse>(Failure);
-            }
-
-            Requests.Add(messages.ToList());
-            Options.Add(options);
-            var reply = replies[Math.Min(Requests.Count - 1, replies.Length - 1)];
-
-            // llama.cpp, model kimliği olarak model dosyasının yolunu döndürür.
-            return Task.FromResult(new ChatResponse(new ChatMessage(ChatRole.Assistant, reply))
-            {
-                ModelId = "/home/someone/models/gemma.gguf",
-                Usage = new UsageDetails { InputTokenCount = 100, OutputTokenCount = 20 }
-            });
-        }
-
-        /// <summary>
-        /// Üretici akışlı (streaming) çağrı kullanmaz; böyle bir çağrıya geçilirse test görünür biçimde başarısız olsun
-        /// diye <c>NotSupportedException</c> fırlatır.
-        /// </summary>
-        public IAsyncEnumerable<ChatResponseUpdate> GetStreamingResponseAsync(IEnumerable<ChatMessage> messages, ChatOptions? options = null, CancellationToken cancellationToken = default)
-            => throw new NotSupportedException();
-
-        /// <summary>Ek servis sunmaz; yalnızca <c>IChatClient</c> sözleşmesi gereği vardır.</summary>
-        public object? GetService(Type serviceType, object? serviceKey = null) => null;
-
-        /// <summary>Serbest bırakılacak kaynak yoktur; arayüz sözleşmesi gereği boştur.</summary>
-        public void Dispose()
-        {
-        }
-    }
-
     /// <summary>
     /// Şemaya uyan, yanıtlanabilir ve <c>C1</c>'e atıf yapan geçerli bir model yanıtı (JSON); alıntı C1 içeriğinde
     /// birebir geçer.
@@ -350,12 +291,14 @@ public sealed class OpenAiCompatibleAnswerGeneratorTests
             : [];
 
     /// <summary>
-    /// Üreticinin yaptığı gerçek model çağrısı sayısını yanıtla birlikte bildirdiğini doğrular: ilk denemede geçerli yanıt
-    /// 1, şema düzeltmesinden sonra gelen geçerli yanıt 2 çağrı olarak raporlanır.
+    /// Üreticinin yaptığı gerçek model çağrısı sayısını ve bütün denemelerin toplam token kullanımını yanıtla birlikte
+    /// bildirdiğini doğrular: ilk denemede geçerli yanıt 1 çağrı ve 100/20 token, şema düzeltmesinden sonra gelen geçerli
+    /// yanıt 2 çağrı ve 200/40 token olarak raporlanır.
     /// </summary>
     /// <remarks>
     /// Handler soru başına model çağrısı bütçesini bu sayıyla tutar ve tanılamada (<c>modelCalls</c>) gösterir. Şema
-    /// düzeltmesi sayılmasaydı tanılama 2 derken sunucuya 4 istek gidebilirdi; bütçe de gecikme de yanlış raporlanırdı.
+    /// düzeltmesi sayılmasaydı tanılama 2 derken sunucuya 4 istek gidebilirdi; ayrıştırılamayan yanıtın token'ları da
+    /// harcanmış maliyettir ve toplamdan düşmemelidir.
     /// </remarks>
     [Theory]
     [InlineData(false, 1)]
@@ -368,6 +311,8 @@ public sealed class OpenAiCompatibleAnswerGeneratorTests
 
         answer.Attempts.ShouldBe(expectedAttempts);
         client.Requests.Count.ShouldBe(expectedAttempts);
+        answer.InputTokens.ShouldBe(100 * expectedAttempts);
+        answer.OutputTokens.ShouldBe(20 * expectedAttempts);
     }
 
     /// <summary>

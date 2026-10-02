@@ -128,14 +128,18 @@ public sealed class AskQuestionCommandHandlerTests : IAsyncLifetime
     /// İsteğe bağlı farklı bir indeks; boş ya da yalnızca eski doküman içeren bir indeksle senaryo kuran testler içindir.
     /// İş kuralları da aynı indeksle kurulur ki "indeks hazır mı" kontrolü doğru indeksi denetlesin.
     /// </param>
-    private async Task<ApiResult<AnswerDto>> AskAsync(string question, IKnowledgeIndex? index = null)
+    /// <param name="generator">
+    /// İsteğe bağlı farklı bir üretici; gerçek üreticiyi sahte bir sohbet istemcisiyle handler'a bağlayan akış testleri
+    /// içindir. Verilmezse sınıfın sahte üreticisi kullanılır.
+    /// </param>
+    private async Task<ApiResult<AnswerDto>> AskAsync(string question, IKnowledgeIndex? index = null, IGroundedAnswerGenerator? generator = null)
     {
         await using var context = CreateContext();
         var options = Options.Create(new RetrievalOptions());
         var usedIndex = index ?? _index;
         var handler = new AskQuestionCommandHandler(
             usedIndex,
-            _generator,
+            generator ?? _generator,
             new KnowledgeBusinessRules(usedIndex),
             new AnswerabilityPolicy(options),
             new VersionResolver(new FixedTimeProvider(new DateOnly(2026, 10, 1))),
@@ -490,6 +494,37 @@ public sealed class AskQuestionCommandHandlerTests : IAsyncLifetime
         _generator.Calls.ShouldBe(1);
         result.Data!.RefusalReason.ShouldBe(RefusalReasons.NoValidCitations);
         result.Data.Diagnostics.ModelCalls.ShouldBe(2);
+    }
+
+    /// <summary>
+    /// Arkadaş incelemesinin örneğini gerçek üretici ve gerçek handler'la birlikte yeniden oynatır: model önce <c>{}</c>,
+    /// sonra uydurma alıntılı geçerli bir JSON, sonra yine <c>{}</c> ve en son doğru bir yanıt verecek şekilde
+    /// programlanmıştır. Bütçe ortak olduğu için sunucuya yalnızca iki istek gider: <c>{}</c> üreticinin şema düzeltmesini,
+    /// uydurma alıntı ise kalan bütçeyi tüketir; yanıt <c>NoValidCitations</c> ile reddedilir ve tanılama iki çağrı
+    /// gösterir.
+    /// </summary>
+    /// <remarks>
+    /// Eski hâlde aynı senaryo dört sohbet isteğiyle sonuçlanıyor ve tanılama iki gösteriyordu. Bu test, sınırın sahte
+    /// üretici varsayımlarıyla değil gerçek bileşenlerin birleşimiyle de tuttuğunu kanıtlar.
+    /// </remarks>
+    [Fact]
+    public async Task The_real_generator_and_handler_together_make_at_most_two_chat_requests()
+    {
+        const string invented = """{"answerable":true,"answer":"İade süresi 900 gündür.","citations":[{"chunkId":"C1","quote":"İade süresi 900 gündür."}],"missingInformation":"","conflicts":[]}""";
+        const string correct = """{"answerable":true,"answer":"30 gün içinde iade edebilirsiniz.","citations":[{"chunkId":"C1","quote":"30 gün içinde iade edebilirsiniz"}],"missingInformation":"","conflicts":[]}""";
+        var client = new ScriptedChatClient("{}", invented, "{}", correct);
+        var generator = new Knowledge.Infrastructure.Llm.OpenAiCompatibleAnswerGenerator(
+            client,
+            Options.Create(new Knowledge.Infrastructure.Llm.LlmOptions { ChatModel = "gemma-test" }),
+            NullLogger<Knowledge.Infrastructure.Llm.OpenAiCompatibleAnswerGenerator>.Instance);
+
+        var result = await AskAsync("İade süresi kaç gün?", generator: generator);
+
+        client.Requests.Count.ShouldBe(2);
+        result.Data!.Answerable.ShouldBeFalse();
+        result.Data.RefusalReason.ShouldBe(RefusalReasons.NoValidCitations);
+        result.Data.Diagnostics.ModelCalls.ShouldBe(2);
+        result.Data.Diagnostics.InputTokens.ShouldBe(200);
     }
 
     /// <summary>

@@ -41,8 +41,8 @@ namespace Knowledge.Application.Commands.AskQuestion;
 /// </para>
 /// <para>
 /// Model yanıtı iki nedenle kabul edilmeyebilir: hiçbir alıntı atıf yapılan bölümde doğrulanamaz ya da model bir
-/// çelişkide öncelik kuralını çiğner (kaybeden kaynağı seçer, yanıtını ona dayandırır ya da kuralın kazananına hiç atıf
-/// yapmaz). İkisi de düzeltilebilir hatalardır; bu yüzden hemen reddetmek yerine model bir kez daha çağrılır:
+/// çelişkide öncelik kuralını çiğner (kaybeden kaynağı seçer, yanıtını ona dayandırır, kuralın kazananına hiç atıf
+/// yapmaz ya da çelişkiyi verilen kaynaklarda olmayan kimliklerle bildirir). İkisi de düzeltilebilir hatalardır; bu yüzden hemen reddetmek yerine model bir kez daha çağrılır:
 /// doğrulanamayan alıntılar geri bildirim olarak iletilir, kurala göre kaybeden bölümler bağlamdan çıkarılır. Düzeltme
 /// turundan sonra da kabul edilmeyen yanıt <c>NoValidCitations</c> ya da <c>UnresolvedConflict</c> ile reddedilir. Soru
 /// başına en fazla iki gerçek model isteği yapılır; üreticinin şema yeniden denemesi de bu bütçeden düşer.
@@ -211,14 +211,16 @@ public sealed class AskQuestionCommandHandler(
             // Öncelik kuralı: model bir çelişkide kurala göre kaybeden kaynağı seçtiyse ya da yanıtını kaybeden bir kaynağa
             // dayandırdıysa eski ya da daha az yetkili bilgi müşteriye ulaşırdı. Kuralın kazananına hiç atıf yapılmaması da
             // ihlaldir: çelişki kaydı "politikayı seçtim" derken yanıt başka bir kaynağa dayanıyorsa beyan ile yanıt
-            // birbirini tutmaz.
-            var conflicts = CheckConflicts(generated.Conflicts, context);
+            // birbirini tutmaz. Verilen kaynaklarda olmayan kimliklerle bildirilen çelişkiler denetlenemez; onlar da
+            // yutulmaz, düzeltme turuna gider.
+            var (conflicts, invalidConflictReferences) = CheckConflicts(generated.Conflicts, context);
             var losers = conflicts.SelectMany(conflict => conflict.Losers).ToHashSet();
             var citedDocuments = accepted.Select(citation => citation.Source.Chunk.DocumentId).ToHashSet(StringComparer.Ordinal);
             var violatesPrecedence = conflicts.Any(conflict => !conflict.RuleSatisfied || !citedDocuments.Contains(conflict.Winner.Chunk.DocumentId))
                 || accepted.Any(citation => losers.Contains(citation.Source));
+            var hasInvalidConflictReferences = invalidConflictReferences > 0;
 
-            if (accepted.Count == 0 || violatesPrecedence)
+            if (accepted.Count == 0 || violatesPrecedence || hasInvalidConflictReferences)
             {
                 // Bütçe bittiyse (üreticinin şema düzeltmesi ikinci isteği harcadıysa da) düzeltme turu yapılamaz.
                 if (usage.Calls >= MaxModelCalls)
@@ -228,16 +230,20 @@ public sealed class AskQuestionCommandHandler(
                 }
 
                 logger.LogWarning(
-                    "The answer was not accepted (verified citations: {VerifiedCitations}, precedence violated or conflict winner not cited: {PrecedenceViolated}); asking the model once more.",
+                    "The answer was not accepted (verified citations: {VerifiedCitations}, precedence violated or conflict winner not cited: {PrecedenceViolated}, conflicts with unknown labels: {InvalidConflicts}); asking the model once more.",
                     accepted.Count,
-                    violatesPrecedence);
+                    violatesPrecedence,
+                    invalidConflictReferences);
 
-                // Düzeltme turu: doğrulanamayan alıntılar modele geri bildirim olarak gösterilir; öncelik ihlalinde kurala
-                // göre kaybeden bölümler bağlamdan çıkarılır ve bağlam yeniden C1..Cn diye etiketlenir. Sunucunun kararı
-                // çelişki kaydı olarak saklanır, çünkü kaybeden kaynak artık bağlamda olmadığından model çelişkiyi bir daha
-                // bildiremez.
-                feedback = accepted.Count == 0
-                    ? new AnswerFeedback(citations.Where(citation => !citation.QuoteVerified).Select(citation => citation.Quote).ToList())
+                // Düzeltme turu: doğrulanamayan alıntılar ve geçersiz çelişki kimlikleri modele geri bildirim olarak
+                // gösterilir; öncelik ihlalinde kurala göre kaybeden bölümler bağlamdan çıkarılır ve bağlam yeniden C1..Cn
+                // diye etiketlenir. Sunucunun kararı çelişki kaydı olarak saklanır, çünkü kaybeden kaynak artık bağlamda
+                // olmadığından model çelişkiyi bir daha bildiremez.
+                feedback = accepted.Count == 0 || hasInvalidConflictReferences
+                    ? new AnswerFeedback(
+                        accepted.Count == 0 ? citations.Where(citation => !citation.QuoteVerified).Select(citation => citation.Quote).ToList() : [],
+                        CitationsRejected: accepted.Count == 0,
+                        InvalidConflictReferences: hasInvalidConflictReferences)
                     : null;
 
                 if (violatesPrecedence)
@@ -388,47 +394,60 @@ public sealed class AskQuestionCommandHandler(
         chunks.Select((chunk, position) => new ContextChunk($"C{position + 1}", chunk)).ToList();
 
     /// <summary>
-    /// Modelin bildirdiği, farklı dokümanlar arasındaki çelişkileri sunucu tarafında doğrular. Seçilen kaynak modele
-    /// verilen bağlamda yoksa ya da geriye geçerli bir reddedilen kaynak kalmazsa çelişki atılır. Kalan her çelişki için
-    /// kurala (<see cref="SourcePrecedence"/>: politika/prosedür &gt; kılavuz &gt; SSS, eşit yetkide daha yeni yürürlük
-    /// tarihi) göre kaybeden kaynaklar ve modelin seçiminin kurala uyup uymadığı hesaplanır.
+    /// Modelin bildirdiği, farklı dokümanlar arasındaki çelişkileri sunucu tarafında doğrular. Her çelişki için kurala
+    /// (<see cref="SourcePrecedence"/>: politika/prosedür &gt; kılavuz &gt; SSS, eşit yetkide daha yeni yürürlük tarihi)
+    /// göre kaybeden kaynaklar ve modelin seçiminin kurala uyup uymadığı hesaplanır. Verilen bağlamda olmayan kimlikler
+    /// ayrıca sayılır.
     /// </summary>
     /// <remarks>
     /// Görev, kaynaklar çeliştiğinde güncel olanın nasıl seçildiğinin gösterilmesini istiyor; bunu yalnızca modelin
     /// beyanına bırakmak, modelin yanlış kaynağı seçtiği durumları gizlerdi. Model etiketleri farklı biçimlerde
-    /// yazabildiği için ("c2", "[C2]", "2") etiketler önce normalize edilir; bağlamda olmayan etiketler sessizce elenir,
-    /// seçilen kaynak reddedilenler arasında sayılmaz, tekrarlar ayıklanır. Sonuç handler'ın kuralı zorlamasında kullanılır:
-    /// ihlalde kaybedenler bağlamdan çıkarılıp model yeniden çağrılır. Aynı belgenin sürümleri arasındaki seçim burada
-    /// değil, model çağrılmadan önce <see cref="VersionResolver"/> tarafından yapılır.
+    /// yazabildiği için ("c2", "[C2]", "2") etiketler önce normalize edilir, seçilen kaynak reddedilenler arasında sayılmaz
+    /// ve tekrarlar ayıklanır. Bağlamda olmayan bir kimlik (seçilen ya da elenen) sessizce yutulmaz: çelişki geçersiz
+    /// kimlik içerir diye sayılır ve handler bunu düzeltme turuna, sürerse <c>UnresolvedConflict</c> reddine götürür. Seçilen
+    /// kaynağı ve en az bir elenen kaynağı bağlamda olan çelişkiler yine de denetlenir; kuralı zorlamak için bu kısım
+    /// yeterlidir. Aynı belgenin sürümleri arasındaki seçim burada değil, model çağrılmadan önce
+    /// <see cref="VersionResolver"/> tarafından yapılır.
     /// </remarks>
-    private static IReadOnlyList<CheckedConflict> CheckConflicts(IReadOnlyList<GeneratedConflict> conflicts, IReadOnlyList<ContextChunk> context)
+    /// <param name="conflicts">Modelin bildirdiği çelişkiler.</param>
+    /// <param name="context">Modele bu denemede verilen etiketli bölümler.</param>
+    /// <returns>Denetlenebilen çelişkiler ve geçersiz kimlik içeren çelişki sayısı.</returns>
+    private static (IReadOnlyList<CheckedConflict> Conflicts, int InvalidReferences) CheckConflicts(IReadOnlyList<GeneratedConflict> conflicts, IReadOnlyList<ContextChunk> context)
     {
         var sourcesByLabel = context.ToDictionary(source => source.Label, StringComparer.OrdinalIgnoreCase);
         var checkedConflicts = new List<CheckedConflict>();
+        var invalidReferences = 0;
 
         foreach (var conflict in conflicts)
         {
             if (!sourcesByLabel.TryGetValue(SourceLabel.Normalize(conflict.ChosenChunkLabel), out var chosen))
             {
+                invalidReferences++;
                 continue;
             }
 
-            var rejected = conflict.RejectedChunkLabels
+            var rejectedLabels = conflict.RejectedChunkLabels
                 .Select(SourceLabel.Normalize)
                 .Distinct()
-                .Where(label => label != chosen.Label && sourcesByLabel.ContainsKey(label))
+                .Where(label => label != chosen.Label)
+                .ToList();
+            var rejected = rejectedLabels
+                .Where(sourcesByLabel.ContainsKey)
                 .Select(label => sourcesByLabel[label])
                 .ToList();
 
-            if (rejected.Count == 0)
+            if (rejected.Count < rejectedLabels.Count || rejected.Count == 0)
             {
-                continue;
+                invalidReferences++;
             }
 
-            checkedConflicts.Add(new CheckedConflict(conflict.Topic.Trim(), chosen, rejected, conflict.Reason.Trim()));
+            if (rejected.Count > 0)
+            {
+                checkedConflicts.Add(new CheckedConflict(conflict.Topic.Trim(), chosen, rejected, conflict.Reason.Trim()));
+            }
         }
 
-        return checkedConflicts;
+        return (checkedConflicts, invalidReferences);
     }
 
     /// <summary>

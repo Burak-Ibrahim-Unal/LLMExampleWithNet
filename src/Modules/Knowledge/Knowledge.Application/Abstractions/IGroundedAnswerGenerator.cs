@@ -52,8 +52,9 @@ public interface IGroundedAnswerGenerator
 }
 
 /// <summary>
-/// Handler'ın düzeltme turunda modele ilettiği geri bildirim: önceki yanıtın hiçbir atfı kabul edilemedi, çünkü
-/// alıntılar atıf yapılan bölümün metninde birebir bulunamadı (ya da atıflar verilen kaynaklara dayanmıyordu).
+/// Handler'ın düzeltme turunda modele ilettiği geri bildirim: önceki yanıtın hiçbir atfı kabul edilemedi (alıntılar
+/// atıf yapılan bölümün metninde birebir bulunamadı ya da atıflar verilen kaynaklara dayanmıyordu) ve/veya yanıttaki
+/// çelişki kayıtları verilen kaynaklarda olmayan kimliklere işaret ediyordu.
 /// </summary>
 /// <remarks>
 /// Sıcaklık 0 ve sabit seed ile aynı istek aynı hatalı alıntıyı yeniden üretirdi; ikinci denemenin işe yaraması için
@@ -63,9 +64,17 @@ public interface IGroundedAnswerGenerator
 /// </remarks>
 /// <param name="UnverifiedQuotes">
 /// Önceki yanıtta doğrulanamayan alıntılar, modelin yazdığı hâliyle. Atıfların hiçbiri verilen bir kaynağa
-/// dayanmıyorsa boş olabilir.
+/// dayanmıyorsa ya da sorun yalnızca çelişki kimliklerindeyse boş olabilir.
 /// </param>
-public sealed record AnswerFeedback(IReadOnlyList<string> UnverifiedQuotes);
+/// <param name="CitationsRejected">
+/// Önceki yanıtın hiçbir atfı kabul edilmediyse true. Atıflar kabul edildiği hâlde yalnızca çelişki kimlikleri
+/// geçersizse false; o durumda model doğru alıntılarını değiştirmeye yönlendirilmez.
+/// </param>
+/// <param name="InvalidConflictReferences">
+/// Önceki yanıtın çelişki kayıtları verilen kaynaklarda olmayan ya da eksik kimlikler içeriyorduysa true. Böyle bir kayıt
+/// denetlenemez: öncelik kuralının kazananı ve kaybedeni belirlenemez.
+/// </param>
+public sealed record AnswerFeedback(IReadOnlyList<string> UnverifiedQuotes, bool CitationsRejected = true, bool InvalidConflictReferences = false);
 
 /// <summary>
 /// Modele verilen tek bir bağlam bölümü: indeks bölümü ve ona bu istek için atanan kısa etiket.

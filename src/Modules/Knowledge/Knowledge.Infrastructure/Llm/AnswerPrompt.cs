@@ -129,40 +129,56 @@ internal static class AnswerPrompt
     }
 
     /// <summary>
-    /// Düzeltme turunun talimat bloğunu kurar: önceki yanıtın atıflarının neden kabul edilmediğini söyler, kaynak
-    /// metninde birebir bulunamayan alıntıları tırnak içinde listeler ve modelden alıntıları kelimesi kelimesine
-    /// kopyalamasını ister. Kaynaklar soruyu gerçekten yanıtlamıyorsa açık ret (<c>answerable=false</c>) yolu da
-    /// hatırlatılır.
+    /// Düzeltme turunun talimat bloğunu kurar: önceki yanıtın neden kabul edilmediğini söyler ve yalnızca gerçekten
+    /// yanlış olan kısmın düzeltilmesini ister. Atıflar kabul edilmediyse kaynak metninde birebir bulunamayan alıntıları
+    /// tırnak içinde listeler (ya da atıfların verilen kaynaklara dayanmadığını söyler); çelişki kayıtları geçersiz
+    /// kimlikler içeriyorduysa bunu söyler. Kaynaklar soruyu gerçekten yanıtlamıyorsa açık ret (<c>answerable=false</c>)
+    /// yolu da hatırlatılır.
     /// </summary>
     /// <remarks>
     /// Alıntıların aynen gösterilmesi modele neyi düzeltmesi gerektiğini somut olarak söyler; yalnızca "doğru alıntı yap"
-    /// demek, sıcaklık 0 altında aynı hatanın tekrarlanmasına yol açabilirdi. Ret yolunun hatırlatılması ise modeli, var
-    /// olmayan bir dayanak için alıntı uydurmaya zorlamamak içindir: düzeltme turu yanıtı kurtarmak için vardır, bilgi
-    /// yoksa reddetmek yine doğru sonuçtur. Liste boşsa (atıflar verilen kaynaklara hiç dayanmıyorsa) yalnızca etiket
-    /// uyarısı verilir.
+    /// demek, sıcaklık 0 altında aynı hatanın tekrarlanmasına yol açabilirdi. Sorun yalnızca çelişki kimliklerindeyse
+    /// alıntı uyarısı verilmez; model doğru alıntılarını gereksiz yere değiştirmeye yönlendirilmez. Ret yolunun
+    /// hatırlatılması ise modeli, var olmayan bir dayanak için alıntı uydurmaya zorlamamak içindir: düzeltme turu yanıtı
+    /// kurtarmak için vardır, bilgi yoksa reddetmek yine doğru sonuçtur.
     /// </remarks>
-    /// <param name="feedback">Doğrulanamayan alıntıları taşıyan geri bildirim.</param>
+    /// <param name="feedback">Kabul edilmeyen atıfları ve geçersiz çelişki kimliklerini bildiren geri bildirim.</param>
     private static string BuildCorrection(AnswerFeedback feedback)
     {
-        var builder = new StringBuilder("DÜZELTME: Önceki yanıtının atıfları kabul edilmedi.");
+        var builder = new StringBuilder("DÜZELTME: Önceki yanıtın kabul edilmedi.");
 
-        if (feedback.UnverifiedQuotes.Count == 0)
+        if (feedback.CitationsRejected)
         {
-            builder.Append(" Atıflar yukarıdaki KAYNAKLAR'ın kimliklerinden (C1, C2…) birine dayanmıyordu.");
-        }
-        else
-        {
-            builder.Append(" Şu alıntılar atıf yapılan kaynağın metninde birebir geçmiyor:");
-
-            foreach (var quote in feedback.UnverifiedQuotes)
+            if (feedback.UnverifiedQuotes.Count == 0)
             {
-                builder.Append("\n- \"").Append(quote).Append('"');
+                builder.Append(" Atıflar yukarıdaki KAYNAKLAR'ın kimliklerinden (C1, C2…) birine dayanmıyordu.");
+            }
+            else
+            {
+                builder.Append(" Şu alıntılar atıf yapılan kaynağın metninde birebir geçmiyor:");
+
+                foreach (var quote in feedback.UnverifiedQuotes)
+                {
+                    builder.Append("\n- \"").Append(quote).Append('"');
+                }
             }
         }
 
+        if (feedback.InvalidConflictReferences)
+        {
+            builder.Append("\nÇelişki kayıtlarındaki kaynak kimlikleri yukarıdaki KAYNAKLAR'la eşleşmiyordu. ")
+                .Append("Bir çelişki bildiriyorsan seçilen ve elenen kaynakları yalnızca verilen kimliklerle (C1, C2…) yaz.");
+        }
+
+        builder.Append("\nYanıtı yeniden üret");
+
+        if (feedback.CitationsRejected)
+        {
+            builder.Append(": her alıntıyı atıf yaptığın kaynaktan kelimesi kelimesine kopyala");
+        }
+
         return builder
-            .Append("\nYanıtı yeniden üret: her alıntıyı atıf yaptığın kaynaktan kelimesi kelimesine kopyala. ")
-            .Append("KAYNAKLAR soruyu yanıtlamaya yetmiyorsa answerable=false yap.")
+            .Append(". KAYNAKLAR soruyu yanıtlamaya yetmiyorsa answerable=false yap.")
             .ToString();
     }
 }

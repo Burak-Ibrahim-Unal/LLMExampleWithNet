@@ -105,6 +105,31 @@ public sealed class OpenAiCompatibleAnswerGeneratorTests
     }
 
     /// <summary>
+    /// Yalnızca çelişki kimlikleri geçersiz olduğunda (atıflar kabul edilmişken) düzeltme bloğunun yalnızca bunu
+    /// söylediğini doğrular: çelişki kimlikleri uyarısı vardır, alıntı uyarısı yoktur.
+    /// </summary>
+    /// <remarks>
+    /// Model neyi yanlış yaptığını doğru öğrenmelidir; atıfları geçerliyken "alıntıların birebir değil" demek onu
+    /// gereksiz yere doğru alıntılarını değiştirmeye iterdi.
+    /// </remarks>
+    [Fact]
+    public async Task Feedback_about_invalid_conflict_labels_names_only_that_problem()
+    {
+        var client = new ScriptedChatClient(ValidReply);
+
+        await Create(client).GenerateAsync(
+            "İade süresi kaç gün?",
+            Context,
+            new AnswerFeedback([], CitationsRejected: false, InvalidConflictReferences: true),
+            cancellationToken: TestContext.Current.CancellationToken);
+
+        var prompt = client.Requests.ShouldHaveSingleItem().Last(message => message.Role == ChatRole.User).Text;
+        prompt.ShouldContain("Çelişki kayıtlarındaki kaynak kimlikleri");
+        prompt.ShouldNotContain("birebir geçmiyor");
+        prompt.ShouldNotContain("dayanmıyordu");
+    }
+
+    /// <summary>
     /// Şemaya uygun JSON yanıtının <c>GeneratedAnswer</c>'a eksiksiz eşlendiğini doğrular: <c>answerable</c>, yanıt
     /// metni, atıflar (<c>chunkId</c> → etiket, alıntı), model adı ve token kullanımı.
     /// </summary>

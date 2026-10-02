@@ -708,6 +708,60 @@ public sealed class AskQuestionCommandHandlerTests : IAsyncLifetime
     }
 
     /// <summary>
+    /// Modelin, verilen kaynaklarda olmayan bir kimlikle (<c>C9</c>) çelişki bildirdiği yanıtın sessizce kabul
+    /// edilmediğini doğrular: model bir kez daha çağrılır, geri bildirim çelişki kimliklerinin geçersiz olduğunu söyler
+    /// (atıflar sorunsuz olduğu için alıntı düzeltmesi istenmez), temiz ikinci yanıt kabul edilir.
+    /// </summary>
+    /// <remarks>
+    /// Geçersiz kimlikli bir çelişki kaydı denetlenemez: kuralın kazananı ve kaybedeni belirlenemediği için öncelik
+    /// kuralı uygulanamaz. Böyle bir kaydı yutmak, modelin bildirdiği bir çelişkiyi hiç bildirmemiş gibi saymak olurdu.
+    /// </remarks>
+    [Fact]
+    public async Task A_conflict_report_with_unknown_labels_gets_a_correction_round()
+    {
+        _generator.Respond = (_, context) =>
+        {
+            var answer = AnswerFrom(context, "iade-v2", ReturnShippingSection);
+            return _generator.Calls == 1
+                ? answer with { Conflicts = [new GeneratedConflict("İade kargo ücreti", "C9", [answer.Citations[0].ChunkLabel], "Uydurma kimlik.")] }
+                : answer;
+        };
+
+        var result = await AskAsync("İade kargo ücretini kim öder?");
+
+        _generator.Calls.ShouldBe(2);
+        var feedback = _generator.Feedbacks[1].ShouldNotBeNull();
+        feedback.InvalidConflictReferences.ShouldBeTrue();
+        feedback.CitationsRejected.ShouldBeFalse();
+        result.Data!.Answerable.ShouldBeTrue();
+        result.Data.Conflicts.ShouldBeEmpty();
+    }
+
+    /// <summary>
+    /// Düzeltme turundan sonra da geçersiz kimlikli çelişki bildiren bir yanıtın <c>UnresolvedConflict</c> ile
+    /// reddedildiğini doğrular.
+    /// </summary>
+    /// <remarks>
+    /// Model iki denemede de denetlenemeyen bir çelişki beyan ediyorsa, yanıtın hangi kaynağa göre doğru olduğu
+    /// söylenemez; çelişkili olabilecek bir yanıtı göstermek yerine açıkça reddedilir.
+    /// </remarks>
+    [Fact]
+    public async Task Invalid_conflict_references_that_persist_are_refused()
+    {
+        _generator.Respond = (_, context) =>
+        {
+            var answer = AnswerFrom(context, "iade-v2", ReturnShippingSection);
+            return answer with { Conflicts = [new GeneratedConflict("İade kargo ücreti", "C9", ["C10"], "Uydurma kimlikler.")] };
+        };
+
+        var result = await AskAsync("İade kargo ücretini kim öder?");
+
+        _generator.Calls.ShouldBe(2);
+        result.Data!.Answerable.ShouldBeFalse();
+        result.Data.RefusalReason.ShouldBe(RefusalReasons.UnresolvedConflict);
+    }
+
+    /// <summary>
     /// Düzeltme turundan sonra da öncelik kuralı ihlal edilirse (ikinci yanıt bu kez daha eski tarihli kargo politikasını
     /// güncel iade politikasına tercih eder) yanıtın <c>UnresolvedConflict</c> gerekçesiyle reddedildiğini ve modelin en
     /// fazla iki kez çağrıldığını doğrular.

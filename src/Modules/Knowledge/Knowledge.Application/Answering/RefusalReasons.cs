@@ -28,9 +28,10 @@ public static class RefusalReasons
     public const string NoValidCitations = "NoValidCitations";
 
     /// <summary>
-    /// Model, farklı dokümanlar arasındaki bir çelişkide öncelik kuralına aykırı bir kaynağı seçti ya da yanıtını kurala
-    /// göre kaybeden bir kaynağa dayandırdı; kaybeden bölümler bağlamdan çıkarılıp model yeniden çağrıldıktan sonra da
-    /// ihlal sürdü. Çelişkili bir yanıtı göstermek yerine açıkça reddedilir.
+    /// Model, farklı dokümanlar arasındaki bir çelişkide öncelik kuralına aykırı bir kaynağı seçti, yanıtını kurala göre
+    /// kaybeden bir kaynağa dayandırdı, kuralın kazananına hiç atıf yapmadı ya da çelişkiyi verilen kaynaklarda olmayan
+    /// kimliklerle bildirdi; düzeltme turundan sonra da durum sürdü. Çelişkili bir yanıtı göstermek yerine açıkça
+    /// reddedilir.
     /// </summary>
     public const string UnresolvedConflict = "UnresolvedConflict";
 

@@ -18,10 +18,10 @@ public static class SecurityServiceExtensions
     /// sınırı politikasını (<see cref="RateLimitingOptions.QuestionsPolicy"/>) kaydeder.
     /// </summary>
     /// <remarks>
-    /// Politika istemci IP'si başına bir dakikalık sabit pencere kullanır; kuyruk yoktur, sınırı aşan istek beklemeden
-    /// 429 alır. Sınır değeri kayıt sırasında değil ilk istekte okunur: seçenekler tembel çözülür, böylece entegrasyon
-    /// testlerinin yapılandırma üzerine yazmaları da geçerli olur. Değer 0 ya da negatifse politika sınırsız bir bölüm
-    /// döndürür.
+    /// Politika istemci başına bir dakikalık sabit pencere kullanır; kuyruk yoktur, sınırı aşan istek beklemeden 429 alır.
+    /// İstemci, <see cref="ClientPartitionKey"/> ile tanınır: IPv4 adresi ya da IPv6 adresinin /64 ağı. Sınır değeri
+    /// kayıt sırasında değil ilk istekte okunur: seçenekler tembel çözülür, böylece entegrasyon testlerinin yapılandırma
+    /// üzerine yazmaları da geçerli olur. Değer 0 ya da negatifse politika sınırsız bir bölüm döndürür.
     /// </remarks>
     public static IServiceCollection AddSecurityServices(this IServiceCollection services, IConfiguration configuration)
     {
@@ -33,7 +33,7 @@ public static class SecurityServiceExtensions
             options.AddPolicy(RateLimitingOptions.QuestionsPolicy, httpContext =>
             {
                 var settings = httpContext.RequestServices.GetRequiredService<IOptions<RateLimitingOptions>>().Value;
-                var client = httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+                var client = ClientPartitionKey.For(httpContext.Connection.RemoteIpAddress);
 
                 if (settings.QuestionsPerMinute <= 0)
                 {
@@ -55,12 +55,14 @@ public static class SecurityServiceExtensions
     }
 
     /// <summary>
-    /// Sınırı aşan isteğe 429 durum kodunu, pencerenin açılmasına kalan saniyeyi <c>Retry-After</c> başlığında ve diğer
-    /// hatalarla aynı <see cref="ApiResult{T}"/> zarfını yazar.
+    /// Sınırı aşan isteğe 429 durum kodunu, sınırlayıcının bildirdiği bekleme süresini <c>Retry-After</c> başlığında ve
+    /// diğer hatalarla aynı <see cref="ApiResult{T}"/> zarfını yazar.
     /// </summary>
     /// <remarks>
-    /// Varsayılan ret yanıtı gövdesiz bir 503'tür; istemcinin hata işleme kodu zarfı ve 429'u bekler. Bekleme süresi
-    /// yukarı yuvarlanır: sıfır saniye demek, istemcinin hemen yeniden deneyip yine reddedilmesi olurdu.
+    /// Varsayılan ret yanıtı gövdesiz bir 503'tür; istemcinin hata işleme kodu zarfı ve 429'u bekler. Sabit pencereli
+    /// sınırlayıcı bekleme süresi olarak pencerenin kalanını değil tamamını (60 sn) bildirir; başlık bu yüzden bir üst
+    /// sınırdır: pencere daha erken açılabilir, ama bu süre beklenirse istek kesinlikle kabul edilir. Süre yukarı
+    /// yuvarlanır: sıfır saniye demek, istemcinin hemen yeniden deneyip yine reddedilmesi olurdu.
     /// </remarks>
     private static async ValueTask WriteTooManyRequestsAsync(OnRejectedContext context, CancellationToken cancellationToken)
     {

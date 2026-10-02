@@ -123,8 +123,8 @@ public static class Messages
     public static class Security
     {
         /// <summary>
-        /// İstemci, soru ucunun dakika başına istek sınırını aştığında 429 yanıtının mesajı. Ne kadar bekleneceği
-        /// <c>Retry-After</c> başlığında saniye olarak verilir.
+        /// İstemci, soru ucunun dakika başına istek sınırını aştığında 429 yanıtının mesajı. En fazla ne kadar
+        /// bekleneceği <c>Retry-After</c> başlığında saniye olarak verilir.
         /// </summary>
         public const string TooManyRequests = "Çok fazla istek gönderildi. Lütfen biraz bekleyip tekrar deneyin.";
 

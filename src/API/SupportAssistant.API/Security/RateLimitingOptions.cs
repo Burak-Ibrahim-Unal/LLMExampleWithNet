@@ -5,9 +5,9 @@ namespace SupportAssistant.API.Security;
 /// <c>RateLimiting__QuestionsPerMinute</c> ortam değişkeni).
 /// </summary>
 /// <remarks>
-/// Sınır istemci IP'si başına, bir dakikalık sabit pencereyle uygulanır ve yalnızca <c>POST /v1/questions</c> ucunu
-/// kapsar: her soru yerel modelde saniyeler süren bir çağrı ve bir denetim kaydı demektir, sağlık ve doküman uçları ise
-/// ucuzdur. API bir ters vekil sunucunun (reverse proxy) arkasında çalışıyorsa bütün istekler vekilin IP'sinden gelir;
+/// Sınır istemci başına (IPv4 adresi ya da IPv6 adresinin /64 ağı; bkz. <see cref="ClientPartitionKey"/>), bir
+/// dakikalık sabit pencereyle uygulanır ve yalnızca <c>POST /v1/questions</c> ucunu kapsar: her soru yerel modelde
+/// saniyeler süren bir çağrı ve bir denetim kaydı demektir, sağlık ve doküman uçları ise ucuzdur. API bir ters vekil sunucunun (reverse proxy) arkasında çalışıyorsa bütün istekler vekilin IP'sinden gelir;
 /// o durumda sınır vekilde uygulanmalı ya da <c>ForwardedHeaders</c> ara katmanı yalnızca güvenilen vekil için
 /// yapılandırılmalıdır (README, Güvenlik).
 /// </remarks>

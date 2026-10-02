@@ -6,7 +6,8 @@ namespace Knowledge.Application.Security;
 /// <summary>
 /// Bir metinde dil modelinin talimatlarını değiştirmeye yönelik kalıpları (prompt injection) arar: talimatları yok
 /// saydırma, sistem prompt'unu açıklatma, rol değiştirme, jailbreak terimleri ve sohbet şablonu belirteçleri. Soru
-/// tarafında modele gitmeden önce, ingest tarafında da bilgi tabanı dokümanları için kullanılır.
+/// tarafında modele gitmeden önce, ingest tarafında da bilgi tabanı dokümanları için kullanılır; prompt kurulurken
+/// doküman metnindeki şablon belirteçleri de <see cref="RemoveChatTemplateTokens"/> ile silinir.
 /// </summary>
 /// <remarks>
 /// <para>
@@ -78,11 +79,46 @@ public static partial class PromptInjectionDetector
     }
 
     /// <summary>
-    /// Sohbet şablonlarının özel belirteçleri: Gemma (<c>&lt;start_of_turn&gt;</c>), ChatML (<c>&lt;|im_start|&gt;</c>),
-    /// Llama 3 (<c>&lt;|eot_id|&gt;</c>) ve Llama 2 (<c>[INST]</c>, <c>&lt;&lt;SYS&gt;&gt;</c>). Kullanıcı metninde bunlar
-    /// sahte bir sistem ya da model sırası açabilir.
+    /// Metindeki sohbet şablonu belirteçlerini (<see cref="ChatTemplateToken"/>) birer boşlukla değiştirir; metnin geri
+    /// kalanına dokunmaz. Doküman metni modele gönderilmeden önce bu yöntemden geçer.
     /// </summary>
-    [GeneratedRegex(@"<\|[a-z_]+\|>|</?(start|end)_of_turn>|\[/?INST\]|<</?SYS>>", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
+    /// <remarks>
+    /// <para>
+    /// llama.cpp sohbet şablonunu uyguladıktan sonra metni özel belirteçleri tanıyarak böler; mesaj içinde kalan bir
+    /// <c>&lt;|turn&gt;</c> gerçek bir sıra belirtecine dönüşür ve sahte bir sistem ya da model sırası açabilir. Şüpheli
+    /// dokümanlar indekste kaldığı için (bkz. ingest), bu belirteçlerin modele hiç ulaşmaması gerekir.
+    /// </para>
+    /// <para>
+    /// Belirteç silinmek yerine boşlukla değiştirilir ve eşleşme kalmayana kadar tekrarlanır: "&lt;|tur&lt;|turn&gt;n&gt;"
+    /// gibi iç içe bir yazım, düz silmede "&lt;|turn&gt;" bırakırdı; boşluk ise belirteç kalıplarının hiçbirinde geçemez.
+    /// Her tur en az bir "&lt;" ya da "[" karakterini tükettiği için döngü sonludur.
+    /// </para>
+    /// </remarks>
+    /// <param name="text">Modele gönderilecek güvenilmez metin (doküman başlığı, bölüm yolu, bölüm metni).</param>
+    public static string RemoveChatTemplateTokens(string text)
+    {
+        while (ChatTemplateToken().IsMatch(text))
+        {
+            text = ChatTemplateToken().Replace(text, " ");
+        }
+
+        return text;
+    }
+
+    /// <summary>
+    /// Sohbet şablonlarının özel belirteçleri: Gemma 4'ün asimetrik belirteçleri (<c>&lt;|turn&gt;</c>, <c>&lt;turn|&gt;</c>,
+    /// <c>&lt;|channel&gt;</c>, <c>&lt;|"|&gt;</c>), Gemma 2/3 (<c>&lt;start_of_turn&gt;</c>), ChatML
+    /// (<c>&lt;|im_start|&gt;</c>), Llama 3 (<c>&lt;|eot_id|&gt;</c>), DeepSeek'in tam genişlikli çubuklu belirteçleri
+    /// (<c>&lt;｜User｜&gt;</c>) ve Llama 2 (<c>[INST]</c>, <c>&lt;&lt;SYS&gt;&gt;</c>). Kullanıcı ya da doküman metninde
+    /// bunlar sahte bir sistem ya da model sırası açabilir.
+    /// </summary>
+    /// <remarks>
+    /// Gemma 4 kalıpları, çalışan llama.cpp sunucusunun <c>/props</c> uç noktasındaki sohbet şablonundan alındı; ilk sürüm
+    /// yalnızca simetrik <c>&lt;|…|&gt;</c> biçimini tanıyordu ve tercih edilen modelin sıra belirteçlerini kaçırıyordu.
+    /// Belirteç içi boşluk içeremez ve en fazla 40 karakterdir; böylece "&lt;750" ya da "A|B" gibi gündelik yazımlar
+    /// eşleşmez.
+    /// </remarks>
+    [GeneratedRegex(@"<\|[^<>|\s]{1,40}\|?>|<[a-z_]{1,40}\|>|<｜[^<>｜\s]{1,40}｜>|</?(start|end)_of_turn>|\[/?INST\]|<</?SYS>>", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
     private static partial Regex ChatTemplateToken();
 
     /// <summary>Satır başında bir rol işareti (<c>system:</c>, <c>assistant:</c>, <c>sistem:</c>): metinde sahte bir konuşma sırası açma girişimi.</summary>

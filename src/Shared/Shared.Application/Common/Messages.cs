@@ -127,5 +127,19 @@ public static class Messages
         /// <c>Retry-After</c> başlığında saniye olarak verilir.
         /// </summary>
         public const string TooManyRequests = "Çok fazla istek gönderildi. Lütfen biraz bekleyip tekrar deneyin.";
+
+        /// <summary>
+        /// Yönetici işlemine (<c>POST /v1/documents/reindex</c>) <c>X-Admin-Key</c> başlığı olmadan ya da yanlış bir
+        /// anahtarla gelindiğinde 401 yanıtının mesajı. Eksik ve yanlış anahtar aynı mesajı alır; anahtarın varlığı ya da
+        /// biçimi hakkında ipucu verilmez.
+        /// </summary>
+        public const string AdminKeyRequired = "Bu işlem için geçerli bir yönetici anahtarı (X-Admin-Key başlığı) gerekli.";
+
+        /// <summary>
+        /// Sunucuda yönetici anahtarı tanımlı değilken yönetici işlemine gelindiğinde 403 yanıtının mesajı. Uç güvenli
+        /// varsayılanla kapalıdır; operatör anahtarı tanımlayarak açar. Açılıştaki indeksleme bundan etkilenmez.
+        /// </summary>
+        public const string ReindexDisabled =
+            "Yeniden indeksleme ucu kapalı: sunucuda yönetici anahtarı (Security__AdminApiKey) tanımlı değil.";
     }
 }

@@ -1,5 +1,7 @@
 using System.Net;
+using System.Net.Http.Json;
 using System.Text.Json;
+using Shared.Application.Common;
 using Shouldly;
 using SupportAssistant.IntegrationTests.Infrastructure;
 
@@ -129,8 +131,9 @@ public sealed class KnowledgeEndpointsTests(SupportAssistantApiFactory factory) 
     }
 
     /// <summary>
-    /// Açılışta indekslenmiş ve dosyaları değişmemiş bilgi tabanında <c>POST /v1/documents/reindex</c> çağrısının üç
-    /// dokümanı da <c>unchanged</c> saydığını ve hiçbirini yeniden eklemediğini doğrular.
+    /// Açılışta indekslenmiş ve dosyaları değişmemiş bilgi tabanında, yönetici anahtarıyla yapılan
+    /// <c>POST /v1/documents/reindex</c> çağrısının üç dokümanı da <c>unchanged</c> saydığını, hiçbirini yeniden
+    /// eklemediğini ve temiz fikstürde şüpheli doküman raporlamadığını doğrular.
     /// </summary>
     /// <remarks>
     /// Veritabanıyla mutabakat içerik hash'iyle yapılır: değişmeyen doküman yeniden bölümlenmez ve yeniden embed edilmez.
@@ -140,12 +143,82 @@ public sealed class KnowledgeEndpointsTests(SupportAssistantApiFactory factory) 
     [Fact]
     public async Task Reindexing_an_unchanged_knowledge_base_keeps_every_document()
     {
-        using var response = await SendAsync(HttpMethod.Post, "/v1/documents/reindex");
+        var cancellationToken = TestContext.Current.CancellationToken;
+        using var client = factory.CreateAdminClient();
+
+        using var response = await ApiResponse.ReadAsync(await client.PostAsync("/v1/documents/reindex", null, cancellationToken), cancellationToken);
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
         response.Data.GetProperty("documents").GetInt32().ShouldBe(3);
         response.Data.GetProperty("unchanged").GetInt32().ShouldBe(3);
         response.Data.GetProperty("added").GetInt32().ShouldBe(0);
+        response.Data.GetProperty("suspiciousDocuments").GetArrayLength().ShouldBe(0);
+    }
+
+    /// <summary>
+    /// Yeniden indeksleme ucunun <c>X-Admin-Key</c> başlığı olmadan ya da yanlış bir anahtarla çağrıldığında 401,
+    /// <c>WWW-Authenticate</c> başlığı ve <c>ApiResult</c> zarfı içinde Türkçe mesajla reddedildiğini doğrular. Eksik ve
+    /// yanlış anahtar aynı yanıtı alır.
+    /// </summary>
+    /// <remarks>
+    /// Yeniden indeksleme sunucu durumunu değiştirir ve embedding sunucusuna yük bindirebilir; anonim erişime açık
+    /// kalmamalıdır. İki durumun aynı yanıtı alması, saldırgana anahtarın varlığı ya da biçimi hakkında ipucu vermez.
+    /// </remarks>
+    [Theory]
+    [InlineData(null)]
+    [InlineData("yanlis-anahtar")]
+    public async Task Reindex_without_a_valid_admin_key_is_rejected_with_401(string? adminKey)
+    {
+        var cancellationToken = TestContext.Current.CancellationToken;
+        using var client = factory.CreateClient();
+        using var request = new HttpRequestMessage(HttpMethod.Post, "/v1/documents/reindex");
+
+        if (adminKey is not null)
+        {
+            request.Headers.Add("X-Admin-Key", adminKey);
+        }
+
+        using var raw = await client.SendAsync(request, cancellationToken);
+        using var response = await ApiResponse.ReadAsync(raw, cancellationToken);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+        raw.Headers.WwwAuthenticate.ShouldNotBeEmpty();
+        response.Success.ShouldBeFalse();
+        response.Message.ShouldBe(Messages.Security.AdminKeyRequired);
+    }
+}
+
+/// <summary>
+/// Sunucuda yönetici anahtarı tanımlı değilken (<see cref="NoAdminKeyApiFactory"/>) yeniden indeksleme ucunun kapalı
+/// kaldığını doğrular.
+/// </summary>
+public sealed class ReindexDisabledTests(NoAdminKeyApiFactory factory) : IClassFixture<NoAdminKeyApiFactory>
+{
+    /// <summary>
+    /// Anahtar tanımlı değilken yeniden indeksleme ucunun, istemci herhangi bir anahtar gönderse bile 403 ve açıklayıcı
+    /// bir Türkçe mesajla döndüğünü; açılış indekslemesinin ise bundan etkilenmeyip soruların yanıtlandığını doğrular.
+    /// </summary>
+    /// <remarks>
+    /// Güvenli varsayılan: anahtar unutulursa uç açık kalmaz, kapalı kalır. Boş bir anahtar "her boş başlık geçerlidir"
+    /// anlamına gelmemelidir. Açılıştaki indeksleme HTTP'den değil doğrudan servis üzerinden yapıldığı için yeni bir
+    /// kurulum anahtar olmadan da çalışır.
+    /// </remarks>
+    [Fact]
+    public async Task Reindex_is_disabled_when_no_admin_key_is_configured()
+    {
+        var cancellationToken = TestContext.Current.CancellationToken;
+        using var client = factory.CreateClient();
+        using var request = new HttpRequestMessage(HttpMethod.Post, "/v1/documents/reindex");
+        request.Headers.Add("X-Admin-Key", string.Empty);
+
+        using var response = await ApiResponse.ReadAsync(await client.SendAsync(request, cancellationToken), cancellationToken);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        response.Success.ShouldBeFalse();
+        response.Message.ShouldBe(Messages.Security.ReindexDisabled);
+
+        using var question = await client.PostAsJsonAsync("/v1/questions", new { question = "İade süresi kaç gün?" }, cancellationToken);
+        question.StatusCode.ShouldBe(HttpStatusCode.OK);
     }
 }
 
@@ -181,7 +254,7 @@ public sealed class MissingKnowledgeBaseTests(MissingKnowledgeBaseApiFactory fac
     public async Task Reindex_explains_why_the_knowledge_base_cannot_be_read()
     {
         var cancellationToken = TestContext.Current.CancellationToken;
-        using var client = factory.CreateClient();
+        using var client = factory.CreateAdminClient();
 
         using var response = await ApiResponse.ReadAsync(await client.PostAsync("/v1/documents/reindex", null, cancellationToken), cancellationToken);
 

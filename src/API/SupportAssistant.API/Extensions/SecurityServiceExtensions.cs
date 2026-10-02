@@ -8,13 +8,14 @@ using SupportAssistant.API.Security;
 namespace SupportAssistant.API.Extensions;
 
 /// <summary>
-/// API genelindeki koruma katmanlarının DI kayıtları: soru ucunun IP başına hız sınırı.
+/// API genelindeki koruma katmanlarının DI kayıtları: koruma ayarları (yönetici anahtarı) ve soru ucunun IP başına hız
+/// sınırı.
 /// </summary>
 public static class SecurityServiceExtensions
 {
     /// <summary>
-    /// <see cref="RateLimitingOptions"/>'ı yapılandırmaya bağlar ve soru ucunun hız sınırı politikasını
-    /// (<see cref="RateLimitingOptions.QuestionsPolicy"/>) kaydeder.
+    /// <see cref="SecurityOptions"/> ile <see cref="RateLimitingOptions"/>'ı yapılandırmaya bağlar ve soru ucunun hız
+    /// sınırı politikasını (<see cref="RateLimitingOptions.QuestionsPolicy"/>) kaydeder.
     /// </summary>
     /// <remarks>
     /// Politika istemci IP'si başına bir dakikalık sabit pencere kullanır; kuyruk yoktur, sınırı aşan istek beklemeden
@@ -24,6 +25,7 @@ public static class SecurityServiceExtensions
     /// </remarks>
     public static IServiceCollection AddSecurityServices(this IServiceCollection services, IConfiguration configuration)
     {
+        services.Configure<SecurityOptions>(configuration.GetSection(SecurityOptions.SectionName));
         services.Configure<RateLimitingOptions>(configuration.GetSection(RateLimitingOptions.SectionName));
 
         services.AddRateLimiter(options =>

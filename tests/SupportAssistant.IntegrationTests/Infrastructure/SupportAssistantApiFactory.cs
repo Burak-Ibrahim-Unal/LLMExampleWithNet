@@ -26,6 +26,23 @@ namespace SupportAssistant.IntegrationTests.Infrastructure;
 public class SupportAssistantApiFactory : WebApplicationFactory<Program>
 {
     /// <summary>
+    /// Test host'una tanımlanan yönetici anahtarı. Yeniden indeksleme ucu bu anahtarı <c>X-Admin-Key</c> başlığında
+    /// ister; testler <see cref="CreateAdminClient"/> ile başlığı taşıyan bir istemci alır.
+    /// </summary>
+    public const string AdminApiKey = "test-admin-key";
+
+    /// <summary>
+    /// Yönetici anahtarını (<see cref="AdminApiKey"/>) her istekte <c>X-Admin-Key</c> başlığında gönderen bir istemci
+    /// oluşturur; yönetici işlemlerini (yeniden indeksleme) çağıran testler içindir.
+    /// </summary>
+    public HttpClient CreateAdminClient()
+    {
+        var client = CreateClient();
+        client.DefaultRequestHeaders.Add("X-Admin-Key", AdminApiKey);
+        return client;
+    }
+
+    /// <summary>
     /// Bu fabrikaya özel geçici SQLite dosyası. Adındaki GUID sayesinde paralel çalışan test sınıfları (xunit her sınıfa
     /// kendi fikstür örneğini verir) aynı veritabanını paylaşmaz ve önceki koşulardan veri sızmaz. Bellek içi
     /// (<c>:memory:</c>) SQLite yerine dosya kullanılır: bellek içi veritabanı yalnızca onu açan bağlantı açık kaldıkça
@@ -72,7 +89,8 @@ public class SupportAssistantApiFactory : WebApplicationFactory<Program>
                 ["Llm:BaseUrl"] = string.Empty,
                 // Hız sınırı açık kalır ama testlerin toplam soru sayısının çok üstündedir; sınırın kendisi ayrı bir
                 // fabrikayla (LowRateLimitApiFactory) sınanır.
-                ["RateLimiting:QuestionsPerMinute"] = "1000"
+                ["RateLimiting:QuestionsPerMinute"] = "1000",
+                ["Security:AdminApiKey"] = AdminApiKey
             });
         });
 
@@ -126,6 +144,29 @@ public sealed class LowRateLimitApiFactory : SupportAssistantApiFactory
             configuration.AddInMemoryCollection(new Dictionary<string, string?>
             {
                 ["RateLimiting:QuestionsPerMinute"] = QuestionsPerMinute.ToString(System.Globalization.CultureInfo.InvariantCulture)
+            });
+        });
+    }
+}
+
+/// <summary>
+/// Sunucuda yönetici anahtarı tanımlı olmayan kurulumu taklit eder: <c>Security:AdminApiKey</c> boştur. Yeniden
+/// indeksleme ucunun bu durumda güvenli varsayılanla kapalı kaldığını (403) sınamak içindir.
+/// </summary>
+public sealed class NoAdminKeyApiFactory : SupportAssistantApiFactory
+{
+    /// <summary>
+    /// Temel test kurulumunu uygular ve yönetici anahtarını boşaltır; sonra eklenen bellek içi kaynak öncekini ezer.
+    /// </summary>
+    protected override void ConfigureWebHost(IWebHostBuilder builder)
+    {
+        base.ConfigureWebHost(builder);
+
+        builder.ConfigureAppConfiguration((_, configuration) =>
+        {
+            configuration.AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["Security:AdminApiKey"] = string.Empty
             });
         });
     }

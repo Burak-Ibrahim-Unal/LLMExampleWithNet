@@ -148,4 +148,24 @@ public static class Messages
         /// </summary>
         public const string RequestTooLarge = "İstek gövdesi çok büyük; en fazla {0} bayt gönderilebilir.";
     }
+
+    /// <summary>
+    /// İsteğin kendisi okunamadığında (geçersiz JSON gövdesi, beklenen türe çevrilemeyen bir alan) dönen 400 mesajları.
+    /// Bu hatalar uç noktaya ulaşmadan, istek bağlanırken oluşur; çerçevenin İngilizce varsayılan hata biçimi yerine
+    /// diğer bütün hatalar gibi <c>ApiResult</c> zarfıyla ve Türkçe mesajla döner.
+    /// </summary>
+    public static class Request
+    {
+        /// <summary>
+        /// Hangi alanın sorunlu olduğu bilinmediğinde (ör. gövde hiç JSON değil) dönen mesaj.
+        /// </summary>
+        public const string Unreadable = "İstek okunamadı: gövde geçerli bir JSON değil ya da bir alan beklenen türde değil.";
+
+        /// <summary>
+        /// Sorunlu alanlar bilindiğinde dönen mesaj; <c>{0}</c> virgülle ayrılmış alan adlarıdır (ör. <c>topK</c>,
+        /// <c>question</c>). Alan adı, istemcinin neyi düzelteceğini çerçevenin ayrıntılı İngilizce iletisine gerek
+        /// kalmadan söyler.
+        /// </summary>
+        public const string UnreadableFields = "İstek okunamadı: şu alanlar geçerli JSON değil ya da beklenen türde değil: {0}.";
+    }
 }

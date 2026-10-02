@@ -4,6 +4,8 @@ using FastEndpoints.OpenApi;
 using Knowledge.Service.Abstractions;
 using Scalar.AspNetCore;
 using Shared.Application.Abstractions;
+using Shared.Application.Common;
+using SupportAssistant.API.Errors;
 using SupportAssistant.API.Extensions;
 using SupportAssistant.API.Security;
 
@@ -39,10 +41,13 @@ app.UseMiddleware<RequestBodyLimitMiddleware>();
 app.UseRateLimiter();
 
 // Tüm uç noktalar "v1" önekiyle yayınlanır (ör. /v1/questions). Sözleşme ileride uyumsuz biçimde değişirse yeni bir
-// sürüm, mevcut istemcileri bozmadan yanına eklenebilir.
+// sürüm, mevcut istemcileri bozmadan yanına eklenebilir. İstek bağlanırken oluşan hatalar (geçersiz JSON, yanlış türde
+// alan) çerçevenin varsayılan biçimiyle değil, diğer bütün hatalar gibi ApiResult zarfıyla ve Türkçe mesajla döner.
 app.UseFastEndpoints(config =>
 {
     config.Endpoints.RoutePrefix = "v1";
+    config.Errors.ResponseBuilder = BindingErrorResponse.Create;
+    config.Errors.ProducesMetadataType = typeof(ApiResult<object>);
 });
 
 // OpenAPI belgesi (/openapi/v1.json) ve onu okuyan etkileşimli Scalar arayüzü (/scalar): uç noktalar, Türkçe özet ve

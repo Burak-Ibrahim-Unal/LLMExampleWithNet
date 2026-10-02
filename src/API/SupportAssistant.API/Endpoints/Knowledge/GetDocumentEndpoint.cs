@@ -33,6 +33,9 @@ public sealed class GetDocumentEndpoint(IKnowledgeService knowledgeService) : En
     {
         Get("documents/{id}");
         AllowAnonymous();
+        // Tek girdi yol parametresidir; gövde okunmaz. Gövdesiz bir GET'teki "Content-Type: application/json" başlığı
+        // isteği bozmaz.
+        RequestBinder(new RequestBinder<GetDocumentRequest>(BindingSource.RouteValues));
         Summary(summary =>
         {
             summary.Summary = "Bir dokümanı bölümleriyle birlikte döndürür.";

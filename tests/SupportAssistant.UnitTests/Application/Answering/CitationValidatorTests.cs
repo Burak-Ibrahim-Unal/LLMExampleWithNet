@@ -71,12 +71,13 @@ public sealed class CitationValidatorTests
 
     /// <summary>
     /// Kaynağı doğru gösteren ama metni birebir aktarmayan bir alıntının ("iade kargosu bedava"; kaynakta "ücretsizdir")
-    /// atılmadığını, yalnızca <c>QuoteVerified=false</c> olarak işaretlendiğini doğrular.
+    /// doğrulayıcıda atılmadığını, yalnızca <c>QuoteVerified=false</c> olarak işaretlendiğini doğrular.
     /// </summary>
     /// <remarks>
-    /// Parafraz, kaynak uydurmakla aynı şey değildir: atıf doğru bölüme işaret eder, bu yüzden yanıt kaynağıyla birlikte
-    /// gösterilebilir. API ise <c>quoteVerified</c> bayrağıyla alıntının birebir olmadığını şeffaf biçimde bildirir;
-    /// istemci ve değerlendirme bu bilgiyi görebilir.
+    /// Doğrulayıcı karar vermez, ölçer: atfın doğru bölüme işaret ettiği ama alıntının doğrulanamadığı bilgisi handler'a
+    /// kadar taşınır. Handler doğrulanmamış atıfları yanıtın kaynaklarına koymaz; hiç doğrulanmış atıf kalmazsa modeli bir
+    /// kez düzeltme talimatıyla yeniden çağırır ve doğrulanamayan alıntıları bu talimatta modele gösterir. Atıf burada
+    /// atılsaydı handler hangi alıntının düzeltilmesi gerektiğini bilemezdi.
     /// </remarks>
     [Fact]
     public void A_paraphrased_quote_keeps_its_source_but_is_marked_unverified()
@@ -85,6 +86,48 @@ public sealed class CitationValidatorTests
 
         citation.Source.Label.ShouldBe("C2");
         citation.QuoteVerified.ShouldBeFalse();
+    }
+
+    /// <summary>
+    /// Üç noktayla kısaltılmış bir alıntının yalnızca parçaları kaynakta aynı sırayla geçiyorsa doğrulandığını gösterir:
+    /// "30 gün … talebinde" kaynaktaki sırayı korur ve doğrulanır; "talebinde … 30 gün" aynı sözcükleri ters sırayla
+    /// birleştirir ve doğrulanmaz.
+    /// </summary>
+    /// <remarks>
+    /// Parçalar sırasız aransaydı, kaynaktaki sözcüklerden yeni bir anlam kurmak mümkün olurdu: "İade süresi 30 gündür."
+    /// metninden <c>30...iade</c> gibi kaynağın söylemediği bir bağlantı "birebir alıntı" diye geçerdi. Doğrulanmış alıntı
+    /// artık yanıtın tek dayanağı olduğu için kısaltma da kaynağın sırasını korumak zorundadır.
+    /// </remarks>
+    [Theory]
+    [InlineData("30 gün … talebinde", true)]
+    [InlineData("30 gün... iade talebinde bulunabilir", true)]
+    [InlineData("talebinde … 30 gün", false)]
+    [InlineData("iade...30", false)]
+    public void Quote_fragments_must_appear_in_the_source_in_order(string quote, bool verified)
+    {
+        CitationValidator.Validate([new("C1", quote)], Context).ShouldHaveSingleItem().QuoteVerified.ShouldBe(verified);
+    }
+
+    /// <summary>
+    /// Alıntının kaynakta bir sözcük başından başlaması gerektiğini ve rakamla biten bir alıntının kaynakta daha uzun bir
+    /// sayının parçası olarak eşleşmediğini doğrular: "300 gün" içeren bir kaynakta "30" ve "0 gün" doğrulanmaz;
+    /// "300 gün" ve Türkçe ek almış "300 gündür" metnindeki "300 gün" doğrulanır.
+    /// </summary>
+    /// <remarks>
+    /// Düz alt dize araması, "30 gün" diyen bir yanıtı "300 gün" yazan bir kaynakla destekleniyormuş gibi gösterirdi;
+    /// süre, tutar ve eşik gibi sayılar destek yanıtlarının en kritik bilgisidir. Sözcük sonu ise yalnızca rakamlar için
+    /// denetlenir: Türkçe ekler ("gün" → "gündür") doğru bir alıntıyı doğrulanmamış saymamalıdır.
+    /// </remarks>
+    [Theory]
+    [InlineData("30", false)]
+    [InlineData("0 gün", false)]
+    [InlineData("300 gün", true)]
+    [InlineData("Teslim süresi 300", true)]
+    public void Quotes_match_at_word_starts_and_numbers_do_not_match_inside_longer_numbers(string quote, bool verified)
+    {
+        IReadOnlyList<ContextChunk> context = [Source("C3", "Teslim süresi 300 gündür.")];
+
+        CitationValidator.Validate([new("C3", quote)], context).ShouldHaveSingleItem().QuoteVerified.ShouldBe(verified);
     }
 
     /// <summary>

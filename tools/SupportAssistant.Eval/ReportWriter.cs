@@ -6,19 +6,42 @@ using Knowledge.Application.Contracts;
 
 namespace SupportAssistant.Eval;
 
-/// <summary>Writes the expected-versus-actual comparison as markdown (for people) and JSON (raw results).</summary>
+/// <summary>
+/// Beklenen ile gerçek karşılaştırmasını iki biçimde yazar: insanlar için Türkçe Markdown raporu (<c>report.md</c>) ve
+/// ham sonuçlar için JSON (<c>results.json</c>).
+/// </summary>
+/// <remarks>
+/// Rapor, değerlendiricinin her soruda beklenen ve gerçek yanıtı, atıf yapılan doküman/sürüm/bölümü, alıntının doğrulanıp
+/// doğrulanmadığını, elenen sürümleri, kaynaklar arası çelişkileri ve kalan kontrolleri tek sayfada görmesi için
+/// tasarlanmıştır. JSON aynı verinin eksiksiz kopyasıdır; rapordaki her satır ondan doğrulanabilir ve koşular araçlarla
+/// karşılaştırılabilir.
+/// </remarks>
 public static class ReportWriter
 {
+    /// <summary>Süreleri Türkçe ondalık ayırıcıyla ("1,5 sn") biçimlendirmek için kullanılan kültür.</summary>
     private static readonly CultureInfo Turkish = CultureInfo.GetCultureInfo("tr-TR");
 
+    /// <summary>
+    /// <c>results.json</c> için camelCase ve girintili JSON ayarları. <c>UnsafeRelaxedJsonEscaping</c>, Türkçe karakterlerin
+    /// <c>\uXXXX</c> kaçış dizileri yerine olduğu gibi yazılmasını sağlar ve dosya okunabilir kalır. Adındaki "unsafe" HTML
+    /// içine gömme riskini anlatır; diske yazılan bir rapor dosyası için geçerli değildir.
+    /// </summary>
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web)
     {
         WriteIndented = true,
         Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
     };
 
+    /// <summary>
+    /// Soru dosyasındaki kategori anahtarlarının rapordaki Türkçe başlıkları. Dizi olması, özet tablosunun sırasını
+    /// sabitler (normal → cevapsız → çelişkili).
+    /// </summary>
     private static readonly (string Key, string Title)[] Categories = [("normal", "Normal"), ("cevapsiz", "Cevapsız"), ("celiskili", "Çelişkili")];
 
+    /// <summary>
+    /// Çıktı klasörünü (yoksa) oluşturur ve aynı sonuçları <c>results.json</c> ile <c>report.md</c> olarak yazar.
+    /// JSON'a koşu bilgileri (zaman, API adresi, etiket, sağlık durumu) ve her soru için yanıtın tamamı dahil edilir.
+    /// </summary>
     public static async Task WriteAsync(string directory, EvalOptions options, SystemStatusDto? status, IReadOnlyList<QuestionResult> results)
     {
         Directory.CreateDirectory(directory);
@@ -49,6 +72,16 @@ public static class ReportWriter
         await File.WriteAllTextAsync(Path.Combine(directory, "report.md"), BuildMarkdown(options, status, results));
     }
 
+    /// <summary>
+    /// Markdown raporunu üretir: başlık (tarih, koşu etiketi, model/embedding/arama modu, toplam sonuç), kategori özeti,
+    /// arama isabeti ve yanıt süresi satırları, soru tablosu ve soru bazında ayrıntılı karşılaştırma.
+    /// </summary>
+    /// <remarks>
+    /// Arama isabeti yalnızca beklenen kaynağı olan sorular üzerinden ve iki mod için ayrı verilir; BM25 ile hibrit arasındaki
+    /// fark vektör aramasının katkısını gösterir. Yanıt süresinde ortalamanın yanında medyan ve en uzun süre de yazılır;
+    /// Kapı 1'de reddedilen soruların modele gitmediği için ~0 sn sürdüğü raporda açıkça not edilir. Düzeltme turuna giren
+    /// (modelin iki kez çağrıldığı) soru sayısı da verilir.
+    /// </remarks>
     private static string BuildMarkdown(EvalOptions options, SystemStatusDto? status, IReadOnlyList<QuestionResult> results)
     {
         var report = new StringBuilder();
@@ -71,12 +104,22 @@ public static class ReportWriter
 
         report.AppendLine($"| **Toplam** | **{results.Count}** | **{passed}** |").AppendLine();
 
+        // HybridHit null ise sorunun beklenen kaynağı yoktur (cevapsız sorular); bu sorular isabet oranının paydasına girmez.
         var withExpectedSource = results.Where(result => result.HybridHit is not null).ToList();
         report.AppendLine($"**Arama isabeti** (beklenen kaynak, sunucunun varsayılan topK değeri kadar arama sonucu içinde — sürüm çözümünden önce; {withExpectedSource.Count} soru): " +
             $"yalnız BM25 {withExpectedSource.Count(result => result.LexicalHit == true)}/{withExpectedSource.Count} · " +
             $"hibrit {withExpectedSource.Count(result => result.HybridHit == true)}/{withExpectedSource.Count}  ");
-        report.AppendLine($"**Yanıt süresi:** medyan {Seconds(Median(results.Select(result => result.LatencyMs)))}, ortalama {Seconds((long)results.Average(result => result.LatencyMs))}, " +
-            $"en uzun {Seconds(results.Max(result => result.LatencyMs))} (Kapı 1'de reddedilen sorular modele gitmediği için ~0 sn)").AppendLine();
+        // Boş bir soru dosyasında ortalama ve en uzun süre tanımsızdır (Average/Max boş kümede istisna fırlatır).
+        if (results.Count > 0)
+        {
+            report.AppendLine($"**Yanıt süresi:** medyan {Seconds(Median(results.Select(result => result.LatencyMs)))}, ortalama {Seconds((long)results.Average(result => result.LatencyMs))}, " +
+                $"en uzun {Seconds(results.Max(result => result.LatencyMs))} (Kapı 1'de reddedilen sorular modele gitmediği için ~0 sn)  ");
+        }
+
+        // Düzeltme turu (doğrulanamayan alıntı ya da öncelik ihlali yüzünden ikinci model çağrısı) gecikmeyi artırır ve
+        // modelin ilk denemede kabul edilebilir bir yanıt veremediğini gösterir; sayısı ayrıca izlenir.
+        var corrected = results.Count(result => result.Answer?.Diagnostics.ModelCalls > 1);
+        report.AppendLine($"**Düzeltme turu:** {corrected} soruda model ikinci kez çağrıldı").AppendLine();
 
         report.AppendLine("| ID | Kategori | Soru | Beklenen | Sonuç | Süre |").AppendLine("|---|---|---|---|---|---:|");
 
@@ -96,6 +139,17 @@ public static class ReportWriter
         return report.ToString();
     }
 
+    /// <summary>
+    /// Tek bir soru için ayrıntılı karşılaştırma bloğu yazar: soru, beklenen ve gerçek yanıt (reddedildiyse
+    /// <c>refusalReason</c>), modelin bildirdiği eksik bilgi, her kaynak için doküman/sürüm/tarih/bölüm ve alıntının
+    /// doğrulanıp doğrulanmadığı, elenen sürümler ve nedenleri, kaynaklar arası çelişkiler ve öncelik kuralına uyum,
+    /// kontroller, arama isabeti, süre ve model çağrısı sayısı.
+    /// </summary>
+    /// <remarks>
+    /// Satır sonlarındaki iki boşluk Markdown'da satır kırılmasıdır; blok tek paragraf olarak okunur. Yalnızca kalan
+    /// kontrollerin ayrıntısı yazılır; rapor kısa kalır ama bir sorunun neden kaldığı hemen görülür. Yanıt verisi yoksa
+    /// (hata zarfı) gerçek yanıt yerine HTTP durum kodu ve API mesajı gösterilir.
+    /// </remarks>
     private static void AppendQuestion(StringBuilder report, QuestionResult result)
     {
         var question = result.Question;
@@ -137,23 +191,38 @@ public static class ReportWriter
         }
 
         report.AppendLine($"**Kontroller:** {string.Join(" · ", result.Checks.Select(check => $"{(check.Passed ? "✅" : "❌")} {check.Name}{(check.Passed ? string.Empty : $" ({check.Detail})")}"))}  ");
-        report.AppendLine($"**Arama isabeti:** BM25 {Hit(result.LexicalHit)} · hibrit {Hit(result.HybridHit)} · **Süre:** {Seconds(result.LatencyMs)}").AppendLine();
+        report.AppendLine($"**Arama isabeti:** BM25 {Hit(result.LexicalHit)} · hibrit {Hit(result.HybridHit)} · **Süre:** {Seconds(result.LatencyMs)}" +
+            $"{(answer is null ? string.Empty : $" · **Model çağrısı:** {answer.Diagnostics.ModelCalls}")}").AppendLine();
     }
 
+    /// <summary>Kategori anahtarını Türkçe başlığa çevirir; tanımsız bir anahtar raporda olduğu gibi gösterilir.</summary>
     private static string CategoryTitle(string key) => Categories.FirstOrDefault(category => category.Key == key).Title ?? key;
 
+    /// <summary>Arama isabetini simgeye çevirir; "—" sorunun beklenen kaynağı olmadığı için isabetin ölçülmediğini belirtir.</summary>
     private static string Hit(bool? hit) => hit switch { true => "✅", false => "❌", null => "—" };
 
-    // A single slow request (model warm-up, a busy shared server) skews the mean; the median shows the typical case.
+    /// <summary>
+    /// Sürelerin medyanını hesaplar (çift sayıda değerde ortadaki iki değerin ortalaması, boş listede 0).
+    /// </summary>
+    /// <remarks>
+    /// Tek bir yavaş istek (modelin ısınması, meşgul ve paylaşılan bir sunucu) ortalamayı çarpıtır; medyan tipik durumu
+    /// gösterir. Raporda ortalama ve en uzun süre de verildiği için aykırı değerler gizlenmez.
+    /// </remarks>
     private static long Median(IEnumerable<long> values)
     {
         var sorted = values.Order().ToList();
         return sorted.Count == 0 ? 0 : sorted.Count % 2 == 1 ? sorted[sorted.Count / 2] : (sorted[sorted.Count / 2 - 1] + sorted[sorted.Count / 2]) / 2;
     }
 
+    /// <summary>Milisaniyeyi Türkçe biçimli saniyeye çevirir (ör. 1470 → "1,5 sn").</summary>
     private static string Seconds(long milliseconds) => (milliseconds / 1000.0).ToString("0.0", Turkish) + " sn";
 
+    /// <summary>Boş ya da eksik değerleri (ör. sağlık ucundan okunamayan model adı) raporda "—" olarak gösterir.</summary>
     private static string Value(string? value) => string.IsNullOrWhiteSpace(value) ? "—" : value;
 
+    /// <summary>
+    /// Metindeki <c>|</c> karakterini kaçışlar; aksi hâlde soru metnindeki bir dikey çizgi Markdown tablosunun sütunlarını
+    /// bozardı.
+    /// </summary>
     private static string Cell(string text) => text.Replace("|", "\\|", StringComparison.Ordinal);
 }

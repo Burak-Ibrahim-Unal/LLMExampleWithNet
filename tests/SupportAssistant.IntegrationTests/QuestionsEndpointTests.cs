@@ -5,8 +5,17 @@ using SupportAssistant.IntegrationTests.Infrastructure;
 
 namespace SupportAssistant.IntegrationTests;
 
+/// <summary>
+/// <c>POST /v1/questions</c> ucunu tüm cevaplama hattı (arama, Kapı 1, sürüm çözümü, sahte model, atıf doğrulama)
+/// üzerinden uçtan uca sınar. Ödevin temel gereksinimlerini HTTP düzeyinde korur: yanıt kullandığı doküman ve bölümü
+/// gösterir, eski sürümün nasıl elendiğini açıklar ve dokümanlarda bilgi yoksa yanıt üretmek yerine bunu açıkça söyler.
+/// </summary>
 public sealed class QuestionsEndpointTests(SupportAssistantApiFactory factory) : IClassFixture<SupportAssistantApiFactory>
 {
+    /// <summary>
+    /// Soruyu gerçek istemcilerin gönderdiği gövdeyle (<c>{ "question": "..." }</c>) gönderir ve yanıtı
+    /// <see cref="ApiResponse"/> olarak döndürür; testler isteği kurmakla değil yanıtın sözleşmesiyle ilgilenir.
+    /// </summary>
     private async Task<ApiResponse> AskAsync(string question)
     {
         var cancellationToken = TestContext.Current.CancellationToken;
@@ -15,6 +24,16 @@ public sealed class QuestionsEndpointTests(SupportAssistantApiFactory factory) :
         return await ApiResponse.ReadAsync(response, cancellationToken);
     }
 
+    /// <summary>
+    /// "İade süresi kaç gün?" sorusunun yürürlükteki <c>iade-v2</c> (sürüm 2.0, "2. İade Süresi" bölümü) kaynak
+    /// gösterilerek yanıtlandığını ve <c>versionResolution</c> içinde eski <c>iade-v1</c>'in elendiğinin raporlandığını
+    /// doğrular.
+    /// </summary>
+    /// <remarks>
+    /// Ödevin iki zorunlu gereksinimini birlikte korur: her yanıt kullandığı dokümanı ve bölümü gösterir; çelişen
+    /// sürümlerde yürürlükteki sürümün nasıl seçildiği açıklanır. Sürüm çözümü devre dışı kalırsa <c>discarded</c> boş
+    /// kalır ve eski sürümün "14 gün" kuralı modele ulaşabilir; test bu durumda kırılır.
+    /// </remarks>
     [Fact]
     public async Task An_answer_shows_its_source_section_and_how_the_current_version_was_chosen()
     {
@@ -31,6 +50,16 @@ public sealed class QuestionsEndpointTests(SupportAssistantApiFactory factory) :
         resolution.GetProperty("discarded")[0].GetProperty("documentId").GetString().ShouldBe("iade-v1");
     }
 
+    /// <summary>
+    /// Dokümanların kapsamadığı bir sorunun ("Apple HomeKit ile uyumlu mu?") HTTP 200, <c>answerable = false</c>,
+    /// <c>refusalReason = LowRelevance</c>, sabit Türkçe "yeterli bilgi bulunamadı" mesajı ve boş <c>sources</c> ile
+    /// döndüğünü doğrular.
+    /// </summary>
+    /// <remarks>
+    /// "Bilmiyorum" bir hata değil, geçerli bir iş sonucudur; bu yüzden 200 döner ve istemci ayrımı <c>answerable</c>
+    /// alanından yapar. Sahte model her zaman yanıt ürettiği için <c>LowRelevance</c> görülmesi, reddin Kapı 1'de model hiç
+    /// çağrılmadan verildiğini kanıtlar; eşik bozulursa sahte model bir "yanıt" üretir ve test kırılır.
+    /// </remarks>
     [Fact]
     public async Task A_question_the_documents_do_not_cover_is_explicitly_refused()
     {
@@ -43,6 +72,11 @@ public sealed class QuestionsEndpointTests(SupportAssistantApiFactory factory) :
         response.Data.GetProperty("sources").GetArrayLength().ShouldBe(0);
     }
 
+    /// <summary>
+    /// Boş sorunun 400 ve "Soru boş olamaz." mesajıyla reddedildiğini doğrular. Geçersiz girdi bir istemci hatasıdır ve
+    /// "bilgi yok" yanıtından (200 + <c>answerable = false</c>) ayrı tutulur; iş kuralı hattın en başında çalıştığı için
+    /// boş bir soru arama ve model maliyeti de doğurmaz.
+    /// </summary>
     [Fact]
     public async Task An_empty_question_is_rejected()
     {

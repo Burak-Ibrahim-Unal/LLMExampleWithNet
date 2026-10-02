@@ -51,8 +51,12 @@ Kurala aykırı bir tasarım gerekiyorsa önce mimari kararı yaz, sonra testi b
 
 - Sürüm çelişkisi kodda (`VersionResolver`) çözülür; eski sürüm modele hiç gönderilmez.
 - "Bilgi yok" üç kapılıdır: arama kanıtı (`AnswerabilityPolicy`) → modelin `answerable` kararı → atıf doğrulama (`CitationValidator`).
-- Modelin çıktısı JSON şemasıyla kısıtlanır; şemada nullable alan kullanma (llama.cpp grammar uyumu).
+- Yanıtın dayanağı yalnızca alıntısı bölüm metninde doğrulanmış atıflardır; doğrulanamayan atıf kaynak listesine girmez.
+- Kaynaklar arası öncelik kuralını sunucu zorlar (`SourcePrecedence.Losers`); kaybeden bölüm bağlamdan çıkarılır.
+- Soru başına en fazla iki model çağrısı (tek düzeltme turu); bu sınırı artırma.
+- Modelin çıktısı JSON şemasıyla kısıtlanır; şemada nullable alan kullanma, her alan `required` olsun (llama.cpp grammar uyumu, eksik çıktı = geçersiz çıktı).
 - Prompt değişikliği yapınca `tools/SupportAssistant.Eval` ile değerlendirmeyi yeniden koş ve raporu güncelle.
+- `eval/questions-holdout.json` bağımsız settir: eşik, prompt ya da `TopK` ayarı için kullanma; beklentilerini sonuç görüp değiştirme.
 
 ## 6) Test ve doğrulama
 

@@ -4,12 +4,15 @@ Kurgu bir akıllı ev şirketinin (**Lumora Akıllı Ev**) müşteri destek ekib
 tabanındaki dokümanlardan** yanıtlayan bir .NET 10 API.
 
 - Her yanıt; kullanılan **dokümanı, sürümünü, yürürlük tarihini, bölümünü** ve metinde gerçekten geçtiği doğrulanmış
-  **alıntıyı** döndürür.
+  **alıntıyı** döndürür. Alıntısı bölüm metninde doğrulanamayan atıf yanıtın dayanağı olamaz.
 - Dokümanlarda yeterli bilgi yoksa yanıt **üretmez**, bunu açıkça belirtir ve nedenini (`refusalReason`) söyler.
 - Aynı prosedürün eski ve yeni sürümü çeliştiğinde **yürürlükteki sürümü kodla seçer**, elenen sürümü gerekçesiyle
-  gösterir. Farklı dokümanlar arasındaki çelişkiyi model bildirir, sunucu öncelik kuralına uyup uymadığını denetler.
+  gösterir. Farklı dokümanlar arasındaki çelişkiyi model bildirir; sunucu öncelik kuralını denetler ve model kuralı
+  çiğnerse **kaybeden kaynağı bağlamdan çıkarıp yanıtı yeniden üretir**.
 
-**Değerlendirme:** 16/16 soru geçti (8 normal · 4 cevapsız · 4 çelişkili) — ayrıntı: [`eval/results/report.md`](eval/results/report.md)
+**Değerlendirme:** kalibrasyon setinde 16/16 (8 normal · 4 cevapsız · 4 çelişkili,
+[rapor](eval/results/report.md)); ayar için hiç kullanılmamış bağımsız 12 soruluk sette 10/12
+([rapor](eval/results/holdout/report.md), kalan iki soru [aşağıda](#bağımsız-set) açıklanıyor).
 
 ---
 
@@ -79,14 +82,17 @@ dotnet run --project src/API/SupportAssistant.API
 
 - Açılışta `knowledge-base/` indekslenir. Log: `Knowledge base indexed: 10 documents, 53 sections, hybrid retrieval.`
 - API arayüzü (Scalar): <http://localhost:5031/scalar> · OpenAPI: <http://localhost:5031/openapi/v1.json>
-- Durum: <http://localhost:5031/v1/health> — indeks, dil modeli ve embedding yapılandırmasını gösterir.
+- Durum: <http://localhost:5031/v1/health> — indeks, dil modeli ve embedding yapılandırmasını gösterir. `ok`,
+  bileşenlerin *yapılandırıldığı* anlamına gelir; sağlık ucu model sunucusuna istek atmaz, erişim sorunu ilk soruda
+  `503` olarak görünür.
 - Veritabanı (`supportassistant.db`) türetilmiş veridir: silinirse açılışta yeniden oluşturulur.
 
 ### 4. Testler ve değerlendirme
 
 ```bash
-dotnet test --solution SupportAssistant.slnx        # 145 test; model sunucusu gerekmez
+dotnet test --solution SupportAssistant.slnx        # 183 test; model sunucusu gerekmez
 dotnet run --project tools/SupportAssistant.Eval     # API çalışırken; rapor: eval/results/report.md
+dotnet run --project tools/SupportAssistant.Eval -- --questions eval/questions-holdout.json --label holdout
 ```
 
 ---
@@ -117,7 +123,7 @@ curl -s -X POST http://localhost:5031/v1/questions \
 
 ```json
 "answerable": true,
-"answer": "Cihazın sağ yanındaki sıfırlama düğmesine 10 saniye boyunca basılı tutun. LED turuncu yanıp sönmeye başladığında düğmeyi bırakın; bu işlem cihazın yeniden başlamasını ve tüm ayarların silinmesini sağlayacaktır.",
+"answer": "Cihazın sağ yanındaki sıfırlama düğmesine 10 saniye boyunca basılı tutmanız gerekmektedir. LED turuncu yanıp sönmeye başladığında düğmeyi bırakabilirsiniz; bu işlemden sonra cihaz yeniden başlar ve tüm ayarlar silinir.",
 "sources": [
   {
     "documentId": "kurulum-kilavuzu-lumora-termo",
@@ -180,9 +186,10 @@ curl -s -X POST http://localhost:5031/v1/questions \
       "candidateDocumentIds": ["iade-politikasi-v2", "iade-politikasi-v1", "kargo-ve-teslimat", "garanti-kosullari", "sss-genel"],
       "context": [{ "label": "C1", "documentId": "iade-politikasi-v2", "version": "2.0", "section": "2. İade Süresi" }, "…7 bölüm daha"],
       "model": "gemma-4-26b-a4b-it",
-      "latencyMs": 1470,
-      "inputTokens": 1286,
-      "outputTokens": 149
+      "latencyMs": 1563,
+      "inputTokens": 1296,
+      "outputTokens": 150,
+      "modelCalls": 1
     }
   },
   "statusCode": 200
@@ -197,17 +204,22 @@ v1.0'daki "14 gün" kuralı arama sonuçlarında vardı, ama modele hiç gönder
 "ücretsiz" diyor. Yanıt politikayı kullanır; model çelişkiyi bildirir, sunucu öncelik kuralına uyduğunu doğrular:
 
 ```json
-"answer": "İade kargosu ücretsizdir; iade kodunu kullanarak anlaşmalı kargo firmamızla gönderdiğiniz iadelerin kargo ücretini Lumora karşılar.",
+"answer": "İade kargo ücreti, iade kodunu kullanarak anlaşmalı kargo firmamızla gönderdiğiniz iadeler için Lumora tarafından karşılanmaktadır ve ücretsizdir.",
 "conflicts": [
   {
     "topic": "İade kargo ücreti",
     "chosen":   { "documentId": "iade-politikasi-v2", "version": "2.0", "effectiveDate": "2025-06-01", "category": "politika", "section": "5. İade Kargo Ücreti" },
     "rejected": [{ "documentId": "sss-genel", "version": "1.0", "effectiveDate": "2024-02-01", "category": "sss", "section": "İade > İade kargo ücretini kim öder?" }],
-    "reason": "C2 (Politika, sürüm 2.0, 2025-06-01) ile C1 (SSS, sürüm 1.0, 2024-02-01) arasında çelişki bulunmaktadır. Politika dokümanı SSS'den daha önceliklidir ve daha yeni bir yürürlük tarihine sahiptir.",
+    "reason": "C2 (İade ve Para İadesi Politikası | sürüm 2.0 | yürürlük 2025-06-01) daha yeni bir yürürlük tarihine sahip olduğu için C1'den (Sıkça Sorulan Sorular | sürüm 1.0 | yürürlük 2024-02-01) daha önceliklidir.",
     "ruleSatisfied": true
   }
 ]
 ```
+
+Model SSS'yi seçseydi ya da yanıtını SSS bölümüne dayandırsaydı bu çıktı kullanıcıya ulaşmazdı. Sunucu, kurala göre
+kaybeden SSS bölümünü bağlamdan çıkarıp modeli bir kez daha çağırır. Çelişki kaydı bu durumda sunucunun kararını
+gösterir: `reason` "Sunucu öncelik kuralını uyguladı…" diye başlar. İhlal sürerse yanıt `UnresolvedConflict` ile
+reddedilir.
 
 ### Örnek 4 — Dokümanlarda bilgi yok
 
@@ -230,13 +242,13 @@ curl -s -X POST http://localhost:5031/v1/questions \
     "conflicts": [],
     "missingInformation": "",
     "refusalReason": "LowRelevance",
-    "diagnostics": { "retrievalMode": "hybrid", "maxDenseScore": 0.456, "maxLexicalCoverage": 0.312, "context": [], "model": "", "latencyMs": 17 }
+    "diagnostics": { "retrievalMode": "hybrid", "maxDenseScore": 0.456, "maxLexicalCoverage": 0.312, "context": [], "model": "", "latencyMs": 9, "modelCalls": 0 }
   },
   "statusCode": 200
 }
 ```
 
-Arama yeterli kanıt bulamadığı için dil modeli **hiç çağrılmadı** (17 ms). Alana yakın sorularda (ör. "HomeKit ile
+Arama yeterli kanıt bulamadığı için dil modeli **hiç çağrılmadı** (`modelCalls: 0`, 9 ms). Alana yakın sorularda (ör. "HomeKit ile
 kullanabilir miyim?") retlerin nedeni `ModelInsufficientContext`'tir. Bu durumda `missingInformation` alanında
 modelin neyin eksik olduğunu açıklaması yer alır.
 
@@ -253,9 +265,13 @@ flowchart LR
     V --> L["Gemma 4<br/>JSON şemalı yanıt"]
     L --> G2{"Kapı 2<br/>answerable?"}
     G2 -- hayır --> R2["Bilgi yok<br/>ModelInsufficientContext"]
-    G2 -- evet --> G3{"Kapı 3<br/>geçerli atıf?"}
-    G3 -- hayır --> R3["Bilgi yok<br/>NoValidCitations"]
-    G3 -- evet --> A["Yanıt + kaynaklar<br/>+ sürüm kararı + çelişkiler"]
+    G2 -- evet --> G3{"Kapı 3<br/>doğrulanmış alıntı?"}
+    G3 -- evet --> P{"Öncelik kuralına<br/>uyuldu mu?"}
+    P -- evet --> A["Yanıt + kaynaklar<br/>+ sürüm kararı + çelişkiler"]
+    G3 -- hayır --> F["Düzeltme turu<br/>(en fazla 1 kez)"]
+    P -- hayır --> F
+    F -- "geri bildirim /<br/>kaybeden bölüm çıkarılır" --> L
+    F -- "ikinci kez de olmadı" --> R3["Bilgi yok<br/>NoValidCitations /<br/>UnresolvedConflict"]
 ```
 
 ### Mimari
@@ -312,14 +328,22 @@ Her başlık (`##`/`###`) bir bölümdür (toplam 53). Atıflarda bölüm yolu g
 |---|---|---|
 | 1 · Arama kanıtı | `AnswerabilityPolicy` | En iyi kosinüs < 0,55 **ve** kelime kapsamı < 0,5. İkisinden biri yeter: vektör parafrazı yakalar, kelime kapsamı bge-m3'ün zayıf kaldığı Türkçe karaktersiz yazımı yakalar. Model çağrılmaz. |
 | 2 · Model kararı | JSON şemasındaki `answerable` | Kaynaklar soruyu yanıtlamıyorsa model `answerable=false` ve `missingInformation` döndürür. |
-| 3 · Atıf doğrulama | `CitationValidator` | Yanıt, modele verilen bölümlerden hiçbirine atıf yapmıyorsa. Alıntının bölüm metninde geçip geçmediği ayrıca `quoteVerified` ile gösterilir. |
+| 3 · Atıf doğrulama | `CitationValidator` | Yanıt, modele verilen bir bölümde birebir geçen en az bir alıntıya dayanmıyorsa. Karşılaştırma büyük/küçük harf, Türkçe karakter ve noktalamadan bağımsızdır. "…" ile kısaltılmış alıntının parçaları kaynaktaki sırayla ve sözcük başında eşleşmelidir; "30", "300" içinde eşleşmez. Doğrulanamayan atıflar kaynak listesine girmez. Hiç doğrulanmış atıf yoksa model bir kez düzeltme talimatıyla, doğrulanamayan alıntılar gösterilerek yeniden çağrılır; yine olmazsa `NoValidCitations`. |
 
-Ayrıca, aramanın bulduğu bölümlerin tamamı yürürlükte olmayan sürümlerden geliyorsa (superseded ya da ileri tarihli)
-model çağrılmadan `NoSourceInEffect` ile reddedilir.
+Ayrıca iki ret nedeni daha vardır:
+- Aramanın bulduğu bölümlerin tamamı yürürlükte olmayan sürümlerden geliyorsa (superseded ya da ileri tarihli), model
+  çağrılmadan `NoSourceInEffect` ile reddedilir.
+- Model, düzeltme turundan sonra da kaynaklar arası öncelik kuralını çiğnerse yanıt `UnresolvedConflict` ile reddedilir
+  (bkz. çelişki çözümü).
 
-Model yanıtı **JSON şemasıyla kısıtlıdır**. llama.cpp şemayı bir grammar'a çevirdiği için çıktı her zaman ayrıştırılır;
-yine de geçersiz gelirse bir kez yeniden denenir, ikincisinde `502` döner. Modele ulaşılamazsa `503` döner. Bu iki
-durum "bilgi yok" diye geçiştirilmez.
+Soru başına en fazla **iki model çağrısı** yapılır. Alıntı ve öncelik düzeltmeleri gerekirse aynı ikinci çağrıda
+birlikte uygulanır. Kaç çağrı yapıldığı `diagnostics.modelCalls` alanında görünür; değerlendirme koşularında düzeltme
+turu hiç gerekmedi.
+
+Model yanıtı **JSON şemasıyla kısıtlıdır** ve şemadaki her alan zorunludur. llama.cpp şemayı bir grammar'a çevirdiği
+için model alan atlayamaz. Yine de eksik alanlı (`{}`), listelerinde `null` öğe bulunan ya da ayrıştırılamayan bir
+çıktı gelirse model bir kez yeniden denenir, ikincisinde `502` döner. Modele ulaşılamazsa `503` döner. Bozuk bir
+çıktı ya da sağlayıcı hatası hiçbir zaman "bilgi yok" diye geçiştirilmez.
 
 ### Çelişki çözümü
 
@@ -328,9 +352,16 @@ durum "bilgi yok" diye geçiştirilmez.
    numarası kazanır; ileri tarihli sürüm henüz yürürlükte sayılmaz. Eski sürümün bölümleri **modele gönderilmez**;
    yanıtta `versionResolution.discarded` altında gerekçesiyle listelenir. Soruya yalnızca eski sürüm eşleştiyse,
    güncel sürümün soruya en yakın bölümleri onun yerine konur.
-2. **Farklı dokümanlar (model + sunucu denetimi).** Prompt'taki öncelik kuralı: politika/prosedür > kılavuz > SSS;
-   aynı türde yürürlük tarihi daha yeni olan geçerlidir. Model çelişkiyi `conflicts` alanına yazar, sunucu seçimin bu
-   kurala uyup uymadığını hesaplayıp `ruleSatisfied` olarak ekler.
+2. **Farklı dokümanlar (model bildirir, sunucu zorlar).** Prompt'taki öncelik kuralı: politika/prosedür > kılavuz > SSS;
+   aynı türde yürürlük tarihi daha yeni olan geçerlidir. Model çelişkiyi `conflicts` alanına yazar. Sunucu seçimin bu
+   kurala uyup uymadığını hesaplar (`ruleSatisfied`) ve kuralı zorlar:
+   - Model kurala göre kaybeden kaynağı seçtiyse ya da yanıtını ona dayandırdıysa, kaybeden bölümler bağlamdan
+     çıkarılır ve model bir kez daha çağrılır. Aynı dokümanın başka, çelişkisiz bölümleri yasaklanmaz.
+   - İhlal sürerse yanıt `UnresolvedConflict` ile reddedilir.
+   - Başarılı bir yanıttaki her çelişki kaydında `ruleSatisfied` true'dur.
+
+   Bu mekanizma, modelin **bildirdiği** çelişkiler için çalışır. Modelin hiç fark etmediği bir çelişkiyi sunucu
+   göremez; aynı doküman ailesindeki sürüm seçimi ise tamamen deterministiktir.
 
 Sürüm kararları yalnızca yanıtın atıf yaptığı doküman aileleri için raporlanır. Retlerde boş döner; arama ve bağlam
 ayrıntısı `diagnostics` altındadır.
@@ -339,34 +370,74 @@ ayrıntısı `diagnostics` altındadır.
 
 ## Değerlendirme
 
-[`eval/questions.json`](eval/questions.json) içinde **16 soru** var: 8 normal (biri parafraz, biri iki dokümana
-yayılan soru), 4 cevapsız ve 4 çelişkili. Her sorunun insanın okuyacağı bir **beklenen yanıtı** ve deterministik
-kontrolleri vardır:
+İki soru seti var:
+- [`eval/questions.json`](eval/questions.json), **kalibrasyon seti** (16 soru): 8 normal (biri parafraz, biri iki
+  dokümana yayılan soru), 4 cevapsız ve 4 çelişkili. Eşikler ve prompt bu setle ayarlandı.
+- [`eval/questions-holdout.json`](eval/questions-holdout.json), **bağımsız set** (12 soru): ayar için hiç kullanılmadı;
+  ayrıntısı aşağıda.
 
-- yanıtlanabilirlik
-- beklenen ve yasak kaynaklar
-- içerik ifadeleri (Türkçe karakterden bağımsız, kelime başında eşleşir)
-- yasak ifadeler (ör. "14 gün")
-- elenmesi gereken sürümler
+Her sorunun insanın okuyacağı bir **beklenen yanıtı** ve deterministik kontrolleri vardır:
+
+- **Yanıtlanabilirlik.** Cevapsız sorularda ayrıca ret sözleşmesi: sabit mesaj, boş kaynak listesi ve dolu
+  `refusalReason`.
+- **Kaynaklar:** beklenen ve yasak kaynaklar, beklenen bölüm.
+- **Alıntı:** her kaynağın alıntısı doğrulanmış olmalı.
+- **Sayılar kaynakta:** yanıttaki her sayı, atıf yapılan dokümanda ya da sorunun kendisinde geçmeli. "Doğru alıntı +
+  yanlış sayı" ancak böyle yakalanır.
+- **İfadeler:** içerik ifadeleri (Türkçe karakterden bağımsız, kelime başında eşleşir) ve yasak ifadeler. Yasak ifadeler
+  hem eski kuralı ("14 gün") hem ters kararı ("ücretsiz değil") yakalar.
+- **Çelişkiler:** elenmesi gereken sürümler ve beklenen kaynaklar arası çelişki kaydı (`ruleSatisfied` ile).
 
 [`tools/SupportAssistant.Eval`](tools/SupportAssistant.Eval) soruları çalışan API'ye sorar ve
 [`eval/results/report.md`](eval/results/report.md) dosyasına **beklenen ile gerçek** karşılaştırmasını, ham sonuçları da
-`results.json` dosyasına yazar.
+`results.json` dosyasına yazar. Çıkış kodu CI için anlamlıdır:
+
+| Kod | Anlamı |
+|---|---|
+| 0 | Bütün sorular geçti |
+| 1 | En az bir soru kaldı |
+| 2 | API'ye ulaşılamadı |
+| 3 | Geçersiz argüman |
 
 | Çalıştırma | Sonuç | Medyan yanıt süresi | Arama isabeti: yalnız BM25 / hibrit |
 |---|---|---|---|
-| Varsayılan — düşünme modu kapalı ([rapor](eval/results/report.md)) | **16/16** | 1,5 sn | 10/12 / **12/12** |
-| Düşünme modu açık ([rapor](eval/results/thinking-on/report.md)) | 16/16 | 9,9 sn | 10/12 / 12/12 |
+| Kalibrasyon seti, düşünme modu kapalı ([rapor](eval/results/report.md)) | **16/16** | 1,5 sn | 10/12 / **12/12** |
+| Kalibrasyon seti, düşünme modu açık ([rapor](eval/results/thinking-on/report.md)) | 16/16 | 10,0 sn | 10/12 / 12/12 |
+| Bağımsız set, düşünme modu kapalı ([rapor](eval/results/holdout/report.md)) | **10/12** (elle okumada 11/12 doğru) | 1,5 sn | 9/9 / 9/9 |
 
 *Arama isabeti:* beklenen kaynağın ilk 8 arama sonucunda olup olmadığı (sürüm çözümünden önce). Modelin bağlamı da
 sürüm çözümünden sonra 8 bölümdür, dolayısıyla metrik iyimser değil, eşit ya da daha katıdır.
+
+### Bağımsız set
+
+12 soru ilk koşudan önce yazıldı ve koşmadan önce ayrı bir commit olarak kaydedildi. Eşik, prompt veya `TopK` bu sete
+göre değiştirilmedi; beklentiler de sonuçlar görüldükten sonra düzeltilmedi.
+
+**İçerik:**
+- **Normal:** Türkçe karaktersiz yazım, sayısal sınır (749 TL'lik sipariş), garanti süresi hesabı, kısmi yanıt
+  (Wi-Fi + Alexa) ve iki konulu soru.
+- **Cevapsız:** alana yakın üç soru.
+- **Çelişkili:** SSS–politika çelişkisinin farklı bir ifadesi ve üç eski sürüm tuzağı.
+
+**Sonuç:** otomatik kontrollerle 10/12. Kalan iki soru:
+
+- **H03, gerçek hata (gereksiz ret).** "Termostatımı 2 yıl 3 ay önce aldım … garanti kapsamında mı?" sorusunu model
+  `ModelInsufficientContext` ile reddetti. Oysa kendi `missingInformation` açıklamasında "2 yıllık garanti süresi
+  dolmuştur" diyor; kuralı bildiği hâlde arızanın nedeni bilinmediği için reddediyor. Yanlış bilgi vermiyor ama
+  gereksiz yere reddediyor. Kalibrasyonda N03 için eklenen prompt kuralı bu eğilimi azaltmıştı; bağımsız set eğilimin
+  sürdüğünü gösteriyor.
+- **H05, değerlendirme hatası.** Yanıt doğru ("Kargoya verilmiş siparişlerde adres değişikliği yapılamamaktadır"), ama
+  beklentideki "yapılamaz" ifadesi bu çekimle eşleşmiyor. Bu, ifade kontrollerinin sınırını gösteren bir örnek. Setin
+  bağımsızlığını korumak için beklenti değiştirilmedi.
+
+**Elle okuma:** kalibrasyon setindeki 16 yanıtın hepsi, bağımsız setteki 12 yanıtın 11'i doğru.
 
 Bulgular:
 
 - **Hibrit aramanın katkısı ölçülebilir.** "Paramı ne zaman geri alırım?" (N08) sorusunda "iade" kelimesi geçmiyor.
   "Para İadesi" bölümünü yalnızca vektör arama buluyor; BM25 tek başına iki soruda beklenen kaynağı kaçırıyor.
 - **Düşünme modu bu sette doğruluğu artırmadı, gecikmeyi ~7 kat yükseltti.** Soru başına üretilen token sayısı
-  60–280'den 654–2618'e çıkıyor. Bu yüzden varsayılan kapalı.
+  60–286'dan 505–3323'e çıkıyor. Bu yüzden varsayılan kapalı.
 - **Kapı 1 eşiği veriyle seçildi.** Yanıtlanabilir sorularda en düşük kosinüs 0,60; Kapı 1'de reddedilen sorularda
   0,45–0,46. Alana yakın cevapsız sorular (garanti uzatma paketi, HomeKit: 0,61–0,62) benzerlikle ayrılamıyor. Bunları
   Kapı 2'de model doğru şekilde reddediyor.
@@ -377,12 +448,17 @@ Bulgular:
   Bir de değerlendirme bakımı yapıldı: C04'ün doğru yanıtı "Lumora **karşılamaktadır**" dediği için "Lumora karşılar"
   ifade kontrolü kök biçimine ("Lumora karşıla") genişletildi. Soruları yazan, dokümanları da yazan kişi olduğundan
   set küçük ve iyimser bir ölçüttür (bkz. sınırlar).
-- Gecikme notu: değerlendirme uzak, tek slotlu ve paylaşılan bir sunucuda koştu. Raporlanan son koşuda en uzun
-  yanıt 3,0 sn sürdü, ancak önceki koşularda ilk istek (ısınma) veya o anki yük tek soruları 15–35 sn'ye çıkardı.
+- **Dış inceleme sonrası sıkılaştırma.** Bir kod incelemesi iki şeyi gösterdi. Birincisi, eski kontroller yanlış bir
+  cevabı geçirebiliyordu: "750 TL üzerindeki siparişlerde kargo ücretsiz değildir; 999 TL alınır." N04'ten geçerdi.
+  Kontroller sıkılaştırıldı ve bu örnek artık bir birim testi. İkincisi, cevaplama hattı doğrulanamayan alıntıları ve
+  öncelik ihlallerini durdurmuyordu. Yukarıdaki sonuçlar bu düzeltmelerden sonraki koşulardır. Kaydedilmiş eski
+  koşulardaki 33 alıntının tamamı yeni doğrulama kurallarından da geçti.
+- Gecikme notu: değerlendirme uzak, tek slotlu ve paylaşılan bir sunucuda koştu. Düşünme modu kapalı koşularda en uzun
+  yanıt 2,6 sn sürdü. Düşünme modu açık koşuda ise ilk istek (ısınma) ve o anki yük tek soruları 35–37 sn'ye çıkardı.
   Raporda bu yüzden medyan da veriliyor.
 
 Yeniden üretmek için: API'yi çalıştırın → `dotnet run --project tools/SupportAssistant.Eval`
-(`--label ad` başka bir klasöre yazar, `--base-url` farklı adres).
+(`--questions` başka bir soru dosyası, `--label ad` başka bir klasöre yazar, `--base-url` farklı adres).
 
 ---
 
@@ -396,7 +472,8 @@ Yeniden üretmek için: API'yi çalıştırın → `dotnet run --project tools/S
 | Hibrit arama: BM25 + bge-m3, RRF | Eş anlamlı ve parafraz sorular + kesin terim ve sayılar; ölçülen katkı 10/12 → 12/12 | Yalnız vektör (sayı/kod kaçırır), yalnız BM25 |
 | Bellek içi indeks, SQLite + EF Core | ~50 bölüm için kaba kuvvet aramanın maliyeti ihmal edilebilir; mevcut altyapı | Qdrant / pgvector / sqlite-vec (bu ölçekte gereksiz işletim yükü) |
 | Sürüm çelişkisini kod çözer | Açıklanabilir, test edilebilir; eski kural modele hiç ulaşmaz | Kararı yalnızca prompt'a bırakmak |
-| Üç kapılı "bilgi yok" | Ucuz ön eleme + model kararı + atıf doğrulaması | Yalnızca "bilmiyorsan söyle" talimatı |
+| Kaynaklar arası öncelik kuralını sunucu zorlar | Model kuralı çiğnerse kaybeden bölüm bağlamdan çıkarılır ve yanıt yeniden üretilir; ihlal sürerse ret | Kuralı yalnızca prompt'ta tarif edip ihlali raporlamak |
+| Üç kapılı "bilgi yok" | Ucuz ön eleme + model kararı + doğrulanmış alıntı şartı; düzeltilebilir hatalar için tek düzeltme turu | Yalnızca "bilmiyorsan söyle" talimatı; ilk hatada hemen ret |
 | JSON şemalı çıktı, kısa bölüm kimlikleri `[C1…]` | Ayrıştırma garantili; uydurma kimlik riski düşük | Serbest metin + regex |
 | Deterministik değerlendirme + arama isabeti | Tekrarlanabilir; hatanın aramada mı üretimde mi olduğu ayrılır | LLM-as-judge (aynı modelle zayıf, tekrarlanamaz) |
 | FastEndpoints 8, MediatR 14, EF Core 10.0.12 | Son kararlı sürümler; `Directory.Packages.props` ile merkezi yönetim | — |
@@ -409,10 +486,20 @@ Not: MediatR 13'ten itibaren ticari lisans modeline geçti. Anahtar olmadan çal
 
 ## Bilinen sınırlar
 
-- **Küçük ve iyimser değerlendirme:** 16 soru; sorular ve dokümanlar aynı kişi tarafından yazıldı. Eşikler bu setle
-  kalibre edildi, yeni sorularda aşırı uyum riski var.
-- **Kaynaklar arası çelişki modele bağlı:** kural prompt'ta, denetim sunucuda (`ruleSatisfied`) ama garanti yok.
-  Aynı doküman ailesindeki sürüm çelişkisi ise deterministik.
+- **Küçük değerlendirme:**
+  - 16 kalibrasyon ve 12 bağımsız soru var. İki seti de dokümanları yazan kişi yazdı.
+  - Bağımsız set ayar için kullanılmadı, ama yazar yanlılığı ondan da tamamen arınmış değil.
+  - Eşikler kalibrasyon setiyle seçildi.
+- **Kontroller anlamsal doğruluğun kanıtı değil:** ifade ve sayı kontrolleri yanlış kararları ve uydurma sayıları
+  yakalar, ama doğru bir yanıtı da kaçırabilir (H05). Yanıtlar ayrıca elle okundu.
+- **Doğrulanmış alıntı, yanıtın her iddiasını kanıtlamaz:** sunucu, alıntılanan metnin atıf yapılan bölümde geçtiğini
+  doğrular. Yanıt cümlesindeki her iddianın bu alıntılardan çıktığını ayrıca denetlemez.
+- **Kaynaklar arası çelişki tespiti modele bağlı:** model bir çelişkiyi bildirdiğinde sunucu öncelik kuralını zorlar.
+  Modelin fark etmediği bir çelişkiyi ise göremez. Aynı doküman ailesindeki sürüm çelişkisi tamamen deterministiktir.
+- **Gereksiz ret eğilimi:** model, açık bir kural soruyu yanıtladığı hâlde müşteriye özgü bir ayrıntı eksik diye zaman
+  zaman reddediyor (bağımsız sette H03). Bu yanlış bilgiye değil, kaçırılmış bir yanıta yol açar.
+- **Sağlık ucu yapılandırmayı gösterir:** `ok`, model sunucusunun o an erişilebilir olduğu anlamına gelmez. Erişim
+  sorunu ilk soruda `503` olarak görünür.
 - **Türkçe morfoloji:** F5 önek kökleme basit bir yöntem; tam morfolojik çözümleme (ör. Zemberek) yok.
   bge-m3 Türkçe karaktersiz yazımda zayıf; bu açığı BM25 tarafındaki harf katlama kapatıyor.
 - **Tarihsel soru yok:** "2024'te iade süresi neydi?" gibi sorularda da her zaman yürürlükteki sürüm kullanılır.
@@ -433,8 +520,9 @@ SupportAssistant.slnx                       .NET 10 solution (slnx)
 Directory.Build.props · Directory.Packages.props · global.json
 .env.example                                 örnek ortam değişkenleri
 knowledge-base/                              10 kurgu doküman (markdown + YAML front matter)
-eval/questions.json                          16 değerlendirme sorusu
-eval/results/                                report.md (beklenen ↔ gerçek), results.json, thinking-on/
+eval/questions.json                          16 kalibrasyon sorusu
+eval/questions-holdout.json                  12 bağımsız soru (ayar için kullanılmadı)
+eval/results/                                report.md (beklenen ↔ gerçek), results.json, thinking-on/, holdout/
 src/API/SupportAssistant.API                 FastEndpoints uçları, DI, Program.cs
 src/Modules/Knowledge/Knowledge.Domain        varlıklar, repository arayüzleri
 src/Modules/Knowledge/Knowledge.Application   komut/sorgu, iş kuralları, cevaplama politikaları, portlar

@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-02T01:04:10.4810769+03:00",
+  "generatedAt": "2026-10-02T07:47:38.6485682+03:00",
   "baseUrl": "http://localhost:5031",
   "label": null,
   "status": {
@@ -9,7 +9,7 @@
       "documents": 10,
       "sections": 53,
       "retrievalMode": "hybrid",
-      "builtAtUtc": "2026-10-01T22:03:44.3693089Z"
+      "builtAtUtc": "2026-10-02T04:46:38.961904Z"
     },
     "llm": {
       "configured": true,
@@ -44,7 +44,12 @@
             ]
           ],
           "mustNotContain": null,
-          "discardedVersions": null
+          "discardedVersions": null,
+          "sectionsAnyOf": [
+            "Kurulumdan Önce",
+            "Cihaz Wi-Fi Ağına Bağlanmıyor"
+          ],
+          "expectConflict": null
         }
       },
       "statusCode": 200,
@@ -62,18 +67,33 @@
           "detail": "beklenen: kurulum-kilavuzu-lumora-termo | sorun-giderme-baglanti; atıf: kurulum-kilavuzu-lumora-termo, sorun-giderme-baglanti"
         },
         {
+          "name": "bölüm",
+          "passed": true,
+          "detail": "beklenen: Kurulumdan Önce | Cihaz Wi-Fi Ağına Bağlanmıyor; atıf: 2. Kurulumdan Önce, 2. Cihaz Wi-Fi Ağına Bağlanmıyor"
+        },
+        {
+          "name": "alıntı doğrulandı",
+          "passed": true,
+          "detail": "doğrulanmamış: —"
+        },
+        {
+          "name": "sayılar kaynakta",
+          "passed": true,
+          "detail": "atıf yapılan dokümanlarda olmayan: —"
+        },
+        {
           "name": "içerik",
           "passed": true,
           "detail": "'2.4 GHz' | '2,4 GHz'"
         }
       ],
-      "latencyMs": 3034,
+      "latencyMs": 1567,
       "lexicalHit": true,
       "hybridHit": true,
       "answer": {
         "question": "Lumora Termo'yu kurarken hangi Wi-Fi ağını kullanmalıyım?",
         "answerable": true,
-        "answer": "Lumora Termo kurulumu için yalnızca 2.4 GHz Wi-Fi ağlarını kullanmalısınız; cihaz 5 GHz ağları desteklememektedir.",
+        "answer": "Lumora Termo kurulumu için yalnızca 2.4 GHz Wi-Fi ağını kullanmalısınız; cihaz 5 GHz ağları desteklemez.",
         "sources": [
           {
             "documentId": "kurulum-kilavuzu-lumora-termo",
@@ -172,9 +192,10 @@
             }
           ],
           "model": "gemma-4-26b-a4b-it",
-          "latencyMs": 2657,
-          "inputTokens": 1602,
-          "outputTokens": 179
+          "latencyMs": 1532,
+          "inputTokens": 1612,
+          "outputTokens": 167,
+          "modelCalls": 1
         }
       }
     },
@@ -195,10 +216,23 @@
             [
               "Wi-Fi",
               "kablosuz"
+            ],
+            [
+              "yok",
+              "olmadığını",
+              "bulunmadığını",
+              "kopuk",
+              "bağlı değil",
+              "kurulamadığını",
+              "kesildiğini"
             ]
           ],
           "mustNotContain": null,
-          "discardedVersions": null
+          "discardedVersions": null,
+          "sectionsAnyOf": [
+            "LED Gösterge Renkleri"
+          ],
+          "expectConflict": null
         }
       },
       "statusCode": 200,
@@ -216,12 +250,27 @@
           "detail": "beklenen: sorun-giderme-baglanti; atıf: sorun-giderme-baglanti"
         },
         {
+          "name": "bölüm",
+          "passed": true,
+          "detail": "beklenen: LED Gösterge Renkleri; atıf: 1. LED Gösterge Renkleri"
+        },
+        {
+          "name": "alıntı doğrulandı",
+          "passed": true,
+          "detail": "doğrulanmamış: —"
+        },
+        {
           "name": "içerik",
           "passed": true,
           "detail": "'Wi-Fi' | 'kablosuz'"
+        },
+        {
+          "name": "içerik",
+          "passed": true,
+          "detail": "'yok' | 'olmadığını' | 'bulunmadığını' | 'kopuk' | 'bağlı değil' | 'kurulamadığını' | 'kesildiğini'"
         }
       ],
-      "latencyMs": 1540,
+      "latencyMs": 1449,
       "lexicalHit": true,
       "hybridHit": true,
       "answer": {
@@ -314,9 +363,10 @@
             }
           ],
           "model": "gemma-4-26b-a4b-it",
-          "latencyMs": 1405,
-          "inputTokens": 1523,
-          "outputTokens": 104
+          "latencyMs": 1440,
+          "inputTokens": 1533,
+          "outputTokens": 104,
+          "modelCalls": 1
         }
       }
     },
@@ -344,7 +394,11 @@
             ]
           ],
           "mustNotContain": null,
-          "discardedVersions": null
+          "discardedVersions": null,
+          "sectionsAnyOf": [
+            "Garanti Kapsamı Dışındaki Durumlar"
+          ],
+          "expectConflict": null
         }
       },
       "statusCode": 200,
@@ -362,18 +416,28 @@
           "detail": "beklenen: garanti-kosullari; atıf: garanti-kosullari"
         },
         {
+          "name": "bölüm",
+          "passed": true,
+          "detail": "beklenen: Garanti Kapsamı Dışındaki Durumlar; atıf: 3. Garanti Kapsamı Dışındaki Durumlar"
+        },
+        {
+          "name": "alıntı doğrulandı",
+          "passed": true,
+          "detail": "doğrulanmamış: —"
+        },
+        {
           "name": "içerik",
           "passed": true,
           "detail": "'kapsam dışı' | 'kapsamı dışında' | 'kapsamında değil' | 'kapsamına girmez' | 'karşılanmaz' | 'hayır'"
         }
       ],
-      "latencyMs": 1314,
+      "latencyMs": 1309,
       "lexicalHit": true,
       "hybridHit": true,
       "answer": {
         "question": "Cihazıma su döküldü ve artık çalışmıyor. Garanti kapsamında ücretsiz onarılır mı?",
         "answerable": true,
-        "answer": "Maalesef, sıvı teması veya su hasarı gibi durumlar garanti kapsamı dışında yer almaktadır.",
+        "answer": "Maalesef, sıvı teması, nem veya su hasarı gibi durumlar garanti kapsamı dışında yer almaktadır.",
         "sources": [
           {
             "documentId": "garanti-kosullari",
@@ -461,9 +525,10 @@
             }
           ],
           "model": "gemma-4-26b-a4b-it",
-          "latencyMs": 1300,
-          "inputTokens": 1320,
-          "outputTokens": 100
+          "latencyMs": 1301,
+          "inputTokens": 1330,
+          "outputTokens": 102,
+          "modelCalls": 1
         }
       }
     },
@@ -483,10 +548,19 @@
           "mustContain": [
             [
               "750"
+            ],
+            [
+              "ücretsiz"
             ]
           ],
-          "mustNotContain": null,
-          "discardedVersions": null
+          "mustNotContain": [
+            "ücretsiz değil"
+          ],
+          "discardedVersions": null,
+          "sectionsAnyOf": [
+            "Kargo Ücreti"
+          ],
+          "expectConflict": null
         }
       },
       "statusCode": 200,
@@ -504,12 +578,37 @@
           "detail": "beklenen: kargo-ve-teslimat; atıf: kargo-ve-teslimat"
         },
         {
+          "name": "bölüm",
+          "passed": true,
+          "detail": "beklenen: Kargo Ücreti; atıf: 2. Kargo Ücreti"
+        },
+        {
+          "name": "alıntı doğrulandı",
+          "passed": true,
+          "detail": "doğrulanmamış: —"
+        },
+        {
+          "name": "sayılar kaynakta",
+          "passed": true,
+          "detail": "atıf yapılan dokümanlarda olmayan: —"
+        },
+        {
           "name": "içerik",
           "passed": true,
           "detail": "'750'"
+        },
+        {
+          "name": "içerik",
+          "passed": true,
+          "detail": "'ücretsiz'"
+        },
+        {
+          "name": "yasak ifade",
+          "passed": true,
+          "detail": "'ücretsiz değil'"
         }
       ],
-      "latencyMs": 1166,
+      "latencyMs": 1181,
       "lexicalHit": true,
       "hybridHit": true,
       "answer": {
@@ -600,9 +699,10 @@
             }
           ],
           "model": "gemma-4-26b-a4b-it",
-          "latencyMs": 1159,
-          "inputTokens": 1205,
-          "outputTokens": 94
+          "latencyMs": 1173,
+          "inputTokens": 1215,
+          "outputTokens": 94,
+          "modelCalls": 1
         }
       }
     },
@@ -626,7 +726,11 @@
             ]
           ],
           "mustNotContain": null,
-          "discardedVersions": null
+          "discardedVersions": null,
+          "sectionsAnyOf": [
+            "Eskalasyon Kriterleri"
+          ],
+          "expectConflict": null
         }
       },
       "statusCode": 200,
@@ -644,18 +748,28 @@
           "detail": "beklenen: sikayet-eskalasyon-proseduru; atıf: sikayet-eskalasyon-proseduru"
         },
         {
+          "name": "bölüm",
+          "passed": true,
+          "detail": "beklenen: Eskalasyon Kriterleri; atıf: 3. Eskalasyon Kriterleri"
+        },
+        {
+          "name": "alıntı doğrulandı",
+          "passed": true,
+          "detail": "doğrulanmamış: —"
+        },
+        {
           "name": "içerik",
           "passed": true,
           "detail": "'L2' | 'Seviye 2'"
         }
       ],
-      "latencyMs": 1432,
+      "latencyMs": 1435,
       "lexicalHit": true,
       "hybridHit": true,
       "answer": {
         "question": "Bir müşteri aynı arızayı üçüncü kez bildirirse talebi nasıl ele almalıyım?",
         "answerable": true,
-        "answer": "Aynı arıza üçüncü kez bildirildiğinde talebi doğrudan L2'ye aktarmalı ve bir L2 uzmanını vaka sahibi olarak atamalısınız.",
+        "answer": "Aynı arıza üçüncü kez bildirildiğinde, talebi doğrudan L2'ye aktarmalı ve bir L2 uzmanını vaka sahibi olarak atamalısınız.",
         "sources": [
           {
             "documentId": "sikayet-eskalasyon-proseduru",
@@ -741,9 +855,10 @@
             }
           ],
           "model": "gemma-4-26b-a4b-it",
-          "latencyMs": 1423,
-          "inputTokens": 1422,
-          "outputTokens": 129
+          "latencyMs": 1426,
+          "inputTokens": 1432,
+          "outputTokens": 130,
+          "modelCalls": 1
         }
       }
     },
@@ -767,7 +882,11 @@
             ]
           ],
           "mustNotContain": null,
-          "discardedVersions": null
+          "discardedVersions": null,
+          "sectionsAnyOf": [
+            "Fabrika Ayarlarına Döndürme"
+          ],
+          "expectConflict": null
         }
       },
       "statusCode": 200,
@@ -785,18 +904,33 @@
           "detail": "beklenen: kurulum-kilavuzu-lumora-termo; atıf: kurulum-kilavuzu-lumora-termo"
         },
         {
+          "name": "bölüm",
+          "passed": true,
+          "detail": "beklenen: Fabrika Ayarlarına Döndürme; atıf: 4. Fabrika Ayarlarına Döndürme"
+        },
+        {
+          "name": "alıntı doğrulandı",
+          "passed": true,
+          "detail": "doğrulanmamış: —"
+        },
+        {
+          "name": "sayılar kaynakta",
+          "passed": true,
+          "detail": "atıf yapılan dokümanlarda olmayan: —"
+        },
+        {
           "name": "içerik",
           "passed": true,
           "detail": "'10 saniye' | '10 sn'"
         }
       ],
-      "latencyMs": 1665,
+      "latencyMs": 1469,
       "lexicalHit": true,
       "hybridHit": true,
       "answer": {
         "question": "termostati fabrika ayarlarina nasil donduruyorum",
         "answerable": true,
-        "answer": "Cihazın sağ yanındaki sıfırlama düğmesine 10 saniye boyunca basılı tutun. LED turuncu yanıp sönmeye başladığında düğmeyi bırakın; bu işlem cihazın yeniden başlamasını ve tüm ayarların silinmesini sağlayacaktır.",
+        "answer": "Cihazın sağ yanındaki sıfırlama düğmesine 10 saniye boyunca basılı tutmanız gerekmektedir. LED turuncu yanıp sönmeye başladığında düğmeyi bırakabilirsiniz; bu işlemden sonra cihaz yeniden başlar ve tüm ayarlar silinir.",
         "sources": [
           {
             "documentId": "kurulum-kilavuzu-lumora-termo",
@@ -883,9 +1017,10 @@
             }
           ],
           "model": "gemma-4-26b-a4b-it",
-          "latencyMs": 1660,
-          "inputTokens": 1516,
-          "outputTokens": 172
+          "latencyMs": 1461,
+          "inputTokens": 1526,
+          "outputTokens": 174,
+          "modelCalls": 1
         }
       }
     },
@@ -913,7 +1048,12 @@
             ]
           ],
           "mustNotContain": null,
-          "discardedVersions": null
+          "discardedVersions": null,
+          "sectionsAnyOf": [
+            "Teslimat Süresi",
+            "Kurulumdan Önce"
+          ],
+          "expectConflict": null
         }
       },
       "statusCode": 200,
@@ -929,6 +1069,21 @@
           "name": "kaynaklar",
           "passed": true,
           "detail": "beklenen: kargo-ve-teslimat + kurulum-kilavuzu-lumora-termo; atıf: kargo-ve-teslimat, kurulum-kilavuzu-lumora-termo"
+        },
+        {
+          "name": "bölüm",
+          "passed": true,
+          "detail": "beklenen: Teslimat Süresi | Kurulumdan Önce; atıf: 1. Teslimat Süresi, 2. Kurulumdan Önce"
+        },
+        {
+          "name": "alıntı doğrulandı",
+          "passed": true,
+          "detail": "doğrulanmamış: —"
+        },
+        {
+          "name": "sayılar kaynakta",
+          "passed": true,
+          "detail": "atıf yapılan dokümanlarda olmayan: —"
         },
         {
           "name": "içerik",
@@ -947,7 +1102,7 @@
       "answer": {
         "question": "Sipariş ettiğim termostat ne zaman elime ulaşır ve kurulum için hangi Wi-Fi ağı gerekir?",
         "answerable": true,
-        "answer": "Siparişleriniz ödeme onayından sonra 1–2 iş günü içinde kargoya verilir ve bulunduğunuz bölgeye göre 2–4 iş günü içinde teslim edilir. Kurulum için yalnızca 2.4 GHz Wi-Fi ağı gereklidir; cihaz 5 GHz ağları desteklemez.",
+        "answer": "Siparişleriniz ödeme onayından sonra 1–2 iş günü içinde kargoya verilir ve bulunduğunuz bölgeye göre 2–4 iş günü içinde teslim edilir. Kurulum için yalnızca 2.4 GHz Wi-Fi ağı gerekmektedir; cihaz 5 GHz ağları desteklemez.",
         "sources": [
           {
             "documentId": "kargo-ve-teslimat",
@@ -1046,8 +1201,9 @@
           ],
           "model": "gemma-4-26b-a4b-it",
           "latencyMs": 2063,
-          "inputTokens": 1581,
-          "outputTokens": 232
+          "inputTokens": 1591,
+          "outputTokens": 228,
+          "modelCalls": 1
         }
       }
     },
@@ -1075,7 +1231,11 @@
           "mustNotContain": [
             "10 iş günü"
           ],
-          "discardedVersions": null
+          "discardedVersions": null,
+          "sectionsAnyOf": [
+            "Para İadesi"
+          ],
+          "expectConflict": null
         }
       },
       "statusCode": 200,
@@ -1098,6 +1258,21 @@
           "detail": "yok"
         },
         {
+          "name": "bölüm",
+          "passed": true,
+          "detail": "beklenen: Para İadesi; atıf: 6. Para İadesi"
+        },
+        {
+          "name": "alıntı doğrulandı",
+          "passed": true,
+          "detail": "doğrulanmamış: —"
+        },
+        {
+          "name": "sayılar kaynakta",
+          "passed": true,
+          "detail": "atıf yapılan dokümanlarda olmayan: —"
+        },
+        {
           "name": "içerik",
           "passed": true,
           "detail": "'5 iş günü' | 'beş iş günü'"
@@ -1108,13 +1283,13 @@
           "detail": "'10 iş günü'"
         }
       ],
-      "latencyMs": 1807,
+      "latencyMs": 1670,
       "lexicalHit": false,
       "hybridHit": true,
       "answer": {
         "question": "Paramı ne zaman geri alırım?",
         "answerable": true,
-        "answer": "İade edilen ürün depomuza ulaşıp kontrol edildikten sonra, ücretiniz 5 iş günü içinde ödemenin yapıldığı karta veya hesaba iade edilir. Bankanızın iadeyi hesabınıza yansıtma süresi bu 5 iş günlük süreye dahil değildir.",
+        "answer": "İade edilen ürün depomuza ulaşıp kontrol edildikten sonra ücret, 5 iş günü içinde ödemenin yapıldığı karta veya hesaba iade edilir. Bankanızın iadeyi hesabınıza yansıtma süresi bu süreye dahil değildir.",
         "sources": [
           {
             "documentId": "iade-politikasi-v2",
@@ -1124,7 +1299,7 @@
             "status": "active",
             "category": "politika",
             "section": "6. Para İadesi",
-            "quote": "İade edilen ürün depomuza ulaşıp kontrol edildikten sonra ücret, 5 iş günü içinde ödemenin yapıldığı karta veya hesaba iade edilir. Bankanızın iadeyi hesabınıza yansıtma süresi bu süreye dahil değildir.",
+            "quote": "İade edilen ürün depomuza ulaşıp kontrol edildikten sonra ücret, 5 iş günü içinde ödemenin yapıldığı karta veya hesaba iade edilir.",
             "quoteVerified": true
           }
         ],
@@ -1150,7 +1325,7 @@
           ]
         },
         "conflicts": [],
-        "missingInformation": "",
+        "missingInformation": "Müşterinin iade talebinin onaylanıp onaylanmadığı veya ürünün depoya ulaşıp ulaşmadığı bilgisi.",
         "refusalReason": "",
         "diagnostics": {
           "retrievalMode": "hybrid",
@@ -1216,9 +1391,10 @@
             }
           ],
           "model": "gemma-4-26b-a4b-it",
-          "latencyMs": 1796,
-          "inputTokens": 1245,
-          "outputTokens": 180
+          "latencyMs": 1663,
+          "inputTokens": 1255,
+          "outputTokens": 184,
+          "modelCalls": 1
         }
       }
     },
@@ -1235,7 +1411,9 @@
           "forbiddenSources": null,
           "mustContain": null,
           "mustNotContain": null,
-          "discardedVersions": null
+          "discardedVersions": null,
+          "sectionsAnyOf": null,
+          "expectConflict": null
         }
       },
       "statusCode": 200,
@@ -1246,9 +1424,14 @@
           "name": "yanıtlanabilirlik",
           "passed": true,
           "detail": "beklenen: bilgi yok, gerçek: bilgi yok (LowRelevance)"
+        },
+        {
+          "name": "ret sözleşmesi",
+          "passed": true,
+          "detail": "—"
         }
       ],
-      "latencyMs": 25,
+      "latencyMs": 12,
       "lexicalHit": null,
       "hybridHit": null,
       "answer": {
@@ -1274,8 +1457,8 @@
             "kurulum-kilavuzu-lumora-termo",
             "iade-politikasi-v2",
             "garanti-kosullari",
-            "sikayet-eskalasyon-proseduru",
             "destek-kanallari-v2",
+            "sikayet-eskalasyon-proseduru",
             "sss-genel",
             "kargo-ve-teslimat",
             "destek-kanallari-v1",
@@ -1283,9 +1466,10 @@
           ],
           "context": [],
           "model": "",
-          "latencyMs": 18,
+          "latencyMs": 9,
           "inputTokens": null,
-          "outputTokens": null
+          "outputTokens": null,
+          "modelCalls": 0
         }
       }
     },
@@ -1302,7 +1486,9 @@
           "forbiddenSources": null,
           "mustContain": null,
           "mustNotContain": null,
-          "discardedVersions": null
+          "discardedVersions": null,
+          "sectionsAnyOf": null,
+          "expectConflict": null
         }
       },
       "statusCode": 200,
@@ -1313,9 +1499,14 @@
           "name": "yanıtlanabilirlik",
           "passed": true,
           "detail": "beklenen: bilgi yok, gerçek: bilgi yok (ModelInsufficientContext)"
+        },
+        {
+          "name": "ret sözleşmesi",
+          "passed": true,
+          "detail": "—"
         }
       ],
-      "latencyMs": 911,
+      "latencyMs": 946,
       "lexicalHit": null,
       "hybridHit": null,
       "answer": {
@@ -1330,7 +1521,7 @@
           "discarded": []
         },
         "conflicts": [],
-        "missingInformation": "Verilen kaynaklarda ek garanti paketi satın alınabilir mi sorusuna dair bir bilgi bulunmamaktadır.",
+        "missingInformation": "Verilen kaynaklarda ek garanti paketi satın alınıp alınamayacağına dair bir bilgi bulunmamaktadır.",
         "refusalReason": "ModelInsufficientContext",
         "diagnostics": {
           "retrievalMode": "hybrid",
@@ -1396,9 +1587,10 @@
             }
           ],
           "model": "gemma-4-26b-a4b-it",
-          "latencyMs": 905,
-          "inputTokens": 1308,
-          "outputTokens": 60
+          "latencyMs": 942,
+          "inputTokens": 1318,
+          "outputTokens": 60,
+          "modelCalls": 1
         }
       }
     },
@@ -1415,7 +1607,9 @@
           "forbiddenSources": null,
           "mustContain": null,
           "mustNotContain": null,
-          "discardedVersions": null
+          "discardedVersions": null,
+          "sectionsAnyOf": null,
+          "expectConflict": null
         }
       },
       "statusCode": 200,
@@ -1426,9 +1620,14 @@
           "name": "yanıtlanabilirlik",
           "passed": true,
           "detail": "beklenen: bilgi yok, gerçek: bilgi yok (ModelInsufficientContext)"
+        },
+        {
+          "name": "ret sözleşmesi",
+          "passed": true,
+          "detail": "—"
         }
       ],
-      "latencyMs": 999,
+      "latencyMs": 874,
       "lexicalHit": null,
       "hybridHit": null,
       "answer": {
@@ -1443,7 +1642,7 @@
           "discarded": []
         },
         "conflicts": [],
-        "missingInformation": "Verilen kaynaklarda Lumora Termo'nun Apple HomeKit desteği olup olmadığına dair bir bilgi bulunmamaktadır.",
+        "missingInformation": "Lumora Termo'nun Apple HomeKit desteği olup olmadığına dair kaynaklarda bilgi bulunmamaktadır.",
         "refusalReason": "ModelInsufficientContext",
         "diagnostics": {
           "retrievalMode": "hybrid",
@@ -1511,9 +1710,10 @@
             }
           ],
           "model": "gemma-4-26b-a4b-it",
-          "latencyMs": 994,
-          "inputTokens": 1404,
-          "outputTokens": 64
+          "latencyMs": 866,
+          "inputTokens": 1414,
+          "outputTokens": 61,
+          "modelCalls": 1
         }
       }
     },
@@ -1530,7 +1730,9 @@
           "forbiddenSources": null,
           "mustContain": null,
           "mustNotContain": null,
-          "discardedVersions": null
+          "discardedVersions": null,
+          "sectionsAnyOf": null,
+          "expectConflict": null
         }
       },
       "statusCode": 200,
@@ -1541,9 +1743,14 @@
           "name": "yanıtlanabilirlik",
           "passed": true,
           "detail": "beklenen: bilgi yok, gerçek: bilgi yok (LowRelevance)"
+        },
+        {
+          "name": "ret sözleşmesi",
+          "passed": true,
+          "detail": "—"
         }
       ],
-      "latencyMs": 23,
+      "latencyMs": 13,
       "lexicalHit": null,
       "hybridHit": null,
       "answer": {
@@ -1575,9 +1782,10 @@
           ],
           "context": [],
           "model": "",
-          "latencyMs": 17,
+          "latencyMs": 9,
           "inputTokens": null,
-          "outputTokens": null
+          "outputTokens": null,
+          "modelCalls": 0
         }
       }
     },
@@ -1606,7 +1814,11 @@
           ],
           "discardedVersions": [
             "iade-politikasi-v1"
-          ]
+          ],
+          "sectionsAnyOf": [
+            "İade Süresi"
+          ],
+          "expectConflict": null
         }
       },
       "statusCode": 200,
@@ -1629,6 +1841,21 @@
           "detail": "yok"
         },
         {
+          "name": "bölüm",
+          "passed": true,
+          "detail": "beklenen: İade Süresi; atıf: 2. İade Süresi"
+        },
+        {
+          "name": "alıntı doğrulandı",
+          "passed": true,
+          "detail": "doğrulanmamış: —"
+        },
+        {
+          "name": "sayılar kaynakta",
+          "passed": true,
+          "detail": "atıf yapılan dokümanlarda olmayan: —"
+        },
+        {
           "name": "içerik",
           "passed": true,
           "detail": "'30 gün'"
@@ -1644,7 +1871,7 @@
           "detail": "beklenen: iade-politikasi-v1; raporlanan: iade-politikasi-v1"
         }
       ],
-      "latencyMs": 1478,
+      "latencyMs": 1571,
       "lexicalHit": true,
       "hybridHit": true,
       "answer": {
@@ -1732,27 +1959,28 @@
             },
             {
               "label": "C6",
-              "documentId": "iade-politikasi-v2",
-              "version": "2.0",
-              "section": "5. İade Kargo Ücreti"
+              "documentId": "sss-genel",
+              "version": "1.0",
+              "section": "İade > İade kargo ücretini kim öder?"
             },
             {
               "label": "C7",
               "documentId": "iade-politikasi-v2",
               "version": "2.0",
-              "section": "4. İade Talebi Nasıl Oluşturulur?"
+              "section": "5. İade Kargo Ücreti"
             },
             {
               "label": "C8",
-              "documentId": "sss-genel",
-              "version": "1.0",
-              "section": "İade > İade kargo ücretini kim öder?"
+              "documentId": "iade-politikasi-v2",
+              "version": "2.0",
+              "section": "4. İade Talebi Nasıl Oluşturulur?"
             }
           ],
           "model": "gemma-4-26b-a4b-it",
-          "latencyMs": 1470,
-          "inputTokens": 1286,
-          "outputTokens": 149
+          "latencyMs": 1563,
+          "inputTokens": 1296,
+          "outputTokens": 150,
+          "modelCalls": 1
         }
       }
     },
@@ -1782,7 +2010,11 @@
           ],
           "discardedVersions": [
             "iade-politikasi-v1"
-          ]
+          ],
+          "sectionsAnyOf": [
+            "Para İadesi"
+          ],
+          "expectConflict": null
         }
       },
       "statusCode": 200,
@@ -1805,6 +2037,21 @@
           "detail": "yok"
         },
         {
+          "name": "bölüm",
+          "passed": true,
+          "detail": "beklenen: Para İadesi; atıf: 6. Para İadesi"
+        },
+        {
+          "name": "alıntı doğrulandı",
+          "passed": true,
+          "detail": "doğrulanmamış: —"
+        },
+        {
+          "name": "sayılar kaynakta",
+          "passed": true,
+          "detail": "atıf yapılan dokümanlarda olmayan: —"
+        },
+        {
           "name": "içerik",
           "passed": true,
           "detail": "'5 iş günü' | 'beş iş günü'"
@@ -1820,7 +2067,7 @@
           "detail": "beklenen: iade-politikasi-v1; raporlanan: iade-politikasi-v1"
         }
       ],
-      "latencyMs": 1495,
+      "latencyMs": 1460,
       "lexicalHit": true,
       "hybridHit": true,
       "answer": {
@@ -1928,9 +2175,10 @@
             }
           ],
           "model": "gemma-4-26b-a4b-it",
-          "latencyMs": 1486,
-          "inputTokens": 1283,
-          "outputTokens": 154
+          "latencyMs": 1456,
+          "inputTokens": 1293,
+          "outputTokens": 155,
+          "modelCalls": 1
         }
       }
     },
@@ -1963,7 +2211,12 @@
           ],
           "discardedVersions": [
             "destek-kanallari-v1"
-          ]
+          ],
+          "sectionsAnyOf": [
+            "Canlı Sohbet",
+            "Telefon Desteği"
+          ],
+          "expectConflict": null
         }
       },
       "statusCode": 200,
@@ -1986,6 +2239,21 @@
           "detail": "yok"
         },
         {
+          "name": "bölüm",
+          "passed": true,
+          "detail": "beklenen: Canlı Sohbet | Telefon Desteği; atıf: 1. Canlı Sohbet, 2. Telefon Desteği"
+        },
+        {
+          "name": "alıntı doğrulandı",
+          "passed": true,
+          "detail": "doğrulanmamış: —"
+        },
+        {
+          "name": "sayılar kaynakta",
+          "passed": true,
+          "detail": "atıf yapılan dokümanlarda olmayan: —"
+        },
+        {
           "name": "içerik",
           "passed": true,
           "detail": "'7/24' | '7 gün' | '24 saat' | 'her gün' | 'hafta sonu dahil'"
@@ -2001,7 +2269,7 @@
           "detail": "beklenen: destek-kanallari-v1; raporlanan: destek-kanallari-v1"
         }
       ],
-      "latencyMs": 2055,
+      "latencyMs": 1997,
       "lexicalHit": true,
       "hybridHit": true,
       "answer": {
@@ -2084,15 +2352,15 @@
             },
             {
               "label": "C3",
-              "documentId": "sikayet-eskalasyon-proseduru",
-              "version": "1.0",
-              "section": "1. Amaç ve Kapsam"
-            },
-            {
-              "label": "C4",
               "documentId": "destek-kanallari-v2",
               "version": "2.0",
               "section": "3. E-posta Desteği"
+            },
+            {
+              "label": "C4",
+              "documentId": "sikayet-eskalasyon-proseduru",
+              "version": "1.0",
+              "section": "1. Amaç ve Kapsam"
             },
             {
               "label": "C5",
@@ -2120,9 +2388,10 @@
             }
           ],
           "model": "gemma-4-26b-a4b-it",
-          "latencyMs": 2046,
-          "inputTokens": 1298,
-          "outputTokens": 246
+          "latencyMs": 1989,
+          "inputTokens": 1308,
+          "outputTokens": 246,
+          "modelCalls": 1
         }
       }
     },
@@ -2155,7 +2424,16 @@
           ],
           "discardedVersions": [
             "iade-politikasi-v1"
-          ]
+          ],
+          "sectionsAnyOf": [
+            "İade Kargo Ücreti"
+          ],
+          "expectConflict": {
+            "chosen": "iade-politikasi-v2",
+            "rejected": [
+              "sss-genel"
+            ]
+          }
         }
       },
       "statusCode": 200,
@@ -2178,6 +2456,16 @@
           "detail": "yok"
         },
         {
+          "name": "bölüm",
+          "passed": true,
+          "detail": "beklenen: İade Kargo Ücreti; atıf: 5. İade Kargo Ücreti"
+        },
+        {
+          "name": "alıntı doğrulandı",
+          "passed": true,
+          "detail": "doğrulanmamış: —"
+        },
+        {
           "name": "içerik",
           "passed": true,
           "detail": "'ücretsiz' | 'Lumora karşıla' | 'Lumora tarafından karşılan' | 'ücret alınmaz'"
@@ -2191,15 +2479,20 @@
           "name": "eski sürüm elendi",
           "passed": true,
           "detail": "beklenen: iade-politikasi-v1; raporlanan: iade-politikasi-v1"
+        },
+        {
+          "name": "çelişki kaydı",
+          "passed": true,
+          "detail": "beklenen: iade-politikasi-v2 > sss-genel; raporlanan: iade-politikasi-v2 > sss-genel (kurala uygun: evet)"
         }
       ],
-      "latencyMs": 2756,
+      "latencyMs": 2578,
       "lexicalHit": true,
       "hybridHit": true,
       "answer": {
         "question": "İade kargo ücretini kim öder?",
         "answerable": true,
-        "answer": "İade kargosu ücretsizdir; iade kodunu kullanarak anlaşmalı kargo firmamızla gönderdiğiniz iadelerin kargo ücretini Lumora karşılar.",
+        "answer": "İade kargo ücreti, iade kodunu kullanarak anlaşmalı kargo firmamızla gönderdiğiniz iadeler için Lumora tarafından karşılanmaktadır ve ücretsizdir.",
         "sources": [
           {
             "documentId": "iade-politikasi-v2",
@@ -2253,7 +2546,7 @@
                 "section": "İade > İade kargo ücretini kim öder?"
               }
             ],
-            "reason": "C2 (Politika, sürüm 2.0, 2025-06-01) ile C1 (SSS, sürüm 1.0, 2024-02-01) arasında çelişki bulunmaktadır. Politika dokümanı SSS'den daha önceliklidir ve daha yeni bir yürürlük tarihine sahiptir.",
+            "reason": "C2 (İade ve Para İadesi Politikası | sürüm 2.0 | yürürlük 2025-06-01) daha yeni bir yürürlük tarihine sahip olduğu için C1'den (Sıkça Sorulan Sorular | sürüm 1.0 | yürürlük 2024-02-01) daha önceliklidir.",
             "ruleSatisfied": true
           }
         ],
@@ -2320,9 +2613,10 @@
             }
           ],
           "model": "gemma-4-26b-a4b-it",
-          "latencyMs": 2744,
-          "inputTokens": 1216,
-          "outputTokens": 280
+          "latencyMs": 2568,
+          "inputTokens": 1226,
+          "outputTokens": 286,
+          "modelCalls": 1
         }
       }
     }

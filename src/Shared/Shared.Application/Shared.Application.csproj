@@ -4,4 +4,15 @@
     <ProjectReference Include="..\Shared.Kernel\Shared.Kernel.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- Kullanıcıya dönen bütün Türkçe metinler; Messages gömülü kaynak olarak okur. Ad sabittir: dosya adına dil eki
+         (".tr") konmaz, aksi hâlde MSBuild dosyayı ayrı bir uydu derlemeye (satellite assembly) taşırdı. -->
+    <EmbeddedResource Include="Common\Resources\messages.json" LogicalName="Shared.Application.Common.Resources.messages.json" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Birim testleri, mesaj dosyasındaki her metnin bir Messages özelliğinde karşılığı olduğunu doğrular. -->
+    <InternalsVisibleTo Include="SupportAssistant.UnitTests" />
+  </ItemGroup>
+
 </Project>

@@ -1,0 +1,61 @@
+{
+  "Knowledge": {
+    "Reindexed": "Bilgi tabanı indekslendi.",
+    "KnowledgeBaseEmpty": "Bilgi tabanı klasöründe doküman bulunamadı.",
+    "KnowledgeBaseUnreadable": "Bilgi tabanı dosyaları okunamadı; ayrıntılar sunucu loglarında.",
+    "DuplicateDocumentId": "Aynı doküman kimliği birden fazla dosyada kullanılmış: {0}",
+    "EmbeddingUnavailable": "Embedding servisine ulaşılamadı; arama yalnızca anahtar kelime (BM25) moduyla çalışıyor.",
+    "IndexNotReady": "Bilgi tabanı henüz hazır değil. Biraz sonra tekrar deneyin veya POST /v1/documents/reindex çağırın.",
+    "DocumentNotFound": "Doküman bulunamadı.",
+    "QueryRequired": "Arama ifadesi boş olamaz.",
+    "QueryTooLong": "Arama ifadesi en fazla {0} karakter olabilir.",
+    "TopKOutOfRange": "topK 1 ile {0} arasında olmalıdır.",
+    "RetrievalModeInvalid": "mode yalnızca 'lexical' veya 'hybrid' olabilir.",
+    "QuestionRequired": "Soru boş olamaz.",
+    "QuestionTooLong": "Soru en fazla {0} karakter olabilir.",
+    "NotEnoughInformation": "Bu soruyu yanıtlamak için dokümanlarda yeterli bilgi bulunamadı.",
+    "LlmUnavailable": "Dil modeli servisine şu anda ulaşılamıyor. Lütfen daha sonra tekrar deneyin.",
+    "LlmInvalidOutput": "Dil modeli geçerli bir yanıt üretemedi. Lütfen tekrar deneyin.",
+    "PromptInjectionRefused": "Soru, asistanın çalışma talimatlarını değiştirmeye yönelik ifadeler içerdiği için yanıtlanmadı. Lütfen yalnızca destek sorunuzu yazın.",
+    "UnsafeOutputRefused": "Üretilen yanıt güvenlik denetiminden geçmediği için gösterilmedi. Lütfen sorunuzu farklı bir şekilde yeniden sorun."
+  },
+  "Answering": {
+    "VersionRule": "Aynı doküman ailesinde, yürürlük tarihi bugün veya daha önce olan en yeni sürüm seçilir; 'superseded' işaretli sürüm seçilmez.",
+    "PrecedenceRule": "Politika ve prosedür dokümanları kılavuzlardan, kılavuzlar SSS'den önceliklidir; aynı türde yürürlük tarihi daha yeni olan geçerlidir.",
+    "NotYetInEffect": "Yürürlük tarihi ({0}) henüz gelmedi.",
+    "NoVersionInEffect": "Bu dokümanın yürürlükte bir sürümü yok.",
+    "SupersededBy": "{0} sürümü ({1}) tarafından geçersiz kılındı.",
+    "PrecedenceEnforced": "Sunucu öncelik kuralını uyguladı (model daha düşük öncelikli kaynağı seçmişti): {0}"
+  },
+  "Ingestion": {
+    "FolderNotFound": "Bilgi tabanı klasörü bulunamadı: {0}",
+    "FrontMatterMissing": "dosya YAML front matter ('---') ile başlamalı",
+    "FrontMatterNotClosed": "front matter kapanış satırı ('---') bulunamadı",
+    "ContentMissing": "içerik bölümü bulunamadı",
+    "FrontMatterUnreadable": "front matter okunamadı ({0})",
+    "FieldMissing": "zorunlu front matter alanı eksik: {0}",
+    "DateInvalid": "effectiveDate 'yyyy-MM-dd' biçiminde olmalı: {0}",
+    "StatusUnknown": "bilinmeyen status: {0} (active | superseded)",
+    "CategoryUnknown": "bilinmeyen category: {0} (politika | prosedur | kilavuz | sss)"
+  },
+  "Security": {
+    "TooManyRequests": "Çok fazla istek gönderildi. Lütfen biraz bekleyip tekrar deneyin.",
+    "AdminKeyRequired": "Bu işlem için geçerli bir yönetici anahtarı (X-Admin-Key başlığı) gerekli.",
+    "ReindexDisabled": "Yeniden indeksleme ucu kapalı: sunucuda yönetici anahtarı (Security__AdminApiKey) tanımlı değil.",
+    "RequestTooLarge": "İstek gövdesi çok büyük; en fazla {0} bayt gönderilebilir."
+  },
+  "Request": {
+    "Unreadable": "İstek okunamadı: gövde geçerli bir JSON değil ya da bir alan beklenen türde değil.",
+    "UnreadableFields": "İstek okunamadı: şu alanlar geçerli JSON değil ya da beklenen türde değil: {0}."
+  },
+  "ApiDocs": {
+    "AskQuestionSummary": "Soruyu bilgi tabanındaki dokümanlara dayanarak yanıtlar.",
+    "AskQuestionDescription": "Yanıt, kullanılan doküman/sürüm/bölümü ve alıntıyı (sources), eski sürümlerin nasıl elendiğini (versionResolution) ve kaynaklar arası çelişkileri (conflicts) içerir. Dokümanlarda yeterli bilgi yoksa answerable=false döner.",
+    "SearchSummary": "Dil modeli olmadan arama: bir soru için hangi bölümlerin bulunduğunu ve skorlarını gösterir.",
+    "ListDocumentsSummary": "Bilgi tabanındaki dokümanları sürüm bilgileriyle listeler.",
+    "GetDocumentSummary": "Bir dokümanı bölümleriyle birlikte döndürür.",
+    "ReindexSummary": "knowledge-base/ klasörünü yeniden okur; yalnızca değişen dokümanlar yeniden embed edilir.",
+    "ReindexDescription": "Yönetici işlemidir: X-Admin-Key başlığında sunucudaki Security__AdminApiKey değeri gönderilmelidir. Başlık eksik ya da yanlışsa 401, sunucuda anahtar tanımlı değilse 403 döner.",
+    "HealthSummary": "İndeks, dil modeli ve embedding yapılandırmasının durumunu döndürür."
+  }
+}

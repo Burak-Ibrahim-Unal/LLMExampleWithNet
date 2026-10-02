@@ -1,6 +1,7 @@
 using System.Globalization;
 using Knowledge.Application.Abstractions;
 using Knowledge.Domain.Entities;
+using Shared.Application.Common;
 
 namespace Knowledge.Application.Answering;
 
@@ -19,10 +20,10 @@ namespace Knowledge.Application.Answering;
 public sealed class VersionResolver(TimeProvider timeProvider)
 {
     /// <summary>
-    /// Sürüm seçim kuralının Türkçe metni. Her yanıtta (retlerde de) <c>versionResolution.rule</c> alanında döner; istemci
-    /// güncel sürümün hangi kurala göre seçildiğini yanıttan okuyabilir.
+    /// Sürüm seçim kuralının Türkçe metni (<see cref="Messages.Answering.VersionRule"/>). Her yanıtta (retlerde de)
+    /// <c>versionResolution.rule</c> alanında döner; istemci güncel sürümün hangi kurala göre seçildiğini yanıttan okuyabilir.
     /// </summary>
-    public const string Rule = "Aynı doküman ailesinde, yürürlük tarihi bugün veya daha önce olan en yeni sürüm seçilir; 'superseded' işaretli sürüm seçilmez.";
+    public static string Rule => Messages.Answering.VersionRule;
 
     /// <summary>
     /// Arama adaylarını doküman ailesine göre gruplar, her ailenin yürürlükteki sürümünü seçer ve adayları buna göre ayırır:
@@ -120,12 +121,12 @@ public sealed class VersionResolver(TimeProvider timeProvider)
     {
         if (version.EffectiveDate > today)
         {
-            return $"Yürürlük tarihi ({Format(version.EffectiveDate)}) henüz gelmedi.";
+            return string.Format(CultureInfo.InvariantCulture, Messages.Answering.NotYetInEffect, Format(version.EffectiveDate));
         }
 
         return current is null
-            ? "Bu dokümanın yürürlükte bir sürümü yok."
-            : $"{current.Version} sürümü ({Format(current.EffectiveDate)}) tarafından geçersiz kılındı.";
+            ? Messages.Answering.NoVersionInEffect
+            : string.Format(CultureInfo.InvariantCulture, Messages.Answering.SupersededBy, current.Version, Format(current.EffectiveDate));
     }
 
     /// <summary>

@@ -1,6 +1,8 @@
+using System.Globalization;
 using Knowledge.Application.Abstractions;
 using Knowledge.Application.Exceptions;
 using Microsoft.Extensions.Options;
+using Shared.Application.Common;
 
 namespace Knowledge.Infrastructure.Ingestion;
 
@@ -85,5 +87,6 @@ public sealed class MarkdownKnowledgeSource(IOptions<KnowledgeBaseOptions> optio
     /// hangi yolun bulunamadığını görür; <c>IOException</c> türevleri ise ayrıntısı yalnızca loglarda kalan genel
     /// "okunamadı" mesajıyla raporlanırdı.
     /// </summary>
-    private static KnowledgeBaseFormatException Missing(string path) => new($"Bilgi tabanı klasörü bulunamadı: {path}");
+    private static KnowledgeBaseFormatException Missing(string path) =>
+        new(string.Format(CultureInfo.InvariantCulture, Messages.Ingestion.FolderNotFound, path));
 }

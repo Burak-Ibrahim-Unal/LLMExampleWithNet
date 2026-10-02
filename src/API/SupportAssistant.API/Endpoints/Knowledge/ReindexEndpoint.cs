@@ -32,10 +32,8 @@ public sealed class ReindexEndpoint(IKnowledgeService knowledgeService) : Endpoi
         PreProcessor<AdminKeyPreProcessor>();
         Summary(summary =>
         {
-            summary.Summary = "knowledge-base/ klasörünü yeniden okur; yalnızca değişen dokümanlar yeniden embed edilir.";
-            summary.Description =
-                "Yönetici işlemidir: X-Admin-Key başlığında sunucudaki Security__AdminApiKey değeri gönderilmelidir. " +
-                "Başlık eksik ya da yanlışsa 401, sunucuda anahtar tanımlı değilse 403 döner.";
+            summary.Summary = Messages.ApiDocs.ReindexSummary;
+            summary.Description = Messages.ApiDocs.ReindexDescription;
         });
     }
 

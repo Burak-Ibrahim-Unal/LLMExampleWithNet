@@ -45,10 +45,8 @@ public sealed class AskQuestionEndpoint(IKnowledgeService knowledgeService) : En
         Options(endpoint => endpoint.RequireRateLimiting(RateLimitingOptions.QuestionsPolicy));
         Summary(summary =>
         {
-            summary.Summary = "Soruyu bilgi tabanındaki dokümanlara dayanarak yanıtlar.";
-            summary.Description =
-                "Yanıt, kullanılan doküman/sürüm/bölümü ve alıntıyı (sources), eski sürümlerin nasıl elendiğini (versionResolution) " +
-                "ve kaynaklar arası çelişkileri (conflicts) içerir. Dokümanlarda yeterli bilgi yoksa answerable=false döner.";
+            summary.Summary = Messages.ApiDocs.AskQuestionSummary;
+            summary.Description = Messages.ApiDocs.AskQuestionDescription;
         });
     }
 

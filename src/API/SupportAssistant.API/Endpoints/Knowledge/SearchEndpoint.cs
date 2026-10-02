@@ -54,7 +54,7 @@ public sealed class SearchEndpoint(IKnowledgeService knowledgeService) : Endpoin
         RequestBinder(new RequestBinder<SearchRequest>(BindingSource.QueryParams));
         Summary(summary =>
         {
-            summary.Summary = "Dil modeli olmadan arama: bir soru için hangi bölümlerin bulunduğunu ve skorlarını gösterir.";
+            summary.Summary = Messages.ApiDocs.SearchSummary;
         });
     }
 

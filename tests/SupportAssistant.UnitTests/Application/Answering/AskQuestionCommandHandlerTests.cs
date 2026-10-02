@@ -897,9 +897,15 @@ public sealed class AskQuestionCommandHandlerTests : IAsyncLifetime
     /// 502 "model geçerli bir yanıt üretemedi" demektir. Bu test kırılırsa model hataları ayırt edilemeyen genel bir hataya
     /// dönüşür ya da işlenmemiş bir istisna olarak handler'ın dışına sızar.
     /// </remarks>
+    /// <param name="failure">Üreticinin fırlattığı hata türü.</param>
+    /// <param name="statusCode">Beklenen HTTP durum kodu.</param>
+    /// <param name="message">
+    /// Beklenen <see cref="Messages.Knowledge"/> mesajının adı; mesajlar dosyadan okunduğu için niteliğe değeri değil adı
+    /// yazılır.
+    /// </param>
     [Theory]
-    [InlineData(AnswerGenerationFailure.Unavailable, 503, Messages.Knowledge.LlmUnavailable)]
-    [InlineData(AnswerGenerationFailure.InvalidOutput, 502, Messages.Knowledge.LlmInvalidOutput)]
+    [InlineData(AnswerGenerationFailure.Unavailable, 503, nameof(Messages.Knowledge.LlmUnavailable))]
+    [InlineData(AnswerGenerationFailure.InvalidOutput, 502, nameof(Messages.Knowledge.LlmInvalidOutput))]
     public async Task Model_failures_are_reported_with_their_own_status(AnswerGenerationFailure failure, int statusCode, string message)
     {
         _generator.Failure = new AnswerGenerationException(failure, "model error");
@@ -908,7 +914,7 @@ public sealed class AskQuestionCommandHandlerTests : IAsyncLifetime
 
         result.Success.ShouldBeFalse();
         result.StatusCode.ShouldBe(statusCode);
-        result.Message.ShouldBe(message);
+        result.Message.ShouldBe((string)typeof(Messages.Knowledge).GetProperty(message)!.GetValue(null)!);
     }
 
     /// <summary>

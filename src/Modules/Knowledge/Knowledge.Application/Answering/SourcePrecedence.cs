@@ -1,5 +1,6 @@
 using Knowledge.Application.Abstractions;
 using Knowledge.Domain.Entities;
+using Shared.Application.Common;
 
 namespace Knowledge.Application.Answering;
 
@@ -15,11 +16,12 @@ namespace Knowledge.Application.Answering;
 public static class SourcePrecedence
 {
     /// <summary>
-    /// Öncelik kuralının Türkçe, insan tarafından okunabilir ifadesi; system prompt'taki 5. kuralla aynı önceliği anlatır.
+    /// Öncelik kuralının Türkçe, insan tarafından okunabilir ifadesi (<see cref="Messages.Answering.PrecedenceRule"/>);
+    /// system prompt'taki 5. kuralla aynı önceliği anlatır.
     /// Sunucu kuralı zorladığında (modelin seçimi düzeltildiğinde) çelişki kaydının gerekçesine de bu metin yazılır;
     /// kararın hangi kurala dayandığı yanıtın içinden okunur.
     /// </summary>
-    public const string Rule = "Politika ve prosedür dokümanları kılavuzlardan, kılavuzlar SSS'den önceliklidir; aynı türde yürürlük tarihi daha yeni olan geçerlidir.";
+    public static string Rule => Messages.Answering.PrecedenceRule;
 
     /// <summary>
     /// <paramref name="candidate"/> kaynağı <paramref name="other"/> kaynağına üstün geliyorsa true döndürür: önce yetki

@@ -38,7 +38,7 @@ public sealed class GetDocumentEndpoint(IKnowledgeService knowledgeService) : En
         RequestBinder(new RequestBinder<GetDocumentRequest>(BindingSource.RouteValues));
         Summary(summary =>
         {
-            summary.Summary = "Bir dokümanı bölümleriyle birlikte döndürür.";
+            summary.Summary = Messages.ApiDocs.GetDocumentSummary;
         });
     }
 

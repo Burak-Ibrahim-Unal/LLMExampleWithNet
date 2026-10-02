@@ -300,18 +300,29 @@ public sealed class EvalChecksTests
     /// değil sorunun kendisinde ya da modelin çıktısında olduğunda API bilerek farklı bir mesaj döndürür; değerlendirici bu
     /// retleri sözleşme ihlali saymamalı, ama gerekçeyle mesajın eşleşmesini yine denetlemelidir.
     /// </remarks>
+    /// <param name="text">
+    /// Ret metni: null ise "bilgi yok" mesajı, bir <see cref="Messages.Knowledge"/> özelliğinin adı ise o mesaj, değilse
+    /// olduğu gibi kullanılan serbest metin. Mesajlar dosyadan okunduğu için niteliğe değeri değil adı yazılır.
+    /// </param>
     [Theory]
     [InlineData(null, null, "LowRelevance", true)]
     [InlineData(null, "kargo", "LowRelevance", false)]
     [InlineData("Bilmiyorum.", null, "LowRelevance", false)]
     [InlineData(null, null, "", false)]
-    [InlineData(Messages.Knowledge.PromptInjectionRefused, null, "PromptInjectionSuspected", true)]
-    [InlineData(Messages.Knowledge.UnsafeOutputRefused, null, "UnsafeOutput", true)]
+    [InlineData(nameof(Messages.Knowledge.PromptInjectionRefused), null, "PromptInjectionSuspected", true)]
+    [InlineData(nameof(Messages.Knowledge.UnsafeOutputRefused), null, "UnsafeOutput", true)]
     [InlineData(null, null, "PromptInjectionSuspected", false)]
-    [InlineData(Messages.Knowledge.UnsafeOutputRefused, null, "LowRelevance", false)]
+    [InlineData(nameof(Messages.Knowledge.UnsafeOutputRefused), null, "LowRelevance", false)]
     public void A_refusal_must_use_the_fixed_message_list_no_sources_and_give_a_reason(string? text, string? source, string reason, bool expected)
     {
-        var answer = Answer(text ?? Messages.Knowledge.NotEnoughInformation, answerable: false, sources: source is null ? null : [source], refusalReason: reason);
+        var message = text switch
+        {
+            null => Messages.Knowledge.NotEnoughInformation,
+            nameof(Messages.Knowledge.PromptInjectionRefused) => Messages.Knowledge.PromptInjectionRefused,
+            nameof(Messages.Knowledge.UnsafeOutputRefused) => Messages.Knowledge.UnsafeOutputRefused,
+            _ => text
+        };
+        var answer = Answer(message, answerable: false, sources: source is null ? null : [source], refusalReason: reason);
 
         EvalChecks.Evaluate(new EvalExpectation(false), answer, "soru", NoDocuments)
             .Single(check => check.Name == "ret sözleşmesi").Passed.ShouldBe(expected);

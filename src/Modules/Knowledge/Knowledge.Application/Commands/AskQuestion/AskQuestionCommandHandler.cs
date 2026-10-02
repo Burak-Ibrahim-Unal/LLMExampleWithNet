@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Globalization;
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using Knowledge.Application.Abstractions;
@@ -621,12 +622,6 @@ public sealed class AskQuestionCommandHandler(
     /// <param name="Reason">Modelin seçim gerekçesi.</param>
     private sealed record CheckedConflict(string Topic, ContextChunk Chosen, IReadOnlyList<ContextChunk> Rejected, string Reason)
     {
-        /// <summary>
-        /// Sunucunun kuralı uyguladığı durumda yazılan gerekçe. Modelin seçiminin düzeltildiğini ve kararın hangi kurala
-        /// dayandığını yanıtın içinde açıkça söyler.
-        /// </summary>
-        private const string EnforcedReasonPrefix = "Sunucu öncelik kuralını uyguladı (model daha düşük öncelikli kaynağı seçmişti): ";
-
         /// <summary>Çelişkinin tüm üyeleri: önce seçilen, ardından elenen bölümler.</summary>
         private IReadOnlyList<ContextChunk> Members { get; } = [Chosen, .. Rejected];
 
@@ -656,7 +651,7 @@ public sealed class AskQuestionCommandHandler(
         /// <summary>
         /// Düzeltme turundan önce, sunucunun kararını gösteren çelişki kaydını üretir. Model kurala uyduysa kayıt modelin
         /// kaydıdır; uymadıysa seçilen kaynak kuralın kazananı, elenenler kaybedenler, gerekçe sunucunun kuralı
-        /// uyguladığını söyleyen metindir ve <c>RuleSatisfied</c> true olur.
+        /// uyguladığını söyleyen metindir (<see cref="Messages.Answering.PrecedenceEnforced"/>) ve <c>RuleSatisfied</c> true olur.
         /// </summary>
         /// <remarks>
         /// Kaybeden bölümler bağlamdan çıkarıldığı için model ikinci denemede bu çelişkiyi bir daha göremez ve bildiremez.
@@ -673,7 +668,7 @@ public sealed class AskQuestionCommandHandler(
                 Topic,
                 ToConflictSource(Winner),
                 Losers.Select(ToConflictSource).ToList(),
-                EnforcedReasonPrefix + SourcePrecedence.Rule,
+                string.Format(CultureInfo.InvariantCulture, Messages.Answering.PrecedenceEnforced, SourcePrecedence.Rule),
                 RuleSatisfied: true);
         }
     }

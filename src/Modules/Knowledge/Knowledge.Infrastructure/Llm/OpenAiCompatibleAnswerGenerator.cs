@@ -2,6 +2,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 using Knowledge.Application.Abstractions;
 using Knowledge.Application.Exceptions;
+using Knowledge.Application.Security;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -155,8 +156,9 @@ public sealed class OpenAiCompatibleAnswerGenerator(
                 attempt + 1,
                 attemptBudget);
             // Model neyi yanlış yaptığını görebilsin diye kendi geçersiz çıktısı konuşmaya eklenir; ardından düzeltici
-            // talimat gelir.
-            messages.Add(new ChatMessage(ChatRole.Assistant, response.Text));
+            // talimat gelir. Çıktıdaki sohbet şablonu belirteçleri silinir: llama.cpp metni özel belirteçleri tanıyarak
+            // böldüğü için, modelin ürettiği bir "<|turn>" ikinci istekte gerçek bir sıra belirtecine dönüşürdü.
+            messages.Add(new ChatMessage(ChatRole.Assistant, PromptInjectionDetector.RemoveChatTemplateTokens(response.Text)));
             messages.Add(new ChatMessage(ChatRole.User, AnswerPrompt.RetryInstruction));
         }
     }

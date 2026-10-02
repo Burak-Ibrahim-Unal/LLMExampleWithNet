@@ -1,0 +1,148 @@
+{
+  "questions": [
+    {
+      "id": "H01",
+      "category": "normal",
+      "question": "sifremi unuttum uygulamaya giris yapamiyorum ne yapmaliyim",
+      "expectedAnswer": "Uygulamanın giriş ekranındaki \"Şifremi Unuttum\" bağlantısına dokunun; şifre sıfırlama bağlantısı e-posta adresinize gönderilir.",
+      "expect": {
+        "answerable": true,
+        "sourcesAnyOf": ["sss-genel"],
+        "mustContain": [["Şifremi Unuttum"], ["e-posta", "eposta", "mail"]],
+        "sectionsAnyOf": ["Şifremi unuttum"]
+      }
+    },
+    {
+      "id": "H02",
+      "category": "normal",
+      "question": "749 TL'lik bir sipariş verdim, kargo için ücret ödeyecek miyim?",
+      "expectedAnswer": "Evet. 750 TL'nin altındaki siparişlerde 49,90 TL kargo ücreti alınır; kargo yalnızca 750 TL ve üzerindeki siparişlerde ücretsizdir.",
+      "expect": {
+        "answerable": true,
+        "sourcesAnyOf": ["kargo-ve-teslimat"],
+        "mustContain": [["49,90", "49.90"]],
+        "sectionsAnyOf": ["Kargo Ücreti"]
+      }
+    },
+    {
+      "id": "H03",
+      "category": "normal",
+      "question": "Termostatımı 2 yıl 3 ay önce aldım ve bozuldu. Garanti kapsamında ücretsiz onarılır mı?",
+      "expectedAnswer": "Hayır. Garanti süresi fatura tarihinden itibaren 2 yıldır; 2 yıl 3 ay geçtiği için cihaz artık garanti kapsamında değildir.",
+      "expect": {
+        "answerable": true,
+        "sourcesAnyOf": ["garanti-kosullari"],
+        "mustContain": [["2 yıl", "iki yıl"], ["dolmuş", "dolduğu", "sona er", "kapsamı dışında", "kapsam dışı", "kapsamında değil", "hayır", "geçmiş", "geçtiği", "bitmiş"]],
+        "sectionsAnyOf": ["Garanti Süresi"]
+      }
+    },
+    {
+      "id": "H04",
+      "category": "normal",
+      "question": "Lumora Termo hangi Wi-Fi frekansında çalışır ve Amazon Alexa ile kullanılabilir mi?",
+      "expectedAnswer": "Yalnızca 2.4 GHz Wi-Fi ağlarını destekler (5 GHz desteklenmez). Alexa uyumluluğu hakkında dokümanlarda bilgi yok; bu kısım yanıtlanamaz (kısmi yanıt).",
+      "expect": {
+        "answerable": true,
+        "sourcesAnyOf": ["kurulum-kilavuzu-lumora-termo", "sorun-giderme-baglanti"],
+        "mustContain": [["2.4 GHz", "2,4 GHz"]]
+      }
+    },
+    {
+      "id": "H05",
+      "category": "normal",
+      "question": "Kargo takip numarası bana nasıl iletilir? Sipariş kargoya verildikten sonra teslimat adresini değiştirebilir miyim?",
+      "expectedAnswer": "Takip numarası sipariş kargoya verildiğinde SMS ve e-posta ile gönderilir (Siparişlerim ekranından da takip edilebilir). Kargoya verilmiş siparişlerde adres değişikliği yapılamaz.",
+      "expect": {
+        "answerable": true,
+        "sourcesAnyOf": ["kargo-ve-teslimat"],
+        "mustContain": [["SMS"], ["yapılamaz", "değiştirilemez", "değiştiremezsiniz", "mümkün değil", "hayır"]],
+        "sectionsAnyOf": ["Sipariş Takibi", "Adres Değişikliği"]
+      }
+    },
+    {
+      "id": "H06",
+      "category": "cevapsiz",
+      "question": "Termostatın kurulumunu sizin teknisyeniniz evime gelip yapabilir mi, ücreti ne kadar?",
+      "expectedAnswer": "Dokümanlarda yerinde kurulum hizmeti veya ücreti hakkında bilgi yok; bilgi olmadığı belirtilmeli.",
+      "expect": {
+        "answerable": false
+      }
+    },
+    {
+      "id": "H07",
+      "category": "cevapsiz",
+      "question": "Lumora Termo'nun pili kaç ay dayanır?",
+      "expectedAnswer": "Dokümanlarda pil veya pil ömrüyle ilgili bilgi yok; bilgi olmadığı belirtilmeli.",
+      "expect": {
+        "answerable": false
+      }
+    },
+    {
+      "id": "H08",
+      "category": "cevapsiz",
+      "question": "Garantisi biten cihazımı ücretli olarak onarıyor musunuz, onarım ücreti ne kadar?",
+      "expectedAnswer": "Dokümanlarda garanti dışı ücretli onarım hizmeti veya ücreti hakkında bilgi yok; bilgi olmadığı belirtilmeli.",
+      "expect": {
+        "answerable": false
+      }
+    },
+    {
+      "id": "H09",
+      "category": "celiskili",
+      "question": "İade talebimi e-posta ile gönderebilir miyim?",
+      "expectedAnswer": "Hayır. Güncel politikaya (v2.0) göre iade talebi Lumora uygulamasında Siparişlerim > İade Talebi Oluştur adımlarıyla oluşturulur; e-posta ile gönderilen talepler işleme alınmaz. v1.0'daki e-posta yöntemi geçersiz.",
+      "expect": {
+        "answerable": true,
+        "sourcesAnyOf": ["iade-politikasi-v2"],
+        "forbiddenSources": ["iade-politikasi-v1"],
+        "mustContain": [["işleme alınmaz", "kabul edilmez", "hayır", "gönderemezsiniz"], ["uygulama"]],
+        "discardedVersions": ["iade-politikasi-v1"],
+        "sectionsAnyOf": ["İade Talebi Nasıl Oluşturulur"]
+      }
+    },
+    {
+      "id": "H10",
+      "category": "celiskili",
+      "question": "Ürünü geri gönderirken kargo parasını ben mi ödüyorum?",
+      "expectedAnswer": "Hayır. Güncel iade politikasına (v2.0) göre iade koduyla anlaşmalı kargoyla gönderilen iadelerde kargo ücretsizdir; ücreti Lumora karşılar. SSS'deki \"müşteri öder\" bilgisi eskidir.",
+      "expect": {
+        "answerable": true,
+        "sourcesAnyOf": ["iade-politikasi-v2"],
+        "forbiddenSources": ["iade-politikasi-v1", "sss-genel"],
+        "mustContain": [["ücretsiz", "Lumora karşıla", "Lumora tarafından karşılan", "ödemezsiniz", "ödemeniz gerekmez", "ücret alınmaz"]],
+        "mustNotContain": ["müşteriye aittir"],
+        "sectionsAnyOf": ["İade Kargo Ücreti"]
+      }
+    },
+    {
+      "id": "H11",
+      "category": "celiskili",
+      "question": "Destek ekibine e-posta atarsam ne kadar sürede cevap gelir?",
+      "expectedAnswer": "Güncel sürüme (v2.0) göre e-postalara 24 saat içinde ilk yanıt verilir; v1.0'daki 48 saat geçersiz.",
+      "expect": {
+        "answerable": true,
+        "sourcesAnyOf": ["destek-kanallari-v2"],
+        "forbiddenSources": ["destek-kanallari-v1"],
+        "mustContain": [["24 saat"]],
+        "mustNotContain": ["48 saat"],
+        "discardedVersions": ["destek-kanallari-v1"],
+        "sectionsAnyOf": ["E-posta Desteği"]
+      }
+    },
+    {
+      "id": "H12",
+      "category": "celiskili",
+      "question": "Kutusunu açıp kurulumunu yaptığım termostatı iade edebilir miyim?",
+      "expectedAnswer": "Evet. Güncel politikaya (v2.0) göre ambalajı açılmış ve kurulumu yapılmış ürünler eksiksiz ve hasarsız olmaları kaydıyla iade edilebilir; göndermeden önce cihaz uygulamadaki hesaptan kaldırılıp fabrika ayarlarına döndürülmelidir. v1.0'daki \"yalnızca üretim hatası varsa\" kuralı geçersiz.",
+      "expect": {
+        "answerable": true,
+        "sourcesAnyOf": ["iade-politikasi-v2"],
+        "forbiddenSources": ["iade-politikasi-v1"],
+        "mustContain": [["eksiksiz", "hasarsız", "evet", "iade edilebilir", "iade edebilirsiniz"]],
+        "mustNotContain": ["yalnızca üretim hatası"],
+        "discardedVersions": ["iade-politikasi-v1"],
+        "sectionsAnyOf": ["İade Koşulları"]
+      }
+    }
+  ]
+}

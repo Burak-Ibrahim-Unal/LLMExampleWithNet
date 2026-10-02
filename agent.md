@@ -6,16 +6,18 @@ kuralları tanımlar. Soyut tavsiye değil, depodaki gerçek yapı esas alınır
 ## 1) Depo haritası
 
 - `src/Shared/Shared.Kernel` — `EntityBase`, `IRepository<T>`, `ISoftDeletable` (hiçbir framework bağımlılığı yok)
-- `src/Shared/Shared.Application` — `ApiResult<T>`, `Messages`, migrator/seeder arayüzleri
+- `src/Shared/Shared.Application` — `ApiResult<T>`, `Messages` (metinler `Common/Resources/messages.json`'da), migrator/seeder arayüzleri
 - `src/Shared/Shared.Infrastructure` — `AppDbContext`, `EfRepository<T>`, `DbMigrator`
 - `src/Modules/Knowledge/Knowledge.Domain` — `KnowledgeDocument`, `DocumentChunk`, `QuestionLog`, repository arayüzleri
 - `src/Modules/Knowledge/Knowledge.Application` — komut/sorgu + handler'lar, `KnowledgeBusinessRules`, portlar
   (`IKnowledgeIndex`, `ITextEmbedder`, `IGroundedAnswerGenerator`, `IKnowledgeBaseSource`), cevaplama politikaları (`Answering/`),
   prompt injection dedektörü (`Security/`)
-- `src/Modules/Knowledge/Knowledge.Infrastructure` — EF konfigürasyonları, markdown ingest, BM25/vektör/RRF indeksi, LLM ve embedding adaptörleri
+- `src/Modules/Knowledge/Knowledge.Infrastructure` — EF konfigürasyonları, markdown ingest, BM25/vektör/RRF indeksi, LLM ve embedding
+  adaptörleri; dil modeline giden metinler `Llm/Prompts/answer-prompt.yaml`'da
 - `src/Services/Knowledge/Knowledge.Service` — `IKnowledgeService` (MediatR facade)
 - `src/API/SupportAssistant.API` — FastEndpoints endpoint'leri, DI toplama (`Extensions/`), HTTP korumaları (`Security/`), `Program.cs`
-- `knowledge-base/` — bilgi tabanı (tek doğruluk kaynağı); `eval/` — değerlendirme seti ve sonuçları
+- `knowledge-base/` — bilgi tabanı (tek doğruluk kaynağı); `eval/` — soru setleri (kalibrasyon, iki bağımsız set,
+  halüsinasyon seti) ve sonuçları
 - `tests/` — birim + mimari testleri, API entegrasyon testleri; `tools/SupportAssistant.Eval` — değerlendirme aracı
 
 ## 2) Katman kuralları (mimari testlerle zorunlu)
@@ -40,6 +42,22 @@ Kurala aykırı bir tasarım gerekiyorsa önce mimari kararı yaz, sonra testi b
 - Handler önce iş kurallarını fail-fast çalıştırır: `var error = rules.CheckXxx<T>(...); if (error is not null) return error;`
 - İş kuralları `Application/BusinessRules/KnowledgeBusinessRules.cs` içinde, `ApiResult<T>?` döndürür, mesajlar `Messages.Knowledge.*`'dan gelir.
 - Yanıt zarfı her zaman `ApiResult<T>`; durum kodu açıkça set edilir.
+
+## 3a) Metin ve boyut kuralları (koruyucu testlerle zorunlu)
+
+`tests/SupportAssistant.UnitTests/Architecture/CodeConventionTests` bunları denetler:
+
+- Kullanıcıya dönen Türkçe metin koda yazılmaz: metin `Shared.Application/Common/Resources/messages.json`'a, belgeli
+  erişim noktası `Messages`'a eklenir (anahtar = iç sınıf + özellik adı). Yer tutuculu metin çağıran tarafta
+  `string.Format(CultureInfo.InvariantCulture, …)` ile doldurulur.
+- Dil modeline giden metin koda yazılmaz: `Knowledge.Infrastructure/Llm/Prompts/answer-prompt.yaml`. Yeni bir parça
+  eklenirse `AnswerPromptTexts`'e alanı ve doğrulaması (beklenen yer tutucular) da eklenir. Yapı işaretleri
+  (`KAYNAKLAR:`, `Bölüm:`, `DÜZELTME:`, `SORU:`) değişirse `AnswerPrompt.StructureMarker` kalıbı da güncellenir.
+- İstisnalar: `[GeneratedRegex]` kalıpları, arama durak sözcükleri gibi veri listeleri, İngilizce log şablonları ve
+  programcı hatalarına ait İngilizce istisna mesajları.
+- Bir C# dosyası en fazla 500 satırdır (`src/`, `tools/`, `tests/`). Aşan sınıf sorumluluğuna göre bölünür; test
+  sınıfları konuya göre ayrılır, paylaşılan kurulum bir taban sınıfta ya da `using static` ile kullanılan bir
+  yardımcıda durur.
 
 ## 4) Bilgi tabanı sözleşmesi
 
@@ -113,8 +131,9 @@ Kurala aykırı bir tasarım gerekiyorsa önce mimari kararı yaz, sonra testi b
   değişiklikte ikisi birlikte güncellenir: aynı bölüm yapısı, aynı sayılar (test sayısı, değerlendirme sonuçları,
   sürümler), aynı örnekler. En üstteki dil bağlantıları (`**Türkçe** | [English](README.en.md)` /
   `[Türkçe](README.md) | **English**`) korunur.
-- Örnek JSON'lar, API mesajları ve soru metinleri API'nin gerçek (Türkçe) çıktısıdır; İngilizce README'de çevrilmez,
-  gerektiğinde yanına İngilizce açıklama yazılır.
+- Türkçe README'deki örnek JSON'lar, API mesajları ve soru metinleri API'nin gerçek (Türkçe) çıktısıdır. İngilizce
+  README bunları İngilizceye çevirir ve çeviri olduklarını belirtir. Kodun birebir eşleştirdiği literaller (prompt
+  işaretleri, dedektör kalıpları, değerlendirmedeki ifadeler) özgün hâliyle ve İngilizce açıklamasıyla kalır.
 - Halüsinasyona karşı sonraki adımlar kodda `TODO(halüsinasyon-1…5)` yorumlarıyla, uygulanacakları yerde işaretlidir.
   Bir madde uygulanınca yorumu kaldırılır ve iki README'deki "Halüsinasyona karşı önlemler" / "Hallucination
   safeguards" tablosu birlikte güncellenir.

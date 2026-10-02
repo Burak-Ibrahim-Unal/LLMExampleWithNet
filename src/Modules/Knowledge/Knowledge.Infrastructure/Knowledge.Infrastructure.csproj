@@ -17,6 +17,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- Dil modeline giden metinler; AnswerPromptTexts gömülü kaynak olarak okur. Ad sabittir: dosya adına dil eki
+         (".tr") konmaz, aksi hâlde MSBuild dosyayı ayrı bir uydu derlemeye (satellite assembly) taşırdı. -->
+    <EmbeddedResource Include="Llm\Prompts\answer-prompt.yaml" LogicalName="Knowledge.Infrastructure.Llm.Prompts.answer-prompt.yaml" />
+  </ItemGroup>
+
+  <ItemGroup>
     <!-- Birim testleri, OpenAI istemcisinin taşıma ayarlarını (yeniden deneme politikası) sahte bir taşıma katmanıyla sınar. -->
     <InternalsVisibleTo Include="SupportAssistant.UnitTests" />
   </ItemGroup>

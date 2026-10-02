@@ -1,5 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
+using System.Text.Json.Serialization.Metadata;
 using Knowledge.Application.Abstractions;
 using Knowledge.Application.Exceptions;
 using Knowledge.Application.Security;
@@ -36,11 +37,13 @@ public sealed class OpenAiCompatibleAnswerGenerator(
     /// <c>RespectNullableAnnotations</c> sayesinde null olamayan özellikler üretilen şemada da null olamaz kalır
     /// (<c>["string","null"]</c> birleşimleri oluşmaz) ve llama.cpp'nin şemadan ürettiği grammar sade kalır. Aynı ayar
     /// ayrıştırmada da uygulanır: null olamayan bir alana açıkça yazılmış null, geçersiz çıktı sayılır ve yeniden
-    /// denemeyi tetikler.
+    /// denemeyi tetikler. Tür çözücüye eklenen <see cref="AnswerPrompt.DescribeSchemaFields"/>, şemanın alan
+    /// açıklamalarını prompt dosyasından verir.
     /// </summary>
     private static readonly JsonSerializerOptions SchemaOptions = new(AIJsonUtilities.DefaultOptions)
     {
-        RespectNullableAnnotations = true
+        RespectNullableAnnotations = true,
+        TypeInfoResolver = AIJsonUtilities.DefaultOptions.TypeInfoResolver!.WithAddedModifier(AnswerPrompt.DescribeSchemaFields)
     };
 
     /// <summary>

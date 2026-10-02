@@ -130,8 +130,10 @@ public sealed class KnowledgeIndex(
     /// </summary>
     /// <remarks>
     /// Embedding yalnızca snapshot'ta kullanılabilir vektörler varsa istenir; aksi hâlde sunucuya boşuna gidilmez. Sorgu
-    /// embedding'i başarısız olursa uyarı loglanır ve arama BM25 ile sürer: embedding sunucusunun kesintisi soruları
-    /// düşürmez. İptal (<c>OperationCanceledException</c>) yutulmaz, çağırana yayılır. Sorgu vektörünün boyutu
+    /// embedding'i başarısız olursa (sunucuya ulaşılamaması ya da yanıt vermeyen sunucunun zaman aşımı) uyarı loglanır ve
+    /// arama BM25 ile sürer: embedding sunucusunun kesintisi soruları düşürmez. Yalnızca çağıranın kendi iptali (belirteci
+    /// iptal edilmiş <c>OperationCanceledException</c>) yutulmaz, çağırana yayılır; zaman aşımı da
+    /// <c>OperationCanceledException</c> olarak gelir, bu yüzden ikisi belirtecin durumuna bakılarak ayrılır. Sorgu vektörünün boyutu
     /// indekstekinden farklıysa (yapılandırılmış ad altında başka bir model yanıt veriyorsa) vektör uyarıyla atılır; bu
     /// kontrol eklenmeden önce boyut uyuşmazlığı bütün benzerlikleri 0 yapıyor ve anlamsız bir vektör sıralaması füzyona
     /// karışıyordu.
@@ -148,8 +150,10 @@ public sealed class KnowledgeIndex(
             {
                 vector = await embedder.EmbedQueryAsync(query, cancellationToken);
             }
-            catch (Exception exception) when (exception is not OperationCanceledException)
+            catch (Exception exception) when (exception is not OperationCanceledException || !cancellationToken.IsCancellationRequested)
             {
+                // Zaman aşımı da buraya düşer: HTTP istemcileri onu OperationCanceledException olarak bildirir, ama
+                // çağıran iptal etmediği için bu bir sunucu arızasıdır ve arama BM25 ile sürer.
                 logger.LogWarning(exception, "Query embedding failed; searching with BM25 only.");
             }
 

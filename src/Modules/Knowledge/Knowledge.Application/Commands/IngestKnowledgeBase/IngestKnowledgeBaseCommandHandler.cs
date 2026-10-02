@@ -212,8 +212,10 @@ public sealed class IngestKnowledgeBaseCommandHandler(
     /// Erişilemeyen bir embedding sunucusu indekslemeyi başarısız kılmaz: hata loglanır, <c>EmbeddingUnavailable</c>
     /// uyarısı döner, vektörü eksik bölümler o hâliyle kaydedilir ve indeks BM25-only modda kurulur (indeks vektörleri
     /// ancak tüm bölümlerde aynı modelden geliyorsa kullanır); sonraki bir yeniden indeksleme eksik vektörleri tamamlar. Bilgi tabanının hiç aranamaması, vektör aramasının getirdiği ek isabetten çok daha
-    /// kötü bir sonuç olurdu. İptal (<see cref="OperationCanceledException"/>) bu kapsamın dışındadır: o bir sunucu
-    /// hatası değil çağıranın isteğidir ve yukarı iletilmelidir. Embedding kapalıysa (<c>Embeddings:BaseUrl</c> boş)
+    /// kötü bir sonuç olurdu. Yanıt vermeyen sunucunun zaman aşımı da bu kapsamdadır; HTTP istemcileri onu
+    /// <see cref="OperationCanceledException"/> olarak bildirdiği için gerçek iptalden belirtecin durumuna bakılarak ayrılır.
+    /// Çağıranın kendi iptali (belirteç iptal edilmişse) kapsam dışıdır: o bir sunucu hatası değil çağıranın isteğidir ve
+    /// yukarı iletilmelidir. Embedding kapalıysa (<c>Embeddings:BaseUrl</c> boş)
     /// hiçbir şey yapılmaz. Bekleyen bölümlerin tamamı tek çağrıyla adaptöre verilir; isteklerin gruplara bölünmesi
     /// adaptörün işidir.
     /// </remarks>
@@ -247,8 +249,10 @@ public sealed class IngestKnowledgeBaseCommandHandler(
 
             return (pending.Count, null);
         }
-        catch (Exception exception) when (exception is not OperationCanceledException)
+        catch (Exception exception) when (exception is not OperationCanceledException || !cancellationToken.IsCancellationRequested)
         {
+            // Zaman aşımı da buraya düşer: HTTP istemcileri onu OperationCanceledException olarak bildirir, ama çağıran
+            // iptal etmediği için bu bir sunucu arızasıdır ve ingest BM25 ile tamamlanır. Yalnızca gerçek iptal yayılır.
             logger.LogWarning(exception, "Embedding {ChunkCount} chunks failed; the index will use BM25 only.", pending.Count);
             return (0, Messages.Knowledge.EmbeddingUnavailable);
         }

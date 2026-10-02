@@ -220,20 +220,25 @@ public sealed class IngestKnowledgeBaseCommandHandlerTests : IAsyncLifetime
     }
 
     /// <summary>
-    /// Embedding sunucusuna ulaşılamadığında ingestion'ın yine başarılı olduğunu, hiçbir chunk'ın embed edilmediğini,
-    /// indeksin lexical (yalnızca BM25) modda hazır olduğunu ve özetin bir uyarı (<c>EmbeddingUnavailable</c>) taşıdığını
-    /// doğrular.
+    /// Embedding sunucusuna ulaşılamadığında (bağlantı reddi) ya da sunucu yanıt vermeyip istek zaman aşımına uğradığında
+    /// ingestion'ın yine başarılı olduğunu, hiçbir chunk'ın embed edilmediğini, indeksin lexical (yalnızca BM25) modda
+    /// hazır olduğunu ve özetin bir uyarı (<c>EmbeddingUnavailable</c>) taşıdığını doğrular.
     /// </summary>
     /// <remarks>
     /// Embedding isteğe bağlı bir iyileştirmedir: sunucu çöktüğünde asistanın tümüyle kullanılamaz hâle gelmesi yerine
     /// arama BM25'e düşer ve sonraki bir reindex eksik vektörleri tamamlar. Uyarı, operatörün bu kademeli düşüşü fark
-    /// etmesini sağlar.
+    /// etmesini sağlar. Zaman aşımı (<c>TaskCanceledException</c>) vakası bir hatanın regresyon testidir: eski filtre onu
+    /// çağıranın iptali sanıyor ve asılı kalan bir sunucu açılıştaki indekslemeyi tamamen başarısız kılıyordu.
     /// </remarks>
-    [Fact]
-    public async Task An_unreachable_embedding_server_leaves_a_working_lexical_index()
+    [Theory]
+    [InlineData("down")]
+    [InlineData("timeout")]
+    public async Task An_unreachable_embedding_server_leaves_a_working_lexical_index(string failure)
     {
         _source.Documents = [ReturnPolicy, Shipping];
-        _embedder.Failure = new HttpRequestException("connection refused");
+        _embedder.Failure = failure == "down"
+            ? new HttpRequestException("connection refused")
+            : new TaskCanceledException("The request was canceled due to the configured HttpClient.Timeout.");
 
         var result = await IngestAsync();
 

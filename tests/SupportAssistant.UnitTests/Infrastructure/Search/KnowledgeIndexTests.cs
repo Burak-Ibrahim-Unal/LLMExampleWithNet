@@ -202,23 +202,53 @@ public sealed class KnowledgeIndexTests
     }
 
     /// <summary>
-    /// İndeks vektörlerle kurulduktan sonra sorgu embedding'i başarısız olursa (embedding sunucusu kapalı) aramanın
-    /// istisna fırlatmadan sözcüksel moda düştüğünü ve doğru bölümü bulduğunu doğrular. Uzak embedding sunucusundaki bir
-    /// kesinti soru yanıtlamayı durdurmamalıdır; ingest'teki "embedding yoksa yalnızca BM25" davranışıyla tutarlı olarak
-    /// sorgu tarafı da zarif biçimde geriler.
+    /// İndeks vektörlerle kurulduktan sonra sorgu embedding'i başarısız olursa aramanın istisna fırlatmadan sözcüksel moda
+    /// düştüğünü ve doğru bölümü bulduğunu doğrular. İki arıza denenir: sunucuya ulaşılamaması
+    /// (<c>HttpRequestException</c>) ve yanıt vermeyen sunucunun zaman aşımı (<c>TaskCanceledException</c>; HTTP
+    /// istemcileri zaman aşımını böyle bildirir).
     /// </summary>
-    [Fact]
-    public async Task Search_falls_back_to_lexical_when_the_query_cannot_be_embedded()
+    /// <remarks>
+    /// Uzak embedding sunucusundaki bir kesinti soru yanıtlamayı durdurmamalıdır; ingest'teki "embedding yoksa yalnızca
+    /// BM25" davranışıyla tutarlı olarak sorgu tarafı da zarif biçimde geriler. Zaman aşımı vakası bir hatanın
+    /// regresyon testidir: istisna filtresi her <c>OperationCanceledException</c>'ı çağıranın iptali sanıyordu ve asılı
+    /// kalan bir sunucu BM25'e düşmek yerine soruyu 500 hatasına götürüyordu.
+    /// </remarks>
+    [Theory]
+    [InlineData("down")]
+    [InlineData("timeout")]
+    public async Task Search_falls_back_to_lexical_when_the_query_cannot_be_embedded(string failure)
     {
         var embedder = new FakeTextEmbedder();
         var index = CreateIndex(embedder);
         index.Rebuild([Document("iade", "İade", ("İade Süresi", "30 gün içinde iade edebilirsiniz.", [1f, 0f], FakeTextEmbedder.DefaultModel))]);
-        embedder.Failure = new HttpRequestException("embedding server is down");
+        embedder.Failure = failure == "down"
+            ? new HttpRequestException("embedding server is down")
+            : new TaskCanceledException("The request was canceled due to the configured HttpClient.Timeout.");
 
         var result = index.Search(await index.PrepareAsync("iade süresi", TestContext.Current.CancellationToken), topK: 3);
 
         result.Mode.ShouldBe(RetrievalMode.Lexical);
         result.Hits.ShouldHaveSingleItem().Chunk.SectionPath.ShouldBe("İade Süresi");
+    }
+
+    /// <summary>
+    /// Çağıranın kendi iptalinin (iptal edilmiş belirteç) sözcüksel moda düşmeye çevrilmeden yukarı yayıldığını doğrular.
+    /// </summary>
+    /// <remarks>
+    /// Zaman aşımını yutan filtre, iptal edilmiş bir isteği yutmamalıdır: istemci bağlantıyı kapattıysa aramayı sürdürüp
+    /// modele gitmek boşa iş olurdu. İki durum, iptalin çağıranın belirtecinden gelip gelmediğine bakılarak ayrılır.
+    /// </remarks>
+    [Fact]
+    public async Task A_cancelled_request_is_not_turned_into_a_lexical_search()
+    {
+        var embedder = new FakeTextEmbedder();
+        var index = CreateIndex(embedder);
+        index.Rebuild([Document("iade", "İade", ("İade Süresi", "30 gün içinde iade edebilirsiniz.", [1f, 0f], FakeTextEmbedder.DefaultModel))]);
+        using var cancellation = new CancellationTokenSource();
+        await cancellation.CancelAsync();
+        embedder.Failure = new OperationCanceledException(cancellation.Token);
+
+        await Should.ThrowAsync<OperationCanceledException>(() => index.PrepareAsync("iade süresi", cancellation.Token));
     }
 
     /// <summary>

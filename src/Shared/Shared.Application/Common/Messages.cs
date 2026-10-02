@@ -95,10 +95,57 @@ public static class Messages
         /// </summary>
         public const string LlmUnavailable = "Dil modeli servisine şu anda ulaşılamıyor. Lütfen daha sonra tekrar deneyin.";
         /// <summary>
-        /// Model, düzeltici talimatla yapılan tek yeniden denemeden sonra da şemaya uygun JSON (ya da <c>answerable=true</c>
-        /// iken boş olmayan bir yanıt) üretemediğinde soru isteğine dönen 502 mesajı. 502, hatanın bu API'de değil yukarı
-        /// akıştaki model sunucusunda olduğunu belirtir.
+        /// Model, soru başına model çağrısı bütçesi içinde (düzeltici talimatla yapılan yeniden deneme dahil) şemaya uygun
+        /// JSON (ya da <c>answerable=true</c> iken boş olmayan bir yanıt) üretemediğinde soru isteğine dönen 502 mesajı. 502,
+        /// hatanın bu API'de değil yukarı akıştaki model sunucusunda olduğunu belirtir.
         /// </summary>
         public const string LlmInvalidOutput = "Dil modeli geçerli bir yanıt üretemedi. Lütfen tekrar deneyin.";
+        /// <summary>
+        /// Soru, dil modelinin talimatlarını değiştirmeye yönelik ifadeler içerdiği için (prompt injection) model
+        /// çağrılmadan reddedildiğinde yanıt metni ve 200 zarfının mesajı. "Bilgi yok" mesajından ayrıdır, çünkü sorun
+        /// dokümanlarda değil sorunun kendisindedir. Hangi kalıbın yakalandığı bilerek söylenmez.
+        /// </summary>
+        public const string PromptInjectionRefused =
+            "Soru, asistanın çalışma talimatlarını değiştirmeye yönelik ifadeler içerdiği için yanıtlanmadı. Lütfen yalnızca destek sorunuzu yazın.";
+        /// <summary>
+        /// Modelin çıktısı güvenlik denetiminden geçmediğinde (sistem prompt'u sızıntısı) yanıt metni ve 200 zarfının
+        /// mesajı. Hangi denetimin tetiklendiği bilerek söylenmez; prompt injection reddindeki gibi saldırgana kalıpların
+        /// etrafından dolaşması için ipucu verilmez.
+        /// </summary>
+        public const string UnsafeOutputRefused =
+            "Üretilen yanıt güvenlik denetiminden geçmediği için gösterilmedi. Lütfen sorunuzu farklı bir şekilde yeniden sorun.";
+    }
+
+    /// <summary>
+    /// API genelindeki koruma katmanlarının (hız sınırı, yönetici anahtarı, istek boyutu) mesajları. Tek bir modüle ait
+    /// olmadıkları için ayrı bir iç sınıfta durur; zarf ve dil diğer yanıtlarla aynıdır.
+    /// </summary>
+    public static class Security
+    {
+        /// <summary>
+        /// İstemci, soru ucunun dakika başına istek sınırını aştığında 429 yanıtının mesajı. En fazla ne kadar
+        /// bekleneceği <c>Retry-After</c> başlığında saniye olarak verilir.
+        /// </summary>
+        public const string TooManyRequests = "Çok fazla istek gönderildi. Lütfen biraz bekleyip tekrar deneyin.";
+
+        /// <summary>
+        /// Yönetici işlemine (<c>POST /v1/documents/reindex</c>) <c>X-Admin-Key</c> başlığı olmadan ya da yanlış bir
+        /// anahtarla gelindiğinde 401 yanıtının mesajı. Eksik ve yanlış anahtar aynı mesajı alır; anahtarın varlığı ya da
+        /// biçimi hakkında ipucu verilmez.
+        /// </summary>
+        public const string AdminKeyRequired = "Bu işlem için geçerli bir yönetici anahtarı (X-Admin-Key başlığı) gerekli.";
+
+        /// <summary>
+        /// Sunucuda yönetici anahtarı tanımlı değilken yönetici işlemine gelindiğinde 403 yanıtının mesajı. Uç güvenli
+        /// varsayılanla kapalıdır; operatör anahtarı tanımlayarak açar. Açılıştaki indeksleme bundan etkilenmez.
+        /// </summary>
+        public const string ReindexDisabled =
+            "Yeniden indeksleme ucu kapalı: sunucuda yönetici anahtarı (Security__AdminApiKey) tanımlı değil.";
+
+        /// <summary>
+        /// İstek gövdesi izin verilen boyutu aştığında 413 yanıtının mesajı; <c>{0}</c> bayt cinsinden sınırdır. Bir destek
+        /// sorusu en fazla 500 karakterdir, sınır bunun çok üstündedir; aşan istek okunmadan reddedilir.
+        /// </summary>
+        public const string RequestTooLarge = "İstek gövdesi çok büyük; en fazla {0} bayt gönderilebilir.";
     }
 }

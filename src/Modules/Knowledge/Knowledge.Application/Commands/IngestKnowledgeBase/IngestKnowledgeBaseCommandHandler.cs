@@ -2,6 +2,7 @@ using Knowledge.Application.Abstractions;
 using Knowledge.Application.BusinessRules;
 using Knowledge.Application.Contracts;
 using Knowledge.Application.Exceptions;
+using Knowledge.Application.Security;
 using Knowledge.Domain.Entities;
 using Knowledge.Domain.Repositories;
 using MediatR;
@@ -123,6 +124,18 @@ public sealed class IngestKnowledgeBaseCommandHandler(
             return duplicateError;
         }
 
+        // Dolaylı prompt injection: dil modeline yönelik talimat benzeri metin içeren dokümanlar uyarıyla raporlanır ama
+        // indeksten çıkarılmaz. Yanlış bir alarm gerçek bir politikayı aramadan düşürürdü; metin modele gitmeden zaten
+        // etkisizleştirilir ve yanıtlar doğrulanmış alıntıya dayanmak zorundadır.
+        var suspicious = sources.Where(ContainsInstructionLikeText).Select(document => document.SourceId).ToList();
+
+        foreach (var documentId in suspicious)
+        {
+            logger.LogWarning(
+                "Document {DocumentId} contains instruction-like text (possible prompt injection); it stays indexed and its text is neutralized before it reaches the model.",
+                documentId);
+        }
+
         // Veritabanındaki mevcut durum. Eşleşen her kayıt döngüde sözlükten çıkarılır; döngü bittiğinde sözlükte kalanlar
         // dosyası artık olmayan, silinecek dokümanlardır.
         var stored = (await repository.ListWithChunksAsync(cancellationToken))
@@ -182,10 +195,24 @@ public sealed class IngestKnowledgeBaseCommandHandler(
             Unchanged: unchanged,
             EmbeddedChunks: embeddedChunks,
             RetrievalMode: status.Mode == RetrievalMode.Hybrid ? "hybrid" : "lexical",
-            Warning: warning);
+            Warning: warning,
+            SuspiciousDocuments: suspicious);
 
         return ApiResult<IngestionSummaryDto>.Ok(summary, Messages.Knowledge.Reindexed);
     }
+
+    /// <summary>
+    /// Bir dokümanın başlığında, bölüm yollarında ya da bölüm metinlerinde dil modeline yönelik talimat benzeri metin
+    /// (dolaylı prompt injection) olup olmadığını <see cref="PromptInjectionDetector"/> ile denetler.
+    /// </summary>
+    /// <remarks>
+    /// Sorulardaki doğrudan saldırının dokümanlar üzerinden yapılan karşılığıdır: bilgi tabanına giren bir yönerge
+    /// (kopyala-yapıştır ya da ele geçirilmiş bir kaynak), modele verilen bağlamın içinden talimat vermeye çalışabilir.
+    /// </remarks>
+    private static bool ContainsInstructionLikeText(SourceDocument document) =>
+        PromptInjectionDetector.Detect(document.Title) is not null
+        || document.Sections.Any(section =>
+            PromptInjectionDetector.Detect(section.SectionPath) is not null || PromptInjectionDetector.Detect(section.Content) is not null);
 
     /// <summary>
     /// Kaynak dosyanın bölümlerini dokümana dosyadaki sırasıyla ekler. Bölümleme kaynak adaptöründe yapılmıştır (her

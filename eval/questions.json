@@ -33,6 +33,7 @@
         "answerable": true,
         "sourcesAnyOf": ["garanti-kosullari"],
         "mustContain": [["kapsam dışı", "kapsamı dışında", "kapsamında değil", "kapsamına girmez", "karşılanmaz", "hayır"]],
+        "mustNotContain": ["kapsam dışı değil", "kapsamı dışında değil", "garanti kapsamındadır", "garanti kapsamında onarılır", "ücretsiz onarılır", "ücretsiz olarak onarılır"],
         "sectionsAnyOf": ["Garanti Kapsamı Dışındaki Durumlar"]
       }
     },
@@ -45,7 +46,8 @@
         "answerable": true,
         "sourcesAnyOf": ["kargo-ve-teslimat"],
         "mustContain": [["750"], ["ücretsiz"]],
-        "mustNotContain": ["ücretsiz değil"],
+        "conditions": [["750 TL ve üzer", "750 TL ve üstü", "750 TL veya üzer", "750 TL veya üstü", "750 TL ve daha fazla", "750 TL üzer", "750 TL üstü", "750 TL'nin üzer", "750 TL'nin üstü", "750 TL'yi aşan", "750 TL'den fazla", "en az 750"]],
+        "mustNotContain": ["ücretsiz değil", "üzerindeki siparişlerde kargo ücretsiz sayılmaz", "üzeri siparişlerde kargo ücretsiz sayılmaz", "altındaki siparişlerde kargo ücretsizdir", "altındaki siparişlerde ücretsizdir", "altında kargo ücretsizdir", "altında ücretsizdir"],
         "sectionsAnyOf": ["Kargo Ücreti"]
       }
     },
@@ -95,7 +97,8 @@
         "sourcesAnyOf": ["iade-politikasi-v2"],
         "forbiddenSources": ["iade-politikasi-v1"],
         "mustContain": [["5 iş günü", "beş iş günü"]],
-        "mustNotContain": ["10 iş günü"],
+        "conditions": [["5 iş günü içinde", "5 iş günü içerisinde", "5 iş gününde", "beş iş günü içinde", "beş iş gününde", "en geç 5 iş günü", "5 iş günü sürer"]],
+        "mustNotContain": ["10 iş günü", "5 iş günü sonra", "5 iş gününden sonra"],
         "sectionsAnyOf": ["Para İadesi"]
       }
     },
@@ -137,7 +140,8 @@
         "sourcesAnyOf": ["iade-politikasi-v2"],
         "forbiddenSources": ["iade-politikasi-v1"],
         "mustContain": [["30 gün"]],
-        "mustNotContain": ["14 gün"],
+        "conditions": [["30 gün içinde", "30 gün içerisinde", "30 gün boyunca", "30 güne kadar", "30 günlük süre"]],
+        "mustNotContain": ["14 gün", "30 gün sonra iade", "30 günden sonra iade", "30 gün geçtikten sonra iade"],
         "discardedVersions": ["iade-politikasi-v1"],
         "sectionsAnyOf": ["İade Süresi"]
       }
@@ -152,7 +156,8 @@
         "sourcesAnyOf": ["iade-politikasi-v2"],
         "forbiddenSources": ["iade-politikasi-v1"],
         "mustContain": [["5 iş günü", "beş iş günü"]],
-        "mustNotContain": ["10 iş günü"],
+        "conditions": [["5 iş günü içinde", "5 iş günü içerisinde", "5 iş gününde", "beş iş günü içinde", "beş iş gününde", "en geç 5 iş günü", "5 iş günü sürer"]],
+        "mustNotContain": ["10 iş günü", "5 iş günü sonra", "5 iş gününden sonra"],
         "discardedVersions": ["iade-politikasi-v1"],
         "sectionsAnyOf": ["Para İadesi"]
       }

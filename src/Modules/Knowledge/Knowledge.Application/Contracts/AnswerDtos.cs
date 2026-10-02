@@ -103,10 +103,12 @@ public sealed record DiscardedVersionDto(string DocumentId, string Title, string
 /// Farklı dokümanlar arasında modelin bildirdiği bir çelişki ve sunucunun bu seçimi öncelik kuralına göre denetleme sonucu.
 /// </summary>
 /// <remarks>
-/// Yalnızca seçilen kaynağı ve en az bir elenen kaynağı modele verilen bağlamda bulunan çelişkiler listelenir; bağlam
-/// dışı etiketlere dayanan bildirimler atılır. Model kurala aykırı bir kaynağı seçtiyse sunucu kaybeden bölümleri
+/// Yalnızca seçilen kaynağı ve en az bir elenen kaynağı modele verilen bağlamda bulunan çelişkiler listelenir. Bağlam
+/// dışı kimliklerle yapılan bir bildirim yutulmaz: model bir kez düzeltme turuna girer, sürerse yanıt
+/// <c>UnresolvedConflict</c> ile reddedilir. Model kurala aykırı bir kaynağı seçtiyse sunucu kaybeden bölümleri
 /// bağlamdan çıkarıp modeli yeniden çağırır; kayıt bu durumda sunucunun kararını gösterir (seçilen kuralın kazananı,
-/// gerekçe sunucunun kuralı uyguladığını söyleyen metin).
+/// gerekçe sunucunun kuralı uyguladığını söyleyen metin). Yalnızca seçilen kaynağı yanıtın atıf yaptığı dokümanlar
+/// arasında olan kayıtlar gösterilir: yanıtın dayanmadığı bir çelişki yanıtı açıklamaz.
 /// </remarks>
 /// <param name="Topic">Çelişkinin konusu.</param>
 /// <param name="Chosen">Geçerli kabul edilen kaynak: modelin seçimi ya da sunucu düzelttiyse kuralın kazananı.</param>

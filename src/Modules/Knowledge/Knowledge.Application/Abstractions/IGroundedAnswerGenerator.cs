@@ -36,18 +36,26 @@ public interface IGroundedAnswerGenerator
     /// Handler'ın düzeltme turunda verdiği geri bildirim; ilk denemede null. Doluysa adaptör, önceki yanıtın neden kabul
     /// edilmediğini modele aynı istekte söyler.
     /// </param>
+    /// <param name="maxAttempts">
+    /// Bu çağrıda yapılabilecek en fazla model isteği (geçersiz çıktının yeniden denenmesi dahil). Handler soru başına
+    /// tek bir bütçe tutar ve adaptöre yalnızca kalanını verir; böylece adaptörün kendi yeniden denemesi ile handler'ın
+    /// düzeltme turu toplanıp bütçeyi aşamaz.
+    /// </param>
     /// <param name="cancellationToken">İsteğin iptal belirteci.</param>
-    /// <exception cref="Exceptions.AnswerGenerationException">Modele ulaşılamıyorsa ya da model geçersiz çıktı vermeyi sürdürüyorsa (adaptör bir kez yeniden dener).</exception>
+    /// <exception cref="Exceptions.AnswerGenerationException">Modele ulaşılamıyorsa ya da model, deneme bütçesi boyunca geçerli çıktı vermediyse.</exception>
     Task<GeneratedAnswer> GenerateAsync(
         string question,
         IReadOnlyList<ContextChunk> context,
         AnswerFeedback? feedback = null,
+        int maxAttempts = 2,
         CancellationToken cancellationToken = default);
 }
 
 /// <summary>
-/// Handler'ın düzeltme turunda modele ilettiği geri bildirim: önceki yanıtın hiçbir atfı kabul edilemedi, çünkü
-/// alıntılar atıf yapılan bölümün metninde birebir bulunamadı (ya da atıflar verilen kaynaklara dayanmıyordu).
+/// Handler'ın düzeltme turunda modele ilettiği geri bildirim: önceki yanıtın hiçbir atfı kabul edilemedi (alıntılar
+/// atıf yapılan bölümün metninde birebir bulunamadı ya da atıflar verilen kaynaklara dayanmıyordu), yanıttaki çelişki
+/// kayıtları verilen kaynaklarda olmayan kimliklere işaret ediyordu ve/veya bildirilen bir çelişkinin geçerli kaynağına
+/// yanıtta atıf yapılmamıştı.
 /// </summary>
 /// <remarks>
 /// Sıcaklık 0 ve sabit seed ile aynı istek aynı hatalı alıntıyı yeniden üretirdi; ikinci denemenin işe yaraması için
@@ -57,9 +65,27 @@ public interface IGroundedAnswerGenerator
 /// </remarks>
 /// <param name="UnverifiedQuotes">
 /// Önceki yanıtta doğrulanamayan alıntılar, modelin yazdığı hâliyle. Atıfların hiçbiri verilen bir kaynağa
-/// dayanmıyorsa boş olabilir.
+/// dayanmıyorsa ya da sorun yalnızca çelişki kimliklerindeyse boş olabilir.
 /// </param>
-public sealed record AnswerFeedback(IReadOnlyList<string> UnverifiedQuotes);
+/// <param name="CitationsRejected">
+/// Önceki yanıtın hiçbir atfı kabul edilmediyse true. Atıflar kabul edildiği hâlde yalnızca çelişki kimlikleri
+/// geçersizse false; o durumda model doğru alıntılarını değiştirmeye yönlendirilmez.
+/// </param>
+/// <param name="InvalidConflictReferences">
+/// Önceki yanıtın çelişki kayıtları verilen kaynaklarda olmayan ya da eksik kimlikler içeriyorduysa true. Böyle bir kayıt
+/// denetlenemez: öncelik kuralının kazananı ve kaybedeni belirlenemez.
+/// </param>
+/// <param name="WinnerNotCited">
+/// Önceki yanıt bir çelişkide kurala uygun seçim yaptığı (seçtiği kaynak öncelik kuralının kazananı olduğu) hâlde o
+/// kaynağın dokümanına hiç atıf yapmadıysa true. Model kuralı çiğnediyse false kalır: o durumda sunucu kaybedeni
+/// bağlamdan çıkarır ve modelin geçerli saydığı kaynak artık bağlamda değildir. Eşit öncelikli kaynaklarda bağlamdan
+/// çıkarılacak bir bölüm olmadığı için, düzeltme turundaki isteği ilkinden ayıran tek şey bu geri bildirimdir.
+/// </param>
+public sealed record AnswerFeedback(
+    IReadOnlyList<string> UnverifiedQuotes,
+    bool CitationsRejected = true,
+    bool InvalidConflictReferences = false,
+    bool WinnerNotCited = false);
 
 /// <summary>
 /// Modele verilen tek bir bağlam bölümü: indeks bölümü ve ona bu istek için atanan kısa etiket.
@@ -87,8 +113,17 @@ public sealed record ContextChunk(string Label, IndexedChunk Chunk);
 /// Yanıtı üreten modelin yapılandırılmış adı. Sunucunun döndürdüğü model kimliği kullanılmaz: llama.cpp orada yerel model
 /// dosyasının yolunu döndürür ve bu makine ayrıntısı API yanıtına sızardı.
 /// </param>
-/// <param name="InputTokens">Girdi token sayısı; sağlayıcı kullanım bilgisi döndürmezse null.</param>
-/// <param name="OutputTokens">Çıktı token sayısı; sağlayıcı kullanım bilgisi döndürmezse null.</param>
+/// <param name="InputTokens">Bu yanıt için yapılan bütün isteklerin toplam girdi token sayısı; sağlayıcı kullanım bilgisi döndürmezse null.</param>
+/// <param name="OutputTokens">Bu yanıt için yapılan bütün isteklerin toplam çıktı token sayısı; sağlayıcı kullanım bilgisi döndürmezse null.</param>
+/// <param name="Attempts">
+/// Bu yanıt için sunucuya gerçekte giden model isteği sayısı (geçersiz çıktı yüzünden yapılan yeniden deneme dahil).
+/// Handler soru başına çağrı bütçesini ve tanılamadaki <c>modelCalls</c> değerini bu sayıyla tutar.
+/// </param>
+/// <param name="LeaksSystemPrompt">
+/// Modelin serbest metin alanlarından biri (yanıt, eksik bilgi açıklaması, çelişki konusu ya da gerekçesi) sistem
+/// prompt'undan bir cümleyi tekrarlıyorsa true. Sistem prompt'unu yalnızca üretici bildiği için tespit üreticide yapılır;
+/// handler böyle bir yanıtı göstermeden <c>UnsafeOutput</c> gerekçesiyle reddeder.
+/// </param>
 public sealed record GeneratedAnswer(
     bool Answerable,
     string Answer,
@@ -97,7 +132,9 @@ public sealed record GeneratedAnswer(
     IReadOnlyList<GeneratedConflict> Conflicts,
     string Model,
     long? InputTokens,
-    long? OutputTokens);
+    long? OutputTokens,
+    int Attempts = 1,
+    bool LeaksSystemPrompt = false);
 
 /// <summary>Modelin tek bir atfı: hangi kaynağa dayandığı ve o kaynaktan alıntıladığı metin.</summary>
 /// <param name="ChunkLabel">

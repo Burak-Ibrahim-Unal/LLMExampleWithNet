@@ -57,6 +57,13 @@ public sealed record EvalQuestion(string Id, string Category, string Question, s
 /// Yanıtta raporlanması gereken kaynaklar arası çelişki: seçilmesi gereken doküman, elenmesi gerekenler ve sunucunun
 /// kurala uygunluk onayı (<c>ruleSatisfied=true</c>).
 /// </param>
+/// <param name="Conditions">
+/// Kritik bir kararın koşulunu doğru yönde söyleyen ifade grupları; <c>MustContain</c> gibi grup içinde VEYA, gruplar
+/// arasında VE ile değerlendirilir ama raporda ayrı bir "koşul" kontrolü olarak görünür. Sayının varlığı (ör. "750")
+/// ile doğru kullanımı (ör. "750 TL ve üzeri") böylece ayrı ayrı denetlenir: eşiği tersine çeviren "750 TL altındaki
+/// siparişlerde kargo ücretsizdir" yanıtı sayıyı içerir ama koşulu karşılamaz. Ters koşulun açık yazımları ayrıca
+/// <c>MustNotContain</c>'e eklenir. İfade tabanlı olduğu için kısmi bir denetimdir; her ters anlatımı yakalamaz.
+/// </param>
 public sealed record EvalExpectation(
     bool Answerable,
     IReadOnlyList<string>? SourcesAnyOf = null,
@@ -66,7 +73,8 @@ public sealed record EvalExpectation(
     IReadOnlyList<string>? MustNotContain = null,
     IReadOnlyList<string>? DiscardedVersions = null,
     IReadOnlyList<string>? SectionsAnyOf = null,
-    ExpectedConflict? ExpectConflict = null);
+    ExpectedConflict? ExpectConflict = null,
+    IReadOnlyList<IReadOnlyList<string>>? Conditions = null);
 
 /// <summary>
 /// Bir yanıtta görünmesi beklenen kaynaklar arası çelişki. Kaynaklar arası çelişkiyi model bildirir; bu beklenti, modelin

@@ -2,6 +2,7 @@ using FastEndpoints;
 using Knowledge.Application.Contracts;
 using Knowledge.Service.Abstractions;
 using Shared.Application.Common;
+using SupportAssistant.API.Security;
 
 namespace SupportAssistant.API.Endpoints.Knowledge;
 
@@ -31,14 +32,17 @@ public sealed class AskQuestionRequest
 public sealed class AskQuestionEndpoint(IKnowledgeService knowledgeService) : Endpoint<AskQuestionRequest, ApiResult<AnswerDto>>
 {
     /// <summary>
-    /// Rotayı (<c>/v1/questions</c>), POST fiilini, anonim erişimi ve OpenAPI özet/açıklamasını tanımlar. Soru gövdede
-    /// taşındığı ve her çağrı dil modelini çağırıp bir denetim kaydı yazabildiği için POST kullanılır. Kimlik doğrulama
-    /// ödev kapsamı dışında olduğundan erişim anonimdir. Açıklama, yanıtın alanlarını Scalar arayüzünde Türkçe anlatır.
+    /// Rotayı (<c>/v1/questions</c>), POST fiilini, anonim erişimi, hız sınırı politikasını ve OpenAPI
+    /// özet/açıklamasını tanımlar. Soru gövdede taşındığı ve her çağrı dil modelini çağırıp bir denetim kaydı
+    /// yazabildiği için POST kullanılır. Kimlik doğrulama ödev kapsamı dışında olduğundan erişim anonimdir; bu yüzden uç,
+    /// istemci IP'si başına dakikalık bir sınırla korunur (<see cref="RateLimitingOptions"/>). Açıklama, yanıtın
+    /// alanlarını Scalar arayüzünde Türkçe anlatır.
     /// </summary>
     public override void Configure()
     {
         Post("questions");
         AllowAnonymous();
+        Options(endpoint => endpoint.RequireRateLimiting(RateLimitingOptions.QuestionsPolicy));
         Summary(summary =>
         {
             summary.Summary = "Soruyu bilgi tabanındaki dokümanlara dayanarak yanıtlar.";

@@ -7,6 +7,7 @@ using Knowledge.Application.BusinessRules;
 using Knowledge.Application.Contracts;
 using Knowledge.Application.Exceptions;
 using Knowledge.Application.Options;
+using Knowledge.Application.Security;
 using Knowledge.Domain.Entities;
 using Knowledge.Domain.Repositories;
 using MediatR;
@@ -19,11 +20,13 @@ namespace Knowledge.Application.Commands.AskQuestion;
 /// <summary>
 /// Soru-cevap hattının kalbi: bir soruyu yalnızca bilgi tabanındaki, bugün yürürlükte olan kaynaklara dayanarak
 /// yanıtlar ya da "dokümanlarda yeterli bilgi yok" diyerek açıkça reddeder. Adımlar sırasıyla:
-/// iş kuralları (boş soru, 500 karakter sınırı, indeksin hazır olması) → hibrit arama (BM25 + varsa vektör benzerliği,
-/// RRF ile birleştirilir) → Kapı 1 (<see cref="AnswerabilityPolicy"/>: bilgi tabanında soruya yeterince yakın bir şey
-/// var mı?) → sürüm çözümleme (<see cref="VersionResolver"/>: her doküman ailesinde yalnızca yürürlükteki sürüm kalır,
-/// sadece eski sürüm eşleştiyse güncel sürümün bölümleri onun yerine konur, yürürlükte kaynak kalmazsa
-/// <c>NoSourceInEffect</c> reddi) → dil modeli → Kapı 2 (modelin kendi <c>answerable</c> kararı) → Kapı 3
+/// iş kuralları (boş soru, 500 karakter sınırı, indeksin hazır olması) → prompt injection denetimi
+/// (<see cref="PromptInjectionDetector"/>; yakalanan soru aramaya ve modele ulaşmaz) → hibrit arama (BM25 + varsa vektör
+/// benzerliği, RRF ile birleştirilir) → Kapı 1 (<see cref="AnswerabilityPolicy"/>: bilgi tabanında soruya yeterince yakın
+/// bir şey var mı?) → sürüm çözümleme (<see cref="VersionResolver"/>: her doküman ailesinde yalnızca yürürlükteki sürüm
+/// kalır, sadece eski sürüm eşleştiyse güncel sürümün bölümleri onun yerine konur, yürürlükte kaynak kalmazsa
+/// <c>NoSourceInEffect</c> reddi) → dil modeli → çıktı koruması (sistem prompt'unu tekrarlayan yanıt
+/// <c>UnsafeOutput</c> ile reddedilir) → Kapı 2 (modelin kendi <c>answerable</c> kararı) → Kapı 3
 /// (<see cref="CitationValidator"/>: yanıt, modele verilen bir bölümde birebir geçen en az bir alıntıya dayanıyor mu?)
 /// → kaynaklar arası çelişkide öncelik kuralının zorlanması (<see cref="SourcePrecedence"/>) → yanıt metninin
 /// temizlenmesi (<see cref="AnswerText"/>) → <see cref="QuestionLog"/> denetim kaydı.
@@ -40,10 +43,11 @@ namespace Knowledge.Application.Commands.AskQuestion;
 /// </para>
 /// <para>
 /// Model yanıtı iki nedenle kabul edilmeyebilir: hiçbir alıntı atıf yapılan bölümde doğrulanamaz ya da model bir
-/// çelişkide öncelik kuralını çiğner (kaybeden kaynağı seçer veya yanıtını ona dayandırır). İkisi de düzeltilebilir
-/// hatalardır; bu yüzden hemen reddetmek yerine model bir kez daha çağrılır: doğrulanamayan alıntılar geri bildirim olarak
-/// iletilir, kurala göre kaybeden bölümler bağlamdan çıkarılır. Düzeltme turundan sonra da kabul edilmeyen yanıt
-/// <c>NoValidCitations</c> ya da <c>UnresolvedConflict</c> ile reddedilir. Soru başına en fazla iki model çağrısı yapılır.
+/// çelişkide öncelik kuralını çiğner (kaybeden kaynağı seçer, yanıtını ona dayandırır, kuralın kazananına hiç atıf
+/// yapmaz ya da çelişkiyi verilen kaynaklarda olmayan kimliklerle bildirir). İkisi de düzeltilebilir hatalardır; bu yüzden hemen reddetmek yerine model bir kez daha çağrılır:
+/// doğrulanamayan alıntılar geri bildirim olarak iletilir, kurala göre kaybeden bölümler bağlamdan çıkarılır. Düzeltme
+/// turundan sonra da kabul edilmeyen yanıt <c>NoValidCitations</c> ya da <c>UnresolvedConflict</c> ile reddedilir. Soru
+/// başına en fazla iki gerçek model isteği yapılır; üreticinin şema yeniden denemesi de bu bütçeden düşer.
 /// </para>
 /// </remarks>
 public sealed class AskQuestionCommandHandler(
@@ -64,10 +68,15 @@ public sealed class AskQuestionCommandHandler(
     private const int SubstituteSectionCount = 2;
 
     /// <summary>
-    /// Soru başına en fazla model çağrısı: ilk deneme ve tek bir düzeltme turu. Yerel model her çağrıda saniyeler
-    /// harcadığından sınır bilinçli olarak düşük tutulur; ikinci denemede de kabul edilmeyen yanıt açıkça reddedilir.
-    /// Alıntı ve öncelik düzeltmeleri gerekirse aynı ikinci çağrıda birlikte uygulanır.
+    /// Soru başına en fazla gerçek model isteği; üreticinin geçersiz çıktı için yaptığı yeniden deneme de bu bütçeden
+    /// düşer. Yerel model her çağrıda saniyeler harcadığından sınır bilinçli olarak düşük tutulur: tipik akış tek
+    /// istektir, ikinci istek ya üreticinin şema düzeltmesine ya da handler'ın düzeltme turuna harcanır. Bütçe bittiğinde
+    /// kabul edilmeyen yanıt açıkça reddedilir; alıntı ve öncelik düzeltmeleri gerekirse aynı istekte birlikte uygulanır.
     /// </summary>
+    /// <remarks>
+    /// Bütçe tek bir yerde tutulur ve üreticiye her çağrıda yalnızca kalanı verilir. Önceden handler'ın iki denemesi ile
+    /// üreticinin iki denemesi çarpılıp sunucuya dört istek gidebiliyor, tanılama ise iki diyordu.
+    /// </remarks>
     private const int MaxModelCalls = 2;
 
     /// <summary>
@@ -119,6 +128,21 @@ public sealed class AskQuestionCommandHandler(
         var stopwatch = Stopwatch.StartNew();
         var settings = options.Value;
 
+        // Prompt injection: talimatları değiştirmeye yönelik bir soru aramaya ve modele hiç ulaşmaz. Hangi kalıbın
+        // yakalandığı yalnızca loga yazılır; istemci genel bir ret mesajı alır, olay denetim kaydında görünür.
+        if (PromptInjectionDetector.Detect(question) is { } injectionRule)
+        {
+            logger.LogWarning("Question refused as a suspected prompt injection ({Rule}); the model was not called.", injectionRule);
+            var noRetrieval = new AnswerDiagnosticsDto(index.Status.Mode.ToApi(), 0, 0, [], [], string.Empty, stopwatch.ElapsedMilliseconds, null, null, 0);
+            return await RefuseAsync(
+                question,
+                RefusalReasons.PromptInjectionSuspected,
+                string.Empty,
+                noRetrieval,
+                cancellationToken,
+                Messages.Knowledge.PromptInjectionRefused);
+        }
+
         // Hibrit arama. Modelin göreceğinden fazlası (TopK * 2) getirilir: eski sürümlerin bölümleri bir sonraki adımda
         // elenecek, bağlam yine de dolu kalmalı. Sorgu bir kez hazırlanır (gerekirse embed edilir) ve yedek bölüm
         // aramalarında yeniden kullanılır.
@@ -150,17 +174,17 @@ public sealed class AskQuestionCommandHandler(
         AnswerFeedback? feedback = null;
         var enforcedConflicts = new List<ConflictDto>();
 
-        // Döngünün koşulu yoktur: her tur ya bir yanıt ya bir ret döndürür ya da tek düzeltme turuna geçer
-        // (en fazla MaxModelCalls çağrı).
-        for (var attempt = 1; ; attempt++)
+        // Döngünün koşulu yoktur: her tur ya bir yanıt ya bir ret döndürür ya da düzeltme turuna geçer. Bütün turlar
+        // birlikte en fazla MaxModelCalls gerçek model isteği yapabilir.
+        while (true)
         {
-            // Dil modeli çağrısı. Buradaki hatalar "bilgi yok" reddi değil gerçek hatalardır: erişilemeyen sunucu 503,
-            // adaptörün kendi şema denemesinden sonra da şemaya uymayan çıktı 502 olarak döner.
+            // Dil modeli çağrısı; üreticiye yalnızca kalan bütçe verilir. Buradaki hatalar "bilgi yok" reddi değil gerçek
+            // hatalardır: erişilemeyen sunucu 503, üreticinin bütçesi içinde şemaya uymayan çıktı 502 olarak döner.
             GeneratedAnswer generated;
 
             try
             {
-                generated = await generator.GenerateAsync(question, context, feedback, cancellationToken);
+                generated = await generator.GenerateAsync(question, context, feedback, MaxModelCalls - usage.Calls, cancellationToken);
             }
             catch (AnswerGenerationException exception)
             {
@@ -173,6 +197,22 @@ public sealed class AskQuestionCommandHandler(
 
             usage.Add(generated);
             var diagnostics = Diagnostics(retrieval, candidateDocumentIds, context, generated.Model, stopwatch, usage);
+
+            // Çıktı koruması: model sistem prompt'unu tekrarladıysa yanıt, doğrulanmış atfı olsa bile gösterilmez. Böyle bir
+            // çıktı bir manipülasyonun (kaynağa gömülü talimat ya da ustaca kurulmuş soru) işe yaradığını gösterir; aynı
+            // bağlamla yeniden denemek aynı sonucu verebileceği için düzeltme turu yapılmaz. Sızıntı eksik bilgi
+            // açıklamasında da olabileceğinden modelin hiçbir metni istemciye dönmez.
+            if (generated.LeaksSystemPrompt)
+            {
+                logger.LogWarning("The model's output repeated the system prompt; the answer was withheld.");
+                return await RefuseAsync(
+                    question,
+                    RefusalReasons.UnsafeOutput,
+                    string.Empty,
+                    diagnostics,
+                    cancellationToken,
+                    Messages.Knowledge.UnsafeOutputRefused);
+            }
 
             // Kapı 2: model verilen kaynakları yetersiz bulduysa yanıt uydurmaz; neyin eksik olduğunu belirterek reddeder.
             // Bu geçerli bir karardır, düzeltme turu gerektirmez.
@@ -187,31 +227,50 @@ public sealed class AskQuestionCommandHandler(
             var accepted = citations.Where(citation => citation.QuoteVerified).ToList();
 
             // Öncelik kuralı: model bir çelişkide kurala göre kaybeden kaynağı seçtiyse ya da yanıtını kaybeden bir kaynağa
-            // dayandırdıysa eski ya da daha az yetkili bilgi müşteriye ulaşırdı.
-            var conflicts = CheckConflicts(generated.Conflicts, context);
+            // dayandırdıysa eski ya da daha az yetkili bilgi müşteriye ulaşırdı. Kuralın kazananına hiç atıf yapılmaması da
+            // ihlaldir: çelişki kaydı "politikayı seçtim" derken yanıt başka bir kaynağa dayanıyorsa beyan ile yanıt
+            // birbirini tutmaz. Verilen kaynaklarda olmayan kimliklerle bildirilen çelişkiler denetlenemez; onlar da
+            // yutulmaz, düzeltme turuna gider.
+            var (conflicts, invalidConflictReferences) = CheckConflicts(generated.Conflicts, context);
             var losers = conflicts.SelectMany(conflict => conflict.Losers).ToHashSet();
+            var citedDocuments = accepted.Select(citation => citation.Source.Chunk.DocumentId).ToHashSet(StringComparer.Ordinal);
+            var winnerNotCited = conflicts.Any(conflict => !citedDocuments.Contains(conflict.Winner.Chunk.DocumentId));
             var violatesPrecedence = conflicts.Any(conflict => !conflict.RuleSatisfied)
+                || winnerNotCited
                 || accepted.Any(citation => losers.Contains(citation.Source));
+            var hasInvalidConflictReferences = invalidConflictReferences > 0;
 
-            if (accepted.Count == 0 || violatesPrecedence)
+            // Model kurala uygun seçim yaptığı (seçtiği kaynak kuralın kazananı olduğu) hâlde ona atıf yapmadıysa bunu
+            // ayrıca söylemek gerekir. Model kuralı çiğnediyse söylenmez: sunucu kaybedeni bağlamdan çıkarır ve modelin
+            // "geçerli" saydığı kaynak artık bağlamda değildir; böyle bir uyarı modeli yanıltırdı.
+            var chosenWinnerNotCited = conflicts.Any(conflict => conflict.RuleSatisfied && !citedDocuments.Contains(conflict.Winner.Chunk.DocumentId));
+
+            if (accepted.Count == 0 || violatesPrecedence || hasInvalidConflictReferences)
             {
-                if (attempt == MaxModelCalls)
+                // Bütçe bittiyse (üreticinin şema düzeltmesi ikinci isteği harcadıysa da) düzeltme turu yapılamaz.
+                if (usage.Calls >= MaxModelCalls)
                 {
                     var reason = accepted.Count == 0 ? RefusalReasons.NoValidCitations : RefusalReasons.UnresolvedConflict;
                     return await RefuseAsync(question, reason, generated.MissingInformation, diagnostics, cancellationToken);
                 }
 
                 logger.LogWarning(
-                    "The answer was not accepted (verified citations: {VerifiedCitations}, precedence violated: {PrecedenceViolated}); asking the model once more.",
+                    "The answer was not accepted (verified citations: {VerifiedCitations}, precedence violated or conflict winner not cited: {PrecedenceViolated}, conflicts with unknown labels: {InvalidConflicts}); asking the model once more.",
                     accepted.Count,
-                    violatesPrecedence);
+                    violatesPrecedence,
+                    invalidConflictReferences);
 
-                // Düzeltme turu: doğrulanamayan alıntılar modele geri bildirim olarak gösterilir; öncelik ihlalinde kurala
-                // göre kaybeden bölümler bağlamdan çıkarılır ve bağlam yeniden C1..Cn diye etiketlenir. Sunucunun kararı
-                // çelişki kaydı olarak saklanır, çünkü kaybeden kaynak artık bağlamda olmadığından model çelişkiyi bir daha
-                // bildiremez.
-                feedback = accepted.Count == 0
-                    ? new AnswerFeedback(citations.Where(citation => !citation.QuoteVerified).Select(citation => citation.Quote).ToList())
+                // Düzeltme turu: doğrulanamayan alıntılar, geçersiz çelişki kimlikleri ve atıf yapılmayan geçerli kaynak
+                // modele geri bildirim olarak gösterilir; öncelik ihlalinde kurala göre kaybeden bölümler bağlamdan çıkarılır
+                // ve bağlam yeniden C1..Cn diye etiketlenir. Eşit öncelikli kaynaklarda kaybeden yoktur; ikinci isteği
+                // ilkinden ayıran tek şey o zaman bu geri bildirimdir. Sunucunun kararı çelişki kaydı olarak saklanır, çünkü
+                // kaybeden kaynak artık bağlamda olmadığından model çelişkiyi bir daha bildiremez.
+                feedback = accepted.Count == 0 || hasInvalidConflictReferences || chosenWinnerNotCited
+                    ? new AnswerFeedback(
+                        accepted.Count == 0 ? citations.Where(citation => !citation.QuoteVerified).Select(citation => citation.Quote).ToList() : [],
+                        CitationsRejected: accepted.Count == 0,
+                        InvalidConflictReferences: hasInvalidConflictReferences,
+                        WinnerNotCited: chosenWinnerNotCited)
                     : null;
 
                 if (violatesPrecedence)
@@ -245,13 +304,20 @@ public sealed class AskQuestionCommandHandler(
             // raporlanır; bağlama girip yanıtta kullanılmayan bir ailenin kararı kullanıcıyı yanlış dokümana yönlendirirdi.
             var citedFamilies = accepted.Select(citation => citation.Source.Chunk.DocumentKey).ToHashSet(StringComparer.Ordinal);
 
+            // Çelişki kayıtları için de aynı ilke geçerlidir: düzeltme turundan önce saklanan sunucu kararları dahil, yalnızca
+            // seçilen kaynağı yanıtın atıf yaptığı dokümanlar arasında olan kayıtlar gösterilir.
+            var reportedConflicts = enforcedConflicts
+                .Concat(conflicts.Select(conflict => conflict.ToDto()))
+                .Where(conflict => citedDocuments.Contains(conflict.Chosen.DocumentId))
+                .ToList();
+
             var answer = new AnswerDto(
                 question,
                 Answerable: true,
                 Answer: answerText,
                 Sources: accepted.Select(ToSourceDto).ToList(),
                 VersionResolution: ToDto(resolution, citedFamilies),
-                Conflicts: [.. enforcedConflicts, .. conflicts.Select(conflict => conflict.ToDto())],
+                Conflicts: reportedConflicts,
                 MissingInformation: generated.MissingInformation.Trim(),
                 RefusalReason: string.Empty,
                 Diagnostics: diagnostics);
@@ -262,28 +328,38 @@ public sealed class AskQuestionCommandHandler(
     }
 
     /// <summary>
-    /// Açık bir "dokümanlarda yeterli bilgi yok" yanıtı oluşturur, denetim kaydına yazar ve HTTP 200 ile döndürür.
-    /// <paramref name="reason"/> hangi kapıda durulduğunu söyleyen <see cref="RefusalReasons"/> değeridir;
-    /// <paramref name="missingInformation"/> modelin neyin eksik olduğuna dair açıklamasıdır (model çağrılmadıysa boş).
+    /// Açık bir ret yanıtı oluşturur, denetim kaydına yazar ve HTTP 200 ile döndürür. <paramref name="reason"/> hangi
+    /// kapıda durulduğunu söyleyen <see cref="RefusalReasons"/> değeridir; <paramref name="missingInformation"/> modelin
+    /// neyin eksik olduğuna dair açıklamasıdır (model çağrılmadıysa boş).
     /// </summary>
     /// <remarks>
     /// Ret bir hata değil geçerli bir iş sonucudur: istemci <c>answerable=false</c>, boş <c>sources</c> ve yanıt alanında
-    /// her zaman aynı sabit Türkçe mesajı alır; modelin ürettiği metin retlerde hiçbir zaman yanıt gibi gösterilmez.
-    /// Retler sürüm kararı taşımaz (yalnızca kural metni, boş listeler): sürüm kararları bir yanıtın kaynaklarını
-    /// açıklamak içindir, yanıt yoksa açıklanacak kaynak da yoktur. Tanılama ise bilerek doldurulur; neyin bulunduğu ve
-    /// modele neyin gösterildiği görülebilsin, "neden reddedildi?" sorusu yanıttan ve denetim kaydından cevaplanabilsin.
+    /// sabit bir Türkçe mesaj alır; modelin ürettiği metin retlerde hiçbir zaman yanıt gibi gösterilmez. Mesaj varsayılan
+    /// olarak "dokümanlarda yeterli bilgi yok" cümlesidir; sorun dokümanlarda değil sorunun kendisinde (prompt injection)
+    /// ya da modelin çıktısında (çıktı koruması) olduğunda buna özel mesaj verilir. Retler sürüm kararı taşımaz (yalnızca kural metni, boş listeler): sürüm kararları
+    /// bir yanıtın kaynaklarını açıklamak içindir, yanıt yoksa açıklanacak kaynak da yoktur. Tanılama ise bilerek
+    /// doldurulur; neyin bulunduğu ve modele neyin gösterildiği görülebilsin, "neden reddedildi?" sorusu yanıttan ve
+    /// denetim kaydından cevaplanabilsin.
     /// </remarks>
+    /// <param name="question">Reddedilen soru.</param>
+    /// <param name="reason">Ret nedeni (<see cref="RefusalReasons"/>).</param>
+    /// <param name="missingInformation">Modelin eksik bilgi açıklaması; yoksa boş.</param>
+    /// <param name="diagnostics">Yanıtta ve denetim kaydında gösterilecek tanılama.</param>
+    /// <param name="cancellationToken">İsteğin iptal belirteci.</param>
+    /// <param name="message">Yanıt metni ve zarf mesajı; null ise <c>Messages.Knowledge.NotEnoughInformation</c>.</param>
     private async Task<ApiResult<AnswerDto>> RefuseAsync(
         string question,
         string reason,
         string missingInformation,
         AnswerDiagnosticsDto diagnostics,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        string? message = null)
     {
+        var text = message ?? Messages.Knowledge.NotEnoughInformation;
         var refusal = new AnswerDto(
             question,
             Answerable: false,
-            Answer: Messages.Knowledge.NotEnoughInformation,
+            Answer: text,
             Sources: [],
             VersionResolution: new VersionResolutionDto(false, VersionResolver.Rule, [], []),
             Conflicts: [],
@@ -292,7 +368,7 @@ public sealed class AskQuestionCommandHandler(
             Diagnostics: diagnostics);
 
         await LogAsync(refusal, cancellationToken);
-        return ApiResult<AnswerDto>.Ok(refusal, Messages.Knowledge.NotEnoughInformation);
+        return ApiResult<AnswerDto>.Ok(refusal, text);
     }
 
     /// <summary>
@@ -345,47 +421,60 @@ public sealed class AskQuestionCommandHandler(
         chunks.Select((chunk, position) => new ContextChunk($"C{position + 1}", chunk)).ToList();
 
     /// <summary>
-    /// Modelin bildirdiği, farklı dokümanlar arasındaki çelişkileri sunucu tarafında doğrular. Seçilen kaynak modele
-    /// verilen bağlamda yoksa ya da geriye geçerli bir reddedilen kaynak kalmazsa çelişki atılır. Kalan her çelişki için
-    /// kurala (<see cref="SourcePrecedence"/>: politika/prosedür &gt; kılavuz &gt; SSS, eşit yetkide daha yeni yürürlük
-    /// tarihi) göre kaybeden kaynaklar ve modelin seçiminin kurala uyup uymadığı hesaplanır.
+    /// Modelin bildirdiği, farklı dokümanlar arasındaki çelişkileri sunucu tarafında doğrular. Her çelişki için kurala
+    /// (<see cref="SourcePrecedence"/>: politika/prosedür &gt; kılavuz &gt; SSS, eşit yetkide daha yeni yürürlük tarihi)
+    /// göre kaybeden kaynaklar ve modelin seçiminin kurala uyup uymadığı hesaplanır. Verilen bağlamda olmayan kimlikler
+    /// ayrıca sayılır.
     /// </summary>
     /// <remarks>
     /// Görev, kaynaklar çeliştiğinde güncel olanın nasıl seçildiğinin gösterilmesini istiyor; bunu yalnızca modelin
     /// beyanına bırakmak, modelin yanlış kaynağı seçtiği durumları gizlerdi. Model etiketleri farklı biçimlerde
-    /// yazabildiği için ("c2", "[C2]", "2") etiketler önce normalize edilir; bağlamda olmayan etiketler sessizce elenir,
-    /// seçilen kaynak reddedilenler arasında sayılmaz, tekrarlar ayıklanır. Sonuç handler'ın kuralı zorlamasında kullanılır:
-    /// ihlalde kaybedenler bağlamdan çıkarılıp model yeniden çağrılır. Aynı belgenin sürümleri arasındaki seçim burada
-    /// değil, model çağrılmadan önce <see cref="VersionResolver"/> tarafından yapılır.
+    /// yazabildiği için ("c2", "[C2]", "2") etiketler önce normalize edilir, seçilen kaynak reddedilenler arasında sayılmaz
+    /// ve tekrarlar ayıklanır. Bağlamda olmayan bir kimlik (seçilen ya da elenen) sessizce yutulmaz: çelişki geçersiz
+    /// kimlik içerir diye sayılır ve handler bunu düzeltme turuna, sürerse <c>UnresolvedConflict</c> reddine götürür. Seçilen
+    /// kaynağı ve en az bir elenen kaynağı bağlamda olan çelişkiler yine de denetlenir; kuralı zorlamak için bu kısım
+    /// yeterlidir. Aynı belgenin sürümleri arasındaki seçim burada değil, model çağrılmadan önce
+    /// <see cref="VersionResolver"/> tarafından yapılır.
     /// </remarks>
-    private static IReadOnlyList<CheckedConflict> CheckConflicts(IReadOnlyList<GeneratedConflict> conflicts, IReadOnlyList<ContextChunk> context)
+    /// <param name="conflicts">Modelin bildirdiği çelişkiler.</param>
+    /// <param name="context">Modele bu denemede verilen etiketli bölümler.</param>
+    /// <returns>Denetlenebilen çelişkiler ve geçersiz kimlik içeren çelişki sayısı.</returns>
+    private static (IReadOnlyList<CheckedConflict> Conflicts, int InvalidReferences) CheckConflicts(IReadOnlyList<GeneratedConflict> conflicts, IReadOnlyList<ContextChunk> context)
     {
         var sourcesByLabel = context.ToDictionary(source => source.Label, StringComparer.OrdinalIgnoreCase);
         var checkedConflicts = new List<CheckedConflict>();
+        var invalidReferences = 0;
 
         foreach (var conflict in conflicts)
         {
             if (!sourcesByLabel.TryGetValue(SourceLabel.Normalize(conflict.ChosenChunkLabel), out var chosen))
             {
+                invalidReferences++;
                 continue;
             }
 
-            var rejected = conflict.RejectedChunkLabels
+            var rejectedLabels = conflict.RejectedChunkLabels
                 .Select(SourceLabel.Normalize)
                 .Distinct()
-                .Where(label => label != chosen.Label && sourcesByLabel.ContainsKey(label))
+                .Where(label => label != chosen.Label)
+                .ToList();
+            var rejected = rejectedLabels
+                .Where(sourcesByLabel.ContainsKey)
                 .Select(label => sourcesByLabel[label])
                 .ToList();
 
-            if (rejected.Count == 0)
+            if (rejected.Count < rejectedLabels.Count || rejected.Count == 0)
             {
-                continue;
+                invalidReferences++;
             }
 
-            checkedConflicts.Add(new CheckedConflict(conflict.Topic.Trim(), chosen, rejected, conflict.Reason.Trim()));
+            if (rejected.Count > 0)
+            {
+                checkedConflicts.Add(new CheckedConflict(conflict.Topic.Trim(), chosen, rejected, conflict.Reason.Trim()));
+            }
         }
 
-        return checkedConflicts;
+        return (checkedConflicts, invalidReferences);
     }
 
     /// <summary>
@@ -535,6 +624,13 @@ public sealed class AskQuestionCommandHandler(
         /// </summary>
         public bool RuleSatisfied => !Losers.Contains(Chosen);
 
+        /// <summary>
+        /// Kurala göre geçerli kaynak: model kurala uyduysa seçtiği bölüm, uymadıysa kaybedenler dışındaki ilk üye (eşitlikte
+        /// modelin sıralaması korunur). Yanıtın bu kaynağın dokümanına atıf yapması beklenir; yapmıyorsa çelişki beyanı ile
+        /// yanıt birbirini tutmaz.
+        /// </summary>
+        public ContextChunk Winner => Members.First(member => !Losers.Contains(member));
+
         /// <summary>Çelişkiyi modelin bildirdiği hâliyle, sunucunun <c>RuleSatisfied</c> kararıyla birlikte API biçimine çevirir.</summary>
         public ConflictDto ToDto() =>
             new(Topic, ToConflictSource(Chosen), Rejected.Select(ToConflictSource).ToList(), Reason, RuleSatisfied);
@@ -555,10 +651,9 @@ public sealed class AskQuestionCommandHandler(
                 return ToDto();
             }
 
-            var winner = Members.First(member => !Losers.Contains(member));
             return new ConflictDto(
                 Topic,
-                ToConflictSource(winner),
+                ToConflictSource(Winner),
                 Losers.Select(ToConflictSource).ToList(),
                 EnforcedReasonPrefix + SourcePrecedence.Rule,
                 RuleSatisfied: true);
@@ -566,16 +661,18 @@ public sealed class AskQuestionCommandHandler(
     }
 
     /// <summary>
-    /// Bir sorudaki model çağrılarının sayısını ve toplam token kullanımını biriktirir; düzeltme turu yapıldığında
-    /// tanılama iki çağrının toplamını gösterir.
+    /// Bir sorudaki gerçek model isteklerinin sayısını ve toplam token kullanımını biriktirir; soru başına çağrı bütçesi
+    /// ve tanılamadaki <c>modelCalls</c> buradan gelir.
     /// </summary>
     /// <remarks>
-    /// Yalnızca son çağrının token sayısını raporlamak düzeltme turunun maliyetini gizlerdi. Sağlayıcı kullanım bilgisi
-    /// döndürmezse toplam null kalır; bilinmeyen bir değer 0 diye gösterilmez.
+    /// Sayım üreticinin bildirdiği gerçek istek sayısıyla (<see cref="GeneratedAnswer.Attempts"/>) yapılır; şema
+    /// düzeltmesi için yapılan yeniden deneme de sayılır. Yalnızca son çağrının token sayısını raporlamak düzeltme turunun
+    /// maliyetini gizlerdi. Sağlayıcı kullanım bilgisi döndürmezse toplam null kalır; bilinmeyen bir değer 0 diye
+    /// gösterilmez.
     /// </remarks>
     private sealed class ModelUsage
     {
-        /// <summary>Şimdiye kadar yapılan model çağrısı sayısı.</summary>
+        /// <summary>Şimdiye kadar sunucuya giden model isteği sayısı (üreticinin yeniden denemeleri dahil).</summary>
         public int Calls { get; private set; }
 
         /// <summary>Toplam girdi token sayısı; hiçbir çağrı bildirmediyse null.</summary>
@@ -584,10 +681,12 @@ public sealed class AskQuestionCommandHandler(
         /// <summary>Toplam çıktı token sayısı; hiçbir çağrı bildirmediyse null.</summary>
         public long? OutputTokens { get; private set; }
 
-        /// <summary>Bir model yanıtını sayaçlara ekler.</summary>
+        /// <summary>
+        /// Bir model yanıtını sayaçlara ekler; yanıtın gerektirdiği istek sayısı kadar bütçe harcanır (en az bir).
+        /// </summary>
         public void Add(GeneratedAnswer generated)
         {
-            Calls++;
+            Calls += Math.Max(1, generated.Attempts);
             InputTokens = Sum(InputTokens, generated.InputTokens);
             OutputTokens = Sum(OutputTokens, generated.OutputTokens);
         }

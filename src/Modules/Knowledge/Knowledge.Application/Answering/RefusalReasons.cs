@@ -28,9 +28,23 @@ public static class RefusalReasons
     public const string NoValidCitations = "NoValidCitations";
 
     /// <summary>
-    /// Model, farklı dokümanlar arasındaki bir çelişkide öncelik kuralına aykırı bir kaynağı seçti ya da yanıtını kurala
-    /// göre kaybeden bir kaynağa dayandırdı; kaybeden bölümler bağlamdan çıkarılıp model yeniden çağrıldıktan sonra da
-    /// ihlal sürdü. Çelişkili bir yanıtı göstermek yerine açıkça reddedilir.
+    /// Model, farklı dokümanlar arasındaki bir çelişkide öncelik kuralına aykırı bir kaynağı seçti, yanıtını kurala göre
+    /// kaybeden bir kaynağa dayandırdı, kuralın kazananına hiç atıf yapmadı ya da çelişkiyi verilen kaynaklarda olmayan
+    /// kimliklerle bildirdi; düzeltme turundan sonra da durum sürdü. Çelişkili bir yanıtı göstermek yerine açıkça
+    /// reddedilir.
     /// </summary>
     public const string UnresolvedConflict = "UnresolvedConflict";
+
+    /// <summary>
+    /// Soru, dil modelinin talimatlarını değiştirmeye yönelik ifadeler içeriyor (prompt injection); model çağrılmadı.
+    /// Yanıt, "bilgi yok" mesajı yerine buna özel bir mesaj taşır ve olay denetim kaydına yazılır.
+    /// </summary>
+    public const string PromptInjectionSuspected = "PromptInjectionSuspected";
+
+    /// <summary>
+    /// Modelin çıktısı sistem prompt'undan bir cümleyi tekrarladı (sistem prompt'u sızıntısı); yanıt, doğrulanmış atfı
+    /// olsa bile gösterilmedi. Böyle bir çıktı bir manipülasyon girişiminin işe yaradığını gösterdiği için düzeltme turu
+    /// yapılmaz. Yanıt buna özel bir mesaj taşır, modelin metni hiçbir alanda dönmez.
+    /// </summary>
+    public const string UnsafeOutput = "UnsafeOutput";
 }

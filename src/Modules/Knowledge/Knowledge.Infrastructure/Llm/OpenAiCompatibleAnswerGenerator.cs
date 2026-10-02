@@ -2,6 +2,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 using Knowledge.Application.Abstractions;
 using Knowledge.Application.Exceptions;
+using Knowledge.Application.Security;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -14,12 +15,12 @@ namespace Knowledge.Infrastructure.Llm;
 /// ister. llama.cpp şemayı bir grammar'a çevirdiği için yanıt normalde her zaman ayrıştırılır; yine de ayrıştırılamayan
 /// (ör. token sınırında yarım kalan ya da şema desteği olmayan bir sunucudan gelen), zorunlu bir alanı eksik olan
 /// (<c>{}</c> gibi), listelerinde <c>null</c> öğe bulunan ya da <c>answerable=true</c> olduğu hâlde yanıt metni boş olan
-/// bir çıktı, düzeltici bir mesajla bir kez yeniden denenir. Böylece bozuk bir çıktı hiçbir zaman modelin "bilgi yok"
-/// kararı sanılmaz.
+/// bir çıktı, çağıranın verdiği deneme bütçesi elverdiği sürece düzeltici bir mesajla yeniden denenir. Böylece bozuk bir
+/// çıktı hiçbir zaman modelin "bilgi yok" kararı sanılmaz.
 /// </summary>
 /// <remarks>
 /// Hatalar Application katmanının tanıdığı tek bir istisna türüne çevrilir: uca ulaşılamaması, zaman aşımı veya uçtan
-/// dönen bir hata <see cref="AnswerGenerationFailure.Unavailable"/> (HTTP 503), iki denemede de geçerli yapı
+/// dönen bir hata <see cref="AnswerGenerationFailure.Unavailable"/> (HTTP 503), deneme bütçesi boyunca geçerli yapı
 /// alınamaması <see cref="AnswerGenerationFailure.InvalidOutput"/> (HTTP 502) olur. Böylece bu teknik arızalar
 /// "bilgi yok" diye geçiştirilmez ve Application katmanı OpenAI SDK'sını ya da HTTP ayrıntılarını tanımak zorunda
 /// kalmaz.
@@ -29,13 +30,6 @@ public sealed class OpenAiCompatibleAnswerGenerator(
     IOptions<LlmOptions> options,
     ILogger<OpenAiCompatibleAnswerGenerator> logger) : IGroundedAnswerGenerator
 {
-    /// <summary>
-    /// Toplam deneme sayısı: ilk istek ve tek bir düzeltici yeniden deneme. Yerel model her denemede saniyeler
-    /// harcadığından sayı bilinçli olarak düşük tutulur; ikinci başarısızlık 502 (<c>LlmInvalidOutput</c>) olarak
-    /// raporlanır.
-    /// </summary>
-    private const int MaxAttempts = 2;
-
     /// <summary>
     /// Şema üretimi ve yanıt ayrıştırması için JSON ayarları. Temel alınan <c>AIJsonUtilities.DefaultOptions</c>
     /// camelCase alan adları üretir; bu adlar sistem prompt'unda geçen adlarla (answerable, missingInformation…) aynıdır.
@@ -78,9 +72,15 @@ public sealed class OpenAiCompatibleAnswerGenerator(
     /// istek büyük olasılıkla aynı hatalı çıktıyı üretirdi.
     /// </para>
     /// <para>
-    /// Ağ veya uç hataları <see cref="AnswerGenerationFailure.Unavailable"/>, ikinci denemede de geçersiz kalan çıktı
+    /// Ağ veya uç hataları <see cref="AnswerGenerationFailure.Unavailable"/>, deneme bütçesi
+    /// (<paramref name="maxAttempts"/>) bittiğinde hâlâ geçersiz olan çıktı
     /// <see cref="AnswerGenerationFailure.InvalidOutput"/> nedeniyle <see cref="AnswerGenerationException"/> olarak
     /// fırlatılır. Çağıranın kendi iptal isteği ise sarmalanmaz, iptal olarak yukarı taşınır.
+    /// </para>
+    /// <para>
+    /// Deneme bütçesi çağırandan gelir: handler soru başına tek bir model çağrısı bütçesi tutar ve buraya yalnızca
+    /// kalanını verir. Yapılan gerçek istek sayısı yanıtta <see cref="GeneratedAnswer.Attempts"/> olarak döner; böylece
+    /// buradaki şema yeniden denemesi bütçeye sayılır ve tanılamada görünür.
     /// </para>
     /// <para>
     /// <paramref name="feedback"/> handler'ın düzeltme turuna aittir ve buradaki şema yeniden denemesinden ayrıdır:
@@ -93,9 +93,15 @@ public sealed class OpenAiCompatibleAnswerGenerator(
         string question,
         IReadOnlyList<ContextChunk> context,
         AnswerFeedback? feedback = null,
+        int maxAttempts = 2,
         CancellationToken cancellationToken = default)
     {
         var settings = options.Value;
+        // En az bir istek her zaman yapılır; sıfır ya da negatif bir bütçe çağıranın hatasıdır, sessizce yanıtsız kalınmaz.
+        var attemptBudget = Math.Max(1, maxAttempts);
+        // Token kullanımı bütün denemeler boyunca toplanır: ayrıştırılamayan bir yanıtın token'ları da harcanmış maliyettir.
+        long? inputTokens = null;
+        long? outputTokens = null;
         var messages = new List<ChatMessage>
         {
             new(ChatRole.System, AnswerPrompt.System),
@@ -132,20 +138,27 @@ public sealed class OpenAiCompatibleAnswerGenerator(
 
             // Şemaya uymak yetmez: listelerde null öğe olmamalı ve yanıt metni olmadan "answerable" ne bir yanıttır ne de
             // bir ret. Eksik zorunlu alanlar ise ayrıştırmada hata verir ve TryGetResult false döner.
+            inputTokens = Sum(inputTokens, response.Usage?.InputTokenCount);
+            outputTokens = Sum(outputTokens, response.Usage?.OutputTokenCount);
+
             if (response.TryGetResult(out var payload) && IsComplete(payload) && !(payload.Answerable && string.IsNullOrWhiteSpace(payload.Answer)))
             {
-                return ToGeneratedAnswer(payload, response, settings);
+                return ToGeneratedAnswer(payload, settings, attempt, inputTokens, outputTokens);
             }
 
-            if (attempt == MaxAttempts)
+            if (attempt >= attemptBudget)
             {
                 throw new AnswerGenerationException(AnswerGenerationFailure.InvalidOutput, "The language model did not return the required JSON structure.");
             }
 
-            logger.LogWarning("The language model returned output that does not match the answer schema; retrying once.");
+            logger.LogWarning(
+                "The language model returned output that does not match the answer schema; retrying (attempt {Attempt} of {Budget}).",
+                attempt + 1,
+                attemptBudget);
             // Model neyi yanlış yaptığını görebilsin diye kendi geçersiz çıktısı konuşmaya eklenir; ardından düzeltici
-            // talimat gelir.
-            messages.Add(new ChatMessage(ChatRole.Assistant, response.Text));
+            // talimat gelir. Çıktıdaki sohbet şablonu belirteçleri silinir: llama.cpp metni özel belirteçleri tanıyarak
+            // böldüğü için, modelin ürettiği bir "<|turn>" ikinci istekte gerçek bir sıra belirtecine dönüşürdü.
+            messages.Add(new ChatMessage(ChatRole.Assistant, PromptInjectionDetector.RemoveChatTemplateTokens(response.Text)));
             messages.Add(new ChatMessage(ChatRole.User, AnswerPrompt.RetryInstruction));
         }
     }
@@ -173,30 +186,53 @@ public sealed class OpenAiCompatibleAnswerGenerator(
     /// <c>??</c> korumaları savunma amaçlıdır: özellikler null olamaz tanımlanmıştır ama dışarıdan gelen veriye tam
     /// güvenilmez. Kimliği boş atıflar burada atılır; etiketin verilen kaynaklardan birine eşlenmesi ve alıntının
     /// doğrulanması Application tarafındaki <c>CitationValidator</c>'ın işidir. Model adı olarak sunucunun döndürdüğü
-    /// kimlik değil, yapılandırılan ad raporlanır. Yeniden deneme olduysa token sayıları yalnızca başarılı son çağrıya
-    /// aittir.
+    /// kimlik değil, yapılandırılan ad raporlanır. Çağrı sayısı ve token kullanımı, şema yeniden denemesi dahil bütün
+    /// denemelerin toplamıdır. Serbest metin alanları (yanıt, eksik bilgi, çelişki konusu ve gerekçesi)
+    /// <see cref="SystemPromptLeakDetector"/> ile taranır ve sistem prompt'unu tekrarlayan yanıt
+    /// <see cref="GeneratedAnswer.LeaksSystemPrompt"/> ile işaretlenir; reddetme kararı handler'ındır.
     /// </remarks>
-    private static GeneratedAnswer ToGeneratedAnswer(AnswerPayload payload, ChatResponse response, LlmOptions settings)
+    /// <param name="payload">Ayrıştırılmış ve eksiksiz olduğu denetlenmiş model yanıtı.</param>
+    /// <param name="settings">Raporlanacak model adının alındığı yapılandırma.</param>
+    /// <param name="attempts">Bu yanıt için sunucuya giden istek sayısı (şema yeniden denemesi dahil).</param>
+    /// <param name="inputTokens">Bütün denemelerin toplam girdi token sayısı; sağlayıcı bildirmediyse null.</param>
+    /// <param name="outputTokens">Bütün denemelerin toplam çıktı token sayısı; sağlayıcı bildirmediyse null.</param>
+    private static GeneratedAnswer ToGeneratedAnswer(AnswerPayload payload, LlmOptions settings, int attempts, long? inputTokens, long? outputTokens)
     {
+        var answer = payload.Answer ?? string.Empty;
+        var missingInformation = payload.MissingInformation ?? string.Empty;
+        var conflicts = (payload.Conflicts ?? [])
+            .Select(conflict => new GeneratedConflict(
+                conflict.Topic ?? string.Empty,
+                conflict.ChosenChunkId ?? string.Empty,
+                conflict.RejectedChunkIds ?? [],
+                conflict.Reason ?? string.Empty))
+            .ToList();
+
+        // Çıktı koruması: istemciye dönebilecek serbest metin alanlarından biri sistem prompt'unu tekrarlıyorsa yanıt
+        // işaretlenir. Alıntılar taranmaz; onlar ancak kaynak metninde birebir doğrulanırsa gösterilir.
+        var leaksSystemPrompt = SystemPromptLeakDetector.Repeats(answer)
+            || SystemPromptLeakDetector.Repeats(missingInformation)
+            || conflicts.Any(conflict => SystemPromptLeakDetector.Repeats(conflict.Topic) || SystemPromptLeakDetector.Repeats(conflict.Reason));
+
         return new GeneratedAnswer(
             payload.Answerable,
-            payload.Answer ?? string.Empty,
+            answer,
             (payload.Citations ?? [])
                 .Where(citation => !string.IsNullOrWhiteSpace(citation.ChunkId))
                 .Select(citation => new GeneratedCitation(citation.ChunkId, citation.Quote ?? string.Empty))
                 .ToList(),
-            payload.MissingInformation ?? string.Empty,
-            (payload.Conflicts ?? [])
-                .Select(conflict => new GeneratedConflict(
-                    conflict.Topic ?? string.Empty,
-                    conflict.ChosenChunkId ?? string.Empty,
-                    conflict.RejectedChunkIds ?? [],
-                    conflict.Reason ?? string.Empty))
-                .ToList(),
+            missingInformation,
+            conflicts,
             // response.ModelId değil, yapılandırılan ad: llama.cpp orada yerel model dosyasının yolunu döndürür ve bu
             // yol yanıtın diagnostics bölümüne ve denetim kaydına makine ayrıntısı sızdırırdı.
             settings.ChatModel,
-            response.Usage?.InputTokenCount,
-            response.Usage?.OutputTokenCount);
+            inputTokens,
+            outputTokens,
+            attempts,
+            leaksSystemPrompt);
     }
+
+    /// <summary>Bilinen token sayılarını toplar; yeni değer bilinmiyorsa (null) mevcut toplamı korur.</summary>
+    /// <remarks>Sağlayıcı kullanım bilgisi döndürmezse toplam null kalır; bilinmeyen bir değer 0 diye gösterilmez.</remarks>
+    private static long? Sum(long? total, long? value) => value is null ? total : (total ?? 0) + value;
 }

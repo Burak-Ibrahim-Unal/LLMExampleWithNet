@@ -34,6 +34,7 @@ public sealed class UnconfiguredAnswerGenerator : IGroundedAnswerGenerator
         string question,
         IReadOnlyList<ContextChunk> context,
         AnswerFeedback? feedback = null,
+        int maxAttempts = 2,
         CancellationToken cancellationToken = default)
         => throw new AnswerGenerationException(AnswerGenerationFailure.Unavailable, "No language model is configured (Llm:BaseUrl is empty).");
 }

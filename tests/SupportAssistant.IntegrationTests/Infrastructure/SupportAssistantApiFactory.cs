@@ -26,6 +26,23 @@ namespace SupportAssistant.IntegrationTests.Infrastructure;
 public class SupportAssistantApiFactory : WebApplicationFactory<Program>
 {
     /// <summary>
+    /// Test host'una tanımlanan yönetici anahtarı. Yeniden indeksleme ucu bu anahtarı <c>X-Admin-Key</c> başlığında
+    /// ister; testler <see cref="CreateAdminClient"/> ile başlığı taşıyan bir istemci alır.
+    /// </summary>
+    public const string AdminApiKey = "test-admin-key";
+
+    /// <summary>
+    /// Yönetici anahtarını (<see cref="AdminApiKey"/>) her istekte <c>X-Admin-Key</c> başlığında gönderen bir istemci
+    /// oluşturur; yönetici işlemlerini (yeniden indeksleme) çağıran testler içindir.
+    /// </summary>
+    public HttpClient CreateAdminClient()
+    {
+        var client = CreateClient();
+        client.DefaultRequestHeaders.Add("X-Admin-Key", AdminApiKey);
+        return client;
+    }
+
+    /// <summary>
     /// Bu fabrikaya özel geçici SQLite dosyası. Adındaki GUID sayesinde paralel çalışan test sınıfları (xunit her sınıfa
     /// kendi fikstür örneğini verir) aynı veritabanını paylaşmaz ve önceki koşulardan veri sızmaz. Bellek içi
     /// (<c>:memory:</c>) SQLite yerine dosya kullanılır: bellek içi veritabanı yalnızca onu açan bağlantı açık kaldıkça
@@ -69,7 +86,11 @@ public class SupportAssistantApiFactory : WebApplicationFactory<Program>
                 // Boş adresler ağ erişimini keser: embedding kapanır (DisabledTextEmbedder, yalnızca BM25) ve gerçek LLM
                 // istemcisi hiç kurulmaz; sahte üretici devreye girmese bile testler uzak bir sunucuya istek atamaz.
                 ["Embeddings:BaseUrl"] = string.Empty,
-                ["Llm:BaseUrl"] = string.Empty
+                ["Llm:BaseUrl"] = string.Empty,
+                // Hız sınırı açık kalır ama testlerin toplam soru sayısının çok üstündedir; sınırın kendisi ayrı bir
+                // fabrikayla (LowRateLimitApiFactory) sınanır.
+                ["RateLimiting:QuestionsPerMinute"] = "1000",
+                ["Security:AdminApiKey"] = AdminApiKey
             });
         });
 
@@ -94,6 +115,60 @@ public class SupportAssistantApiFactory : WebApplicationFactory<Program>
         {
             File.Delete(_databasePath);
         }
+    }
+}
+
+/// <summary>
+/// Soru ucunun hız sınırını dakikada <see cref="QuestionsPerMinute"/> soruya indiren fabrika; sınırın aşıldığı durumu
+/// birkaç istekle sınamak içindir.
+/// </summary>
+/// <remarks>
+/// Temel fabrikanın yapılandırması aynen uygulanır, ardından ikinci bir bellek içi kaynak eklenir. Sonra eklenen kaynak
+/// öncekini ezdiği için yalnızca hız sınırı değişir. Diğer test sınıfları yüksek sınırlı temel fabrikayı kullandığından,
+/// aynı süreçte koşan testler birbirinin kotasını tüketmez.
+/// </remarks>
+public sealed class LowRateLimitApiFactory : SupportAssistantApiFactory
+{
+    /// <summary>Bu fabrikada bir istemcinin dakikada gönderebileceği soru sayısı.</summary>
+    public const int QuestionsPerMinute = 2;
+
+    /// <summary>
+    /// Temel test kurulumunu uygular ve hız sınırını <see cref="QuestionsPerMinute"/> değerine indirir.
+    /// </summary>
+    protected override void ConfigureWebHost(IWebHostBuilder builder)
+    {
+        base.ConfigureWebHost(builder);
+
+        builder.ConfigureAppConfiguration((_, configuration) =>
+        {
+            configuration.AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["RateLimiting:QuestionsPerMinute"] = QuestionsPerMinute.ToString(System.Globalization.CultureInfo.InvariantCulture)
+            });
+        });
+    }
+}
+
+/// <summary>
+/// Sunucuda yönetici anahtarı tanımlı olmayan kurulumu taklit eder: <c>Security:AdminApiKey</c> boştur. Yeniden
+/// indeksleme ucunun bu durumda güvenli varsayılanla kapalı kaldığını (403) sınamak içindir.
+/// </summary>
+public sealed class NoAdminKeyApiFactory : SupportAssistantApiFactory
+{
+    /// <summary>
+    /// Temel test kurulumunu uygular ve yönetici anahtarını boşaltır; sonra eklenen bellek içi kaynak öncekini ezer.
+    /// </summary>
+    protected override void ConfigureWebHost(IWebHostBuilder builder)
+    {
+        base.ConfigureWebHost(builder);
+
+        builder.ConfigureAppConfiguration((_, configuration) =>
+        {
+            configuration.AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["Security:AdminApiKey"] = string.Empty
+            });
+        });
     }
 }
 

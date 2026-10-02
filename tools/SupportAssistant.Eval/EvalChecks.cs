@@ -1,3 +1,4 @@
+using Knowledge.Application.Answering;
 using Knowledge.Application.Contracts;
 using Knowledge.Application.Text;
 using Shared.Application.Common;
@@ -16,8 +17,8 @@ public static class EvalChecks
     /// <summary>
     /// Bir yanıt için kontrol listesini üretir: yanıtlanabilirlik; cevapsız sorularda ret sözleşmesi; yanıtlanan sorularda
     /// beklenen kaynak(lar), yasak kaynaklar, beklenen bölüm, alıntıların doğrulanmış olması, sayıların kaynağa dayanması,
-    /// zorunlu ifade grupları, yasak ifadeler, elenmesi gereken eski sürümler ve beklenen çelişki kaydı. Her kontrol,
-    /// raporda gösterilecek Türkçe bir ad ve beklenen/gerçek özetiyle döner.
+    /// zorunlu ifade grupları, kritik kararların koşul ifadeleri, yasak ifadeler, elenmesi gereken eski sürümler ve
+    /// beklenen çelişki kaydı. Her kontrol, raporda gösterilecek Türkçe bir ad ve beklenen/gerçek özetiyle döner.
     /// </summary>
     /// <remarks>
     /// <para>
@@ -28,8 +29,10 @@ public static class EvalChecks
     /// <para>
     /// İfade kontrolleri anahtar kelimelere dayandığı için yanlış bir kararı ya da uydurma bir sayıyı kendi başına
     /// yakalayamaz ("doğru kaynak + yanlış karar"). Bu yüzden yanıttaki her sayı ayrıca atıf yapılan dokümanların
-    /// metniyle karşılaştırılır. Yine de bu kontroller anlamsal doğruluğun kanıtı değildir; değerlendirme raporundaki
-    /// gerçek yanıtlar ayrıca elle okunur.
+    /// metniyle karşılaştırılır. Sayının kaynakta geçmesi doğru kullanıldığını da kanıtlamaz ("750 TL altındaki
+    /// siparişlerde kargo ücretsizdir"); kritik kararlarda koşulun yönü ayrı bir "koşul" kontrolüyle, ters yazımları da
+    /// yasak ifadelerle denetlenir. Bu denetim ifade tabanlı olduğu için kısmidir; kontroller anlamsal doğruluğun kanıtı
+    /// değildir ve değerlendirme raporundaki gerçek yanıtlar ayrıca elle okunur.
     /// </para>
     /// </remarks>
     /// <param name="expect">Sorunun beklentileri.</param>
@@ -119,6 +122,13 @@ public static class EvalChecks
             checks.Add(new CheckResult("içerik", group.Any(phrase => ContainsPhrase(answer.Answer, phrase)), $"'{string.Join("' | '", group)}'"));
         }
 
+        // Koşul grupları içerikle aynı biçimde değerlendirilir ama ayrı adla raporlanır: sayının yanıtta geçmesi ("750")
+        // ile koşulun doğru yönde söylenmesi ("750 TL ve üzeri") ayrı sorulardır.
+        foreach (var group in expect.Conditions ?? [])
+        {
+            checks.Add(new CheckResult("koşul", group.Any(phrase => ContainsPhrase(answer.Answer, phrase)), $"'{string.Join("' | '", group)}'"));
+        }
+
         foreach (var phrase in expect.MustNotContain ?? [])
         {
             checks.Add(new CheckResult("yasak ifade", !ContainsPhrase(answer.Answer, phrase), $"'{phrase}'"));
@@ -148,20 +158,28 @@ public static class EvalChecks
     }
 
     /// <summary>
-    /// Bir reddin API sözleşmesine uyup uymadığını denetler: yanıt metni sabit "yeterli bilgi bulunamadı" mesajıdır,
-    /// kaynak listesi boştur ve hangi kapıda durulduğunu söyleyen bir <c>refusalReason</c> vardır.
+    /// Bir reddin API sözleşmesine uyup uymadığını denetler: yanıt metni, ret gerekçesine ait sabit mesajdır (genelde
+    /// "yeterli bilgi bulunamadı"; prompt injection ve çıktı koruması retlerinde onlara özel mesaj), kaynak listesi boştur
+    /// ve hangi kapıda durulduğunu söyleyen bir <c>refusalReason</c> vardır.
     /// </summary>
     /// <remarks>
     /// Yalnızca <c>answerable=false</c>'a bakmak, kaynak gösteren ya da modelin kendi metnini döndüren bir "ret"i de
-    /// başarılı sayardı. İstemciler bu üç alana dayanır; sözleşmenin uçtan uca korunduğu burada görülür.
+    /// başarılı sayardı. İstemciler bu üç alana dayanır; sözleşmenin uçtan uca korunduğu burada görülür. Mesajın gerekçeyle
+    /// eşleşmesi de denetlenir: sorun soruda ya da model çıktısında olduğunda "bilgi yok" demek kullanıcıyı yanıltırdı.
     /// </remarks>
     private static CheckResult RefusalContract(AnswerDto answer)
     {
         var problems = new List<string>();
-
-        if (answer.Answer != Messages.Knowledge.NotEnoughInformation)
+        var expectedMessage = answer.RefusalReason switch
         {
-            problems.Add("ret metni sabit mesaj değil");
+            RefusalReasons.PromptInjectionSuspected => Messages.Knowledge.PromptInjectionRefused,
+            RefusalReasons.UnsafeOutput => Messages.Knowledge.UnsafeOutputRefused,
+            _ => Messages.Knowledge.NotEnoughInformation
+        };
+
+        if (answer.Answer != expectedMessage)
+        {
+            problems.Add("ret metni gerekçenin sabit mesajı değil");
         }
 
         if (answer.Sources.Count > 0)

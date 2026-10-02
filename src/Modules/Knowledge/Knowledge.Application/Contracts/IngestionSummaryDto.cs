@@ -20,6 +20,10 @@ namespace Knowledge.Application.Contracts;
 /// Ingest bozulmuş bir modda başarılı olduğunda dolar (ör. embedding sunucusuna ulaşılamadı ve arama BM25'e düştü);
 /// aksi hâlde null.
 /// </param>
+/// <param name="SuspiciousDocuments">
+/// Dil modeline yönelik talimat benzeri metin (dolaylı prompt injection) içeren dokümanların kimlikleri; yoksa boş.
+/// Bu dokümanlar indekste kalır, metinleri modele gitmeden etkisizleştirilir; liste operatörün gözden geçirmesi içindir.
+/// </param>
 public sealed record IngestionSummaryDto(
     int Documents,
     int Chunks,
@@ -29,4 +33,5 @@ public sealed record IngestionSummaryDto(
     int Unchanged,
     int EmbeddedChunks,
     string RetrievalMode,
-    string? Warning);
+    string? Warning,
+    IReadOnlyList<string> SuspiciousDocuments);

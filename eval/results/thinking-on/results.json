@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-02T07:52:05.0327729+03:00",
+  "generatedAt": "2026-10-02T10:08:57.3040797+03:00",
   "baseUrl": "http://localhost:5031",
   "label": "thinking-on",
   "status": {
@@ -9,7 +9,7 @@
       "documents": 10,
       "sections": 53,
       "retrievalMode": "hybrid",
-      "builtAtUtc": "2026-10-02T04:48:57.8324751Z"
+      "builtAtUtc": "2026-10-02T07:05:49.4627296Z"
     },
     "llm": {
       "configured": true,
@@ -49,7 +49,8 @@
             "Kurulumdan Önce",
             "Cihaz Wi-Fi Ağına Bağlanmıyor"
           ],
-          "expectConflict": null
+          "expectConflict": null,
+          "conditions": null
         }
       },
       "statusCode": 200,
@@ -87,7 +88,7 @@
           "detail": "'2.4 GHz' | '2,4 GHz'"
         }
       ],
-      "latencyMs": 34978,
+      "latencyMs": 39810,
       "lexicalHit": true,
       "hybridHit": true,
       "answer": {
@@ -192,7 +193,7 @@
             }
           ],
           "model": "gemma-4-26b-a4b-it",
-          "latencyMs": 34806,
+          "latencyMs": 39709,
           "inputTokens": 1610,
           "outputTokens": 3323,
           "modelCalls": 1
@@ -232,7 +233,8 @@
           "sectionsAnyOf": [
             "LED Gösterge Renkleri"
           ],
-          "expectConflict": null
+          "expectConflict": null,
+          "conditions": null
         }
       },
       "statusCode": 200,
@@ -270,7 +272,7 @@
           "detail": "'yok' | 'olmadığını' | 'bulunmadığını' | 'kopuk' | 'bağlı değil' | 'kurulamadığını' | 'kesildiğini'"
         }
       ],
-      "latencyMs": 4801,
+      "latencyMs": 4857,
       "lexicalHit": true,
       "hybridHit": true,
       "answer": {
@@ -363,7 +365,7 @@
             }
           ],
           "model": "gemma-4-26b-a4b-it",
-          "latencyMs": 4788,
+          "latencyMs": 4842,
           "inputTokens": 1531,
           "outputTokens": 738,
           "modelCalls": 1
@@ -393,12 +395,20 @@
               "hayır"
             ]
           ],
-          "mustNotContain": null,
+          "mustNotContain": [
+            "kapsam dışı değil",
+            "kapsamı dışında değil",
+            "garanti kapsamındadır",
+            "garanti kapsamında onarılır",
+            "ücretsiz onarılır",
+            "ücretsiz olarak onarılır"
+          ],
           "discardedVersions": null,
           "sectionsAnyOf": [
             "Garanti Kapsamı Dışındaki Durumlar"
           ],
-          "expectConflict": null
+          "expectConflict": null,
+          "conditions": null
         }
       },
       "statusCode": 200,
@@ -429,9 +439,39 @@
           "name": "içerik",
           "passed": true,
           "detail": "'kapsam dışı' | 'kapsamı dışında' | 'kapsamında değil' | 'kapsamına girmez' | 'karşılanmaz' | 'hayır'"
+        },
+        {
+          "name": "yasak ifade",
+          "passed": true,
+          "detail": "'kapsam dışı değil'"
+        },
+        {
+          "name": "yasak ifade",
+          "passed": true,
+          "detail": "'kapsamı dışında değil'"
+        },
+        {
+          "name": "yasak ifade",
+          "passed": true,
+          "detail": "'garanti kapsamındadır'"
+        },
+        {
+          "name": "yasak ifade",
+          "passed": true,
+          "detail": "'garanti kapsamında onarılır'"
+        },
+        {
+          "name": "yasak ifade",
+          "passed": true,
+          "detail": "'ücretsiz onarılır'"
+        },
+        {
+          "name": "yasak ifade",
+          "passed": true,
+          "detail": "'ücretsiz olarak onarılır'"
         }
       ],
-      "latencyMs": 9519,
+      "latencyMs": 9492,
       "lexicalHit": true,
       "hybridHit": true,
       "answer": {
@@ -525,7 +565,7 @@
             }
           ],
           "model": "gemma-4-26b-a4b-it",
-          "latencyMs": 9510,
+          "latencyMs": 9483,
           "inputTokens": 1328,
           "outputTokens": 1495,
           "modelCalls": 1
@@ -554,13 +594,35 @@
             ]
           ],
           "mustNotContain": [
-            "ücretsiz değil"
+            "ücretsiz değil",
+            "üzerindeki siparişlerde kargo ücretsiz sayılmaz",
+            "üzeri siparişlerde kargo ücretsiz sayılmaz",
+            "altındaki siparişlerde kargo ücretsizdir",
+            "altındaki siparişlerde ücretsizdir",
+            "altında kargo ücretsizdir",
+            "altında ücretsizdir"
           ],
           "discardedVersions": null,
           "sectionsAnyOf": [
             "Kargo Ücreti"
           ],
-          "expectConflict": null
+          "expectConflict": null,
+          "conditions": [
+            [
+              "750 TL ve üzer",
+              "750 TL ve üstü",
+              "750 TL veya üzer",
+              "750 TL veya üstü",
+              "750 TL ve daha fazla",
+              "750 TL üzer",
+              "750 TL üstü",
+              "750 TL'nin üzer",
+              "750 TL'nin üstü",
+              "750 TL'yi aşan",
+              "750 TL'den fazla",
+              "en az 750"
+            ]
+          ]
         }
       },
       "statusCode": 200,
@@ -603,12 +665,47 @@
           "detail": "'ücretsiz'"
         },
         {
+          "name": "koşul",
+          "passed": true,
+          "detail": "'750 TL ve üzer' | '750 TL ve üstü' | '750 TL veya üzer' | '750 TL veya üstü' | '750 TL ve daha fazla' | '750 TL üzer' | '750 TL üstü' | '750 TL'nin üzer' | '750 TL'nin üstü' | '750 TL'yi aşan' | '750 TL'den fazla' | 'en az 750'"
+        },
+        {
           "name": "yasak ifade",
           "passed": true,
           "detail": "'ücretsiz değil'"
+        },
+        {
+          "name": "yasak ifade",
+          "passed": true,
+          "detail": "'üzerindeki siparişlerde kargo ücretsiz sayılmaz'"
+        },
+        {
+          "name": "yasak ifade",
+          "passed": true,
+          "detail": "'üzeri siparişlerde kargo ücretsiz sayılmaz'"
+        },
+        {
+          "name": "yasak ifade",
+          "passed": true,
+          "detail": "'altındaki siparişlerde kargo ücretsizdir'"
+        },
+        {
+          "name": "yasak ifade",
+          "passed": true,
+          "detail": "'altındaki siparişlerde ücretsizdir'"
+        },
+        {
+          "name": "yasak ifade",
+          "passed": true,
+          "detail": "'altında kargo ücretsizdir'"
+        },
+        {
+          "name": "yasak ifade",
+          "passed": true,
+          "detail": "'altında ücretsizdir'"
         }
       ],
-      "latencyMs": 5357,
+      "latencyMs": 5518,
       "lexicalHit": true,
       "hybridHit": true,
       "answer": {
@@ -699,7 +796,7 @@
             }
           ],
           "model": "gemma-4-26b-a4b-it",
-          "latencyMs": 5344,
+          "latencyMs": 5510,
           "inputTokens": 1213,
           "outputTokens": 859,
           "modelCalls": 1
@@ -730,7 +827,8 @@
           "sectionsAnyOf": [
             "Eskalasyon Kriterleri"
           ],
-          "expectConflict": null
+          "expectConflict": null,
+          "conditions": null
         }
       },
       "statusCode": 200,
@@ -763,7 +861,7 @@
           "detail": "'L2' | 'Seviye 2'"
         }
       ],
-      "latencyMs": 5089,
+      "latencyMs": 5391,
       "lexicalHit": true,
       "hybridHit": true,
       "answer": {
@@ -855,7 +953,7 @@
             }
           ],
           "model": "gemma-4-26b-a4b-it",
-          "latencyMs": 5080,
+          "latencyMs": 5383,
           "inputTokens": 1430,
           "outputTokens": 804,
           "modelCalls": 1
@@ -886,7 +984,8 @@
           "sectionsAnyOf": [
             "Fabrika Ayarlarına Döndürme"
           ],
-          "expectConflict": null
+          "expectConflict": null,
+          "conditions": null
         }
       },
       "statusCode": 200,
@@ -924,7 +1023,7 @@
           "detail": "'10 saniye' | '10 sn'"
         }
       ],
-      "latencyMs": 11909,
+      "latencyMs": 11557,
       "lexicalHit": true,
       "hybridHit": true,
       "answer": {
@@ -1028,7 +1127,7 @@
             }
           ],
           "model": "gemma-4-26b-a4b-it",
-          "latencyMs": 11900,
+          "latencyMs": 11549,
           "inputTokens": 1524,
           "outputTokens": 1980,
           "modelCalls": 1
@@ -1064,7 +1163,8 @@
             "Teslimat Süresi",
             "Kurulumdan Önce"
           ],
-          "expectConflict": null
+          "expectConflict": null,
+          "conditions": null
         }
       },
       "statusCode": 200,
@@ -1107,7 +1207,7 @@
           "detail": "'2.4 GHz' | '2,4 GHz'"
         }
       ],
-      "latencyMs": 13544,
+      "latencyMs": 13486,
       "lexicalHit": false,
       "hybridHit": true,
       "answer": {
@@ -1211,7 +1311,7 @@
             }
           ],
           "model": "gemma-4-26b-a4b-it",
-          "latencyMs": 13538,
+          "latencyMs": 13477,
           "inputTokens": 1589,
           "outputTokens": 2349,
           "modelCalls": 1
@@ -1240,13 +1340,26 @@
             ]
           ],
           "mustNotContain": [
-            "10 iş günü"
+            "10 iş günü",
+            "5 iş günü sonra",
+            "5 iş gününden sonra"
           ],
           "discardedVersions": null,
           "sectionsAnyOf": [
             "Para İadesi"
           ],
-          "expectConflict": null
+          "expectConflict": null,
+          "conditions": [
+            [
+              "5 iş günü içinde",
+              "5 iş günü içerisinde",
+              "5 iş gününde",
+              "beş iş günü içinde",
+              "beş iş gününde",
+              "en geç 5 iş günü",
+              "5 iş günü sürer"
+            ]
+          ]
         }
       },
       "statusCode": 200,
@@ -1289,12 +1402,27 @@
           "detail": "'5 iş günü' | 'beş iş günü'"
         },
         {
+          "name": "koşul",
+          "passed": true,
+          "detail": "'5 iş günü içinde' | '5 iş günü içerisinde' | '5 iş gününde' | 'beş iş günü içinde' | 'beş iş gününde' | 'en geç 5 iş günü' | '5 iş günü sürer'"
+        },
+        {
           "name": "yasak ifade",
           "passed": true,
           "detail": "'10 iş günü'"
+        },
+        {
+          "name": "yasak ifade",
+          "passed": true,
+          "detail": "'5 iş günü sonra'"
+        },
+        {
+          "name": "yasak ifade",
+          "passed": true,
+          "detail": "'5 iş gününden sonra'"
         }
       ],
-      "latencyMs": 10457,
+      "latencyMs": 10635,
       "lexicalHit": false,
       "hybridHit": true,
       "answer": {
@@ -1402,7 +1530,7 @@
             }
           ],
           "model": "gemma-4-26b-a4b-it",
-          "latencyMs": 10444,
+          "latencyMs": 10627,
           "inputTokens": 1253,
           "outputTokens": 1817,
           "modelCalls": 1
@@ -1424,7 +1552,8 @@
           "mustNotContain": null,
           "discardedVersions": null,
           "sectionsAnyOf": null,
-          "expectConflict": null
+          "expectConflict": null,
+          "conditions": null
         }
       },
       "statusCode": 200,
@@ -1442,7 +1571,7 @@
           "detail": "—"
         }
       ],
-      "latencyMs": 14,
+      "latencyMs": 12,
       "lexicalHit": null,
       "hybridHit": null,
       "answer": {
@@ -1477,7 +1606,7 @@
           ],
           "context": [],
           "model": "",
-          "latencyMs": 9,
+          "latencyMs": 8,
           "inputTokens": null,
           "outputTokens": null,
           "modelCalls": 0
@@ -1499,7 +1628,8 @@
           "mustNotContain": null,
           "discardedVersions": null,
           "sectionsAnyOf": null,
-          "expectConflict": null
+          "expectConflict": null,
+          "conditions": null
         }
       },
       "statusCode": 200,
@@ -1517,7 +1647,7 @@
           "detail": "—"
         }
       ],
-      "latencyMs": 3527,
+      "latencyMs": 3565,
       "lexicalHit": null,
       "hybridHit": null,
       "answer": {
@@ -1598,7 +1728,7 @@
             }
           ],
           "model": "gemma-4-26b-a4b-it",
-          "latencyMs": 3523,
+          "latencyMs": 3557,
           "inputTokens": 1316,
           "outputTokens": 505,
           "modelCalls": 1
@@ -1620,7 +1750,8 @@
           "mustNotContain": null,
           "discardedVersions": null,
           "sectionsAnyOf": null,
-          "expectConflict": null
+          "expectConflict": null,
+          "conditions": null
         }
       },
       "statusCode": 200,
@@ -1638,7 +1769,7 @@
           "detail": "—"
         }
       ],
-      "latencyMs": 4287,
+      "latencyMs": 4474,
       "lexicalHit": null,
       "hybridHit": null,
       "answer": {
@@ -1721,7 +1852,7 @@
             }
           ],
           "model": "gemma-4-26b-a4b-it",
-          "latencyMs": 4282,
+          "latencyMs": 4470,
           "inputTokens": 1412,
           "outputTokens": 651,
           "modelCalls": 1
@@ -1743,7 +1874,8 @@
           "mustNotContain": null,
           "discardedVersions": null,
           "sectionsAnyOf": null,
-          "expectConflict": null
+          "expectConflict": null,
+          "conditions": null
         }
       },
       "statusCode": 200,
@@ -1793,7 +1925,7 @@
           ],
           "context": [],
           "model": "",
-          "latencyMs": 9,
+          "latencyMs": 10,
           "inputTokens": null,
           "outputTokens": null,
           "modelCalls": 0
@@ -1821,7 +1953,10 @@
             ]
           ],
           "mustNotContain": [
-            "14 gün"
+            "14 gün",
+            "30 gün sonra iade",
+            "30 günden sonra iade",
+            "30 gün geçtikten sonra iade"
           ],
           "discardedVersions": [
             "iade-politikasi-v1"
@@ -1829,7 +1964,16 @@
           "sectionsAnyOf": [
             "İade Süresi"
           ],
-          "expectConflict": null
+          "expectConflict": null,
+          "conditions": [
+            [
+              "30 gün içinde",
+              "30 gün içerisinde",
+              "30 gün boyunca",
+              "30 güne kadar",
+              "30 günlük süre"
+            ]
+          ]
         }
       },
       "statusCode": 200,
@@ -1872,9 +2016,29 @@
           "detail": "'30 gün'"
         },
         {
+          "name": "koşul",
+          "passed": true,
+          "detail": "'30 gün içinde' | '30 gün içerisinde' | '30 gün boyunca' | '30 güne kadar' | '30 günlük süre'"
+        },
+        {
           "name": "yasak ifade",
           "passed": true,
           "detail": "'14 gün'"
+        },
+        {
+          "name": "yasak ifade",
+          "passed": true,
+          "detail": "'30 gün sonra iade'"
+        },
+        {
+          "name": "yasak ifade",
+          "passed": true,
+          "detail": "'30 günden sonra iade'"
+        },
+        {
+          "name": "yasak ifade",
+          "passed": true,
+          "detail": "'30 gün geçtikten sonra iade'"
         },
         {
           "name": "eski sürüm elendi",
@@ -1882,7 +2046,7 @@
           "detail": "beklenen: iade-politikasi-v1; raporlanan: iade-politikasi-v1"
         }
       ],
-      "latencyMs": 14420,
+      "latencyMs": 14298,
       "lexicalHit": true,
       "hybridHit": true,
       "answer": {
@@ -1999,7 +2163,7 @@
             }
           ],
           "model": "gemma-4-26b-a4b-it",
-          "latencyMs": 14416,
+          "latencyMs": 14290,
           "inputTokens": 1294,
           "outputTokens": 2439,
           "modelCalls": 1
@@ -2028,7 +2192,9 @@
             ]
           ],
           "mustNotContain": [
-            "10 iş günü"
+            "10 iş günü",
+            "5 iş günü sonra",
+            "5 iş gününden sonra"
           ],
           "discardedVersions": [
             "iade-politikasi-v1"
@@ -2036,7 +2202,18 @@
           "sectionsAnyOf": [
             "Para İadesi"
           ],
-          "expectConflict": null
+          "expectConflict": null,
+          "conditions": [
+            [
+              "5 iş günü içinde",
+              "5 iş günü içerisinde",
+              "5 iş gününde",
+              "beş iş günü içinde",
+              "beş iş gününde",
+              "en geç 5 iş günü",
+              "5 iş günü sürer"
+            ]
+          ]
         }
       },
       "statusCode": 200,
@@ -2079,9 +2256,24 @@
           "detail": "'5 iş günü' | 'beş iş günü'"
         },
         {
+          "name": "koşul",
+          "passed": true,
+          "detail": "'5 iş günü içinde' | '5 iş günü içerisinde' | '5 iş gününde' | 'beş iş günü içinde' | 'beş iş gününde' | 'en geç 5 iş günü' | '5 iş günü sürer'"
+        },
+        {
           "name": "yasak ifade",
           "passed": true,
           "detail": "'10 iş günü'"
+        },
+        {
+          "name": "yasak ifade",
+          "passed": true,
+          "detail": "'5 iş günü sonra'"
+        },
+        {
+          "name": "yasak ifade",
+          "passed": true,
+          "detail": "'5 iş gününden sonra'"
         },
         {
           "name": "eski sürüm elendi",
@@ -2089,7 +2281,7 @@
           "detail": "beklenen: iade-politikasi-v1; raporlanan: iade-politikasi-v1"
         }
       ],
-      "latencyMs": 11116,
+      "latencyMs": 10963,
       "lexicalHit": true,
       "hybridHit": true,
       "answer": {
@@ -2197,7 +2389,7 @@
             }
           ],
           "model": "gemma-4-26b-a4b-it",
-          "latencyMs": 11109,
+          "latencyMs": 10955,
           "inputTokens": 1291,
           "outputTokens": 1912,
           "modelCalls": 1
@@ -2238,7 +2430,8 @@
             "Canlı Sohbet",
             "Telefon Desteği"
           ],
-          "expectConflict": null
+          "expectConflict": null,
+          "conditions": null
         }
       },
       "statusCode": 200,
@@ -2291,7 +2484,7 @@
           "detail": "beklenen: destek-kanallari-v1; raporlanan: destek-kanallari-v1"
         }
       ],
-      "latencyMs": 36791,
+      "latencyMs": 37251,
       "lexicalHit": true,
       "hybridHit": true,
       "answer": {
@@ -2410,10 +2603,10 @@
             }
           ],
           "model": "gemma-4-26b-a4b-it",
-          "latencyMs": 36784,
-          "inputTokens": 1356,
-          "outputTokens": 2311,
-          "modelCalls": 1
+          "latencyMs": 37247,
+          "inputTokens": 2662,
+          "outputTokens": 6407,
+          "modelCalls": 2
         }
       }
     },
@@ -2455,7 +2648,8 @@
             "rejected": [
               "sss-genel"
             ]
-          }
+          },
+          "conditions": null
         }
       },
       "statusCode": 200,
@@ -2508,7 +2702,7 @@
           "detail": "beklenen: iade-politikasi-v2 > sss-genel; raporlanan: iade-politikasi-v2 > sss-genel (kurala uygun: evet)"
         }
       ],
-      "latencyMs": 11496,
+      "latencyMs": 11511,
       "lexicalHit": true,
       "hybridHit": true,
       "answer": {
@@ -2635,7 +2829,7 @@
             }
           ],
           "model": "gemma-4-26b-a4b-it",
-          "latencyMs": 11482,
+          "latencyMs": 11503,
           "inputTokens": 1224,
           "outputTokens": 1924,
           "modelCalls": 1

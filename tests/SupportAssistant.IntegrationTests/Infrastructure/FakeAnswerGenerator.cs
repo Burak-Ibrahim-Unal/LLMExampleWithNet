@@ -36,6 +36,7 @@ public sealed class FakeAnswerGenerator : IGroundedAnswerGenerator
         string question,
         IReadOnlyList<ContextChunk> context,
         AnswerFeedback? feedback = null,
+        int maxAttempts = 2,
         CancellationToken cancellationToken = default)
     {
         var first = context[0];

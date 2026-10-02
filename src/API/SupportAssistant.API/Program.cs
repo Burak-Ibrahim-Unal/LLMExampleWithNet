@@ -1,6 +1,5 @@
 using DotNetEnv;
 using FastEndpoints;
-using FastEndpoints.OpenApi;
 using Knowledge.Service.Abstractions;
 using Scalar.AspNetCore;
 using Shared.Application.Abstractions;

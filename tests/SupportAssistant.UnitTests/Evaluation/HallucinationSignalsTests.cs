@@ -3,6 +3,7 @@ using Knowledge.Application.Contracts;
 using Shared.Application.Common;
 using Shouldly;
 using SupportAssistant.Eval;
+using static SupportAssistant.UnitTests.Evaluation.EvalAnswers;
 
 namespace SupportAssistant.UnitTests.Evaluation;
 
@@ -101,19 +102,4 @@ public sealed class HallucinationSignalsTests
     /// </summary>
     private static QuestionResult Result(string id, string category, EvalExpectation expect, AnswerDto answer) =>
         new(new EvalQuestion(id, category, "soru", "beklenen", expect), 200, "ok", answer, EvalChecks.Evaluate(expect, answer, "soru", Documents), 1000, null, null);
-
-    /// <summary>
-    /// Kontrollerin okuduğu alanlar (yanıt metni, <c>answerable</c>, atıf yapılan dokümanlar, alıntı doğrulama durumu) dışında
-    /// sabit değerler taşıyan bir API yanıtı kurar.
-    /// </summary>
-    private static AnswerDto Answer(string text, bool answerable = true, string[]? sources = null, bool quoteVerified = true) => new(
-        "soru",
-        answerable,
-        text,
-        (sources ?? []).Select(id => new AnswerSourceDto(id, "Başlık", "1.0", new DateOnly(2025, 1, 1), "active", "politika", "Bölüm", "alıntı", quoteVerified)).ToList(),
-        new VersionResolutionDto(false, "kural", [], []),
-        [],
-        string.Empty,
-        answerable ? string.Empty : "LowRelevance",
-        new AnswerDiagnosticsDto("hybrid", 0.7, 1.0, [], [], "model", 100, null, null, 1));
 }

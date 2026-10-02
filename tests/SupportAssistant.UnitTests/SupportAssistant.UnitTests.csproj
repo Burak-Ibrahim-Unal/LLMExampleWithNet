@@ -11,6 +11,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" />
     <PackageReference Include="NetArchTest.Rules" />
     <PackageReference Include="Shouldly" />
     <PackageReference Include="xunit.v3" />
